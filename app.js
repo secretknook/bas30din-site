@@ -2,6 +2,7 @@
   var S = window.SITE, view = document.getElementById('view');
   ['yt', 'yt2'].forEach(function (id) { document.getElementById(id).href = S.youtube; });
   ['ig', 'ig2'].forEach(function (id) { document.getElementById(id).href = S.instagram; });
+  if (S.email) { var m2 = document.getElementById('mail2'); m2.href = 'mailto:' + S.email; m2.title = S.email; m2.hidden = false; }
 
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   var fmt = function (s) { return s ? new Date(s + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''; };
@@ -153,7 +154,7 @@
       '</div>' +
       '<p class="lead">The internet says a lot. I test it myself.</p>' +
       '<div class="contact"><a class="btn" href="' + esc(S.youtube) + '" target="_blank" rel="noopener">Watch on YouTube</a><a class="btn btn--line" href="' + esc(S.instagram) + '" target="_blank" rel="noopener">Instagram</a>' +
-      (S.email ? '<span class="mail">' + esc(S.email) + '</span>' : '') + '</div>' +
+      (S.email ? '<a class="mail" href="mailto:' + esc(S.email) + '">Collabs: ' + esc(S.email) + '</a>' : '') + '</div>' +
       '</div></article>';
   }
 

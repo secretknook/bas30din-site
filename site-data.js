@@ -19,7 +19,7 @@ window.SITE = {
   domain: "bas30din.com",
   youtube: "https://www.youtube.com/@bas30din",
   instagram: "https://www.instagram.com/bas30din/",
-  email: "",
+  email: "collab@bas30din.com",   // shown on About + footer as "Collabs"
   current: "ai-automation",
   why: "I used to start everything and finish nothing. So now I pick one skill, give it a fixed number of days, and do it in public, so I can't quit quietly.",
 
