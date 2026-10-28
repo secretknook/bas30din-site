@@ -77,8 +77,21 @@
   function chips(a) { return '<div class="chips">' + a.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('') + '</div>'; }
 
   /* NOW: the current challenge only */
+  function noteHTML() {
+    var n = S.nowNote; if (!n || !n.length) return '';
+    return '<section class="note"><h2>In my words</h2>' + n.map(function (p, i) { return '<p' + (i === 0 ? ' class="note__hi"' : '') + '>' + esc(p) + '</p>'; }).join('') + '<div class="note__sign"><img src="assets/pfp.jpg" alt="">Alok</div></section>';
+  }
   function now() {
     var c = byId[S.current] || S.challenges[0];
+    if (c.status === 'soon') {
+      return '<div class="split"><article class="card main">' +
+        '<div class="soonwrap">' + cover(c) + '<div class="soonbadge"><b>Coming soon</b></div></div>' +
+        '<h1>' + esc(c.title) + '</h1>' + metaHTML(c) +
+        '<div class="prose">' + noteHTML() +
+          (c.learn && c.learn.length ? sec("What I'm going to find out", ticks(c.learn)) : '') +
+          sec('Files', '<p class="muted">Coming soon. Every day\'s notes and files will be here, free.</p>') +
+        '</div></article>' + sideCard(c) + '</div>';
+    }
     return '<div class="split"><article class="card main">' + cover(c) +
       '<h1>' + esc(c.title) + '</h1>' + metaHTML(c) +
       '<div class="prose">' +

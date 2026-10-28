@@ -218,3 +218,16 @@ a.drow { transition: background-color .15s; }
 .inbox button { font-family: var(--text); }
 /* sidebar is now taller (email box), so it scrolls with the page instead of sticking */
 .side { position: static; }
+
+/* Coming-soon challenge on the Now tab */
+.soonwrap { position: relative; }
+.soonwrap .cover { opacity: .3; filter: saturate(.6); }
+.soonwrap .cover small, .soonwrap .cover span { display: none; }
+.soonbadge { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+.soonbadge b { background: var(--ink); color: #fff; font: 800 clamp(22px, 4.2vw, 44px)/1 var(--display); text-transform: uppercase; letter-spacing: .05em; padding: .38em .7em .32em; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.18); }
+/* "In my words" note */
+.note { background: var(--ground); border-radius: var(--r); padding: 20px 22px; display: grid; gap: 10px; }
+.note p { font-size: 17px; color: var(--ink); }
+.note .note__hi { font-weight: 600; }
+.note__sign { display: flex; align-items: center; gap: 10px; font: 700 18px/1 var(--display); margin-top: 4px; }
+.note__sign img { width: 32px; height: 32px; border-radius: 50%; }

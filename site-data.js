@@ -20,7 +20,7 @@ window.SITE = {
   youtube: "https://www.youtube.com/@bas30din",
   instagram: "https://www.instagram.com/bas30din/",
   email: "collab@bas30din.com",   // shown on About + footer as "Collabs"
-  current: "ai-automation",
+  current: "ai-lakhs",
   // Email list box ("Get it in your inbox"). Emails are collected by Netlify Forms (form name: "inbox").
   inbox: {
     on: true,
@@ -30,15 +30,34 @@ window.SITE = {
     done: "You're in. Watch your inbox.",
     small: "No spam. Unsubscribe any time. I never share your email."
   },
+  // Now tab: a short note in Alok's own words (edit freely). A blank string hides it.
+  nowNote: [
+    "Hi, I'm Alok. Here's what I'm doing next.",
+    "Everywhere on Instagram, people say you can learn AI automation without coding and earn lakhs a month. Maybe it's true. Maybe it's mostly people selling courses. I want to know for real, so I'm testing it myself.",
+    "First I'm learning it properly, at my own pace, without a fixed syllabus. Then 30 days of actually trying: building real things, talking to real businesses, trying to get paid.",
+    "Every hour and every rupee goes on screen. Friends and family don't count. And there's no course at the end. Just the truth, plus my notes and files so you can do it faster than I did.",
+    "Day 0 is coming soon."
+  ],
   why: "I used to start everything and finish nothing. So now I pick one skill, give it a fixed number of days, and do it in public, so I can't quit quietly.",
 
   challenges: [
+    {
+      id: "ai-lakhs",
+      title: "Instagram Says AI Automation Pays Lakhs. I'm Testing It.",
+      coverTitle: "AI automation: ₹ lakhs?",
+      oneLine: "Can you really earn lakhs with AI automation? 30 days, every rupee shown.",
+      status: "soon",
+      cover: "coral", photo: true,
+      totalDays: 30,
+      started: null,
+      about: "", learn: ["What the 'lakhs' claim really promises", "What it takes to get a first paying client", "What real earners do differently"], tools: [], days: []
+    },
     {
       id: "ai-automation",
       title: "14 Days of AI Automation",
       coverTitle: "AI Automation from zero",
       oneLine: "Make your computer do boring work for you. No coding.",
-      status: "now",
+      status: "paused",
       cover: "coral", photo: true,
       totalDays: 14,
       started: "2026-10-14",
