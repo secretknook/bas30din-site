@@ -33,7 +33,7 @@ window.SITE = {
       cover: "coral", photo: true,
       totalDays: 14,
       started: "2026-10-14",
-      about: "I'm teaching my computer to do boring work for me, with zero coding. Every day I try something new, film it, and put the notes and files here so you can do it in 10 minutes instead of a whole day.",
+      about: "Paused after Day 3, on purpose. I'm learning the fundamentals of automation properly first. Then I test the biggest claim on Instagram: that AI automation earns people lakhs a month. Every rupee shown. The notes and files for every day land here, so you can do it in 10 minutes instead of a whole day.",
       learn: ["What automation is, in simple words", "Make a reel post itself on Instagram", "Build your first AI agent"],
       tools: ["n8n (free)", "Google Drive"],
       days: [
