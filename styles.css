@@ -199,3 +199,22 @@ a.drow { transition: background-color .15s; }
   .cover img { height: 82%; right: -6%; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* Email list box */
+.inbox { border-top: 1px solid var(--line); padding: 18px; display: grid; gap: 8px; background: var(--coral-wash); }
+.about .inbox { margin-top: 22px; border: 1px solid var(--line); border-radius: var(--r); }
+.inbox h3 { font: 800 22px/1.05 var(--display); }
+.inbox p { font-size: 15px; color: var(--ink-2); }
+.inbox__row { display: grid; gap: 8px; }
+.inbox input { min-height: 46px; padding: 0 14px; border: 1px solid var(--line); border-radius: 10px; font: 500 16px var(--text); background: #fff; color: var(--ink); width: 100%; }
+.inbox input:focus { outline: 3px solid rgba(255,107,87,.35); border-color: var(--coral); }
+.inbox .btn:disabled { opacity: .6; cursor: default; }
+.inbox__msg { font-size: 13px; color: var(--ink-3); }
+.inbox__msg.is-err { color: var(--coral-ink); }
+.inbox.is-done h3 { color: var(--live); }
+.about .inbox__row { grid-template-columns: 1fr auto; }
+@media (max-width: 560px) { .about .inbox__row { grid-template-columns: 1fr; } }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.inbox button { font-family: var(--text); }
+/* sidebar is now taller (email box), so it scrolls with the page instead of sticking */
+.side { position: static; }

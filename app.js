@@ -49,8 +49,29 @@
       '<div class="links"><a href="' + esc(S.youtube) + '" target="_blank" rel="noopener">YouTube</a><a href="' + esc(S.instagram) + '" target="_blank" rel="noopener">Instagram</a></div>' +
       '<div class="stats"><div><b>' + posted + '</b><small>days posted</small></div><div><b>' + running + '</b><small>challenges</small></div><div><b>₹0</b><small>always free</small></div></div>' +
       (first ? '<a class="btn" href="#d-' + c.id + '-' + first.day + '">Start from Day ' + first.day + '</a>' : '<a class="btn" href="#classroom">See all challenges</a>') +
-      '</div></aside>';
+      '</div>' + inboxBox('sidebar') + '</aside>';
   }
+  function inboxBox(where) {
+    var I = S.inbox; if (!I || !I.on) return '';
+    return '<form class="inbox" data-inbox="' + esc(where) + '" novalidate>' +
+      '<h3>' + esc(I.title) + '</h3><p>' + esc(I.text) + '</p>' +
+      '<div class="inbox__row"><label class="sr" for="em-' + esc(where) + '">Your email</label>' +
+      '<input id="em-' + esc(where) + '" type="email" name="email" placeholder="you@email.com" autocomplete="email" required>' +
+      '<button class="btn" type="submit">' + esc(I.button) + '</button></div>' +
+      '<small class="inbox__msg">' + esc(I.small) + '</small></form>';
+  }
+  document.addEventListener('submit', function (e) {
+    var f = e.target; if (!f.matches || !f.matches('form[data-inbox]')) return;
+    e.preventDefault();
+    var input = f.querySelector('input[name=email]'), msg = f.querySelector('.inbox__msg'), btn = f.querySelector('button');
+    var v = (input.value || '').trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { msg.textContent = 'That email doesn\'t look right. Try again?'; msg.className = 'inbox__msg is-err'; input.focus(); return; }
+    btn.disabled = true; msg.textContent = 'Sending…'; msg.className = 'inbox__msg';
+    var body = new URLSearchParams({ 'form-name': 'inbox', email: v, source: f.getAttribute('data-inbox'), 'bot-field': '' }).toString();
+    fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); f.classList.add('is-done'); f.innerHTML = '<h3>' + esc(S.inbox.done) + '</h3>'; })
+      .catch(function () { btn.disabled = false; msg.textContent = 'Couldn\'t send right now. Please try again in a minute.'; msg.className = 'inbox__msg is-err'; });
+  });
   function sec(title, inner) { return '<section><h2>' + esc(title) + '</h2>' + inner + '</section>'; }
   function ticks(a) { return '<ul class="ticks">' + a.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>'; }
   function chips(a) { return '<div class="chips">' + a.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('') + '</div>'; }
@@ -154,7 +175,7 @@
       '</div>' +
       '<p class="lead">The internet says a lot. I test it myself.</p>' +
       '<div class="contact"><a class="btn" href="' + esc(S.youtube) + '" target="_blank" rel="noopener">Watch on YouTube</a><a class="btn btn--line" href="' + esc(S.instagram) + '" target="_blank" rel="noopener">Instagram</a>' +
-      (S.email ? '<a class="mail" href="mailto:' + esc(S.email) + '">Collabs: ' + esc(S.email) + '</a>' : '') + '</div>' +
+      (S.email ? '<a class="mail" href="mailto:' + esc(S.email) + '">Collabs: ' + esc(S.email) + '</a>' : '') + '</div>' + inboxBox('about') +
       '</div></article>';
   }
 

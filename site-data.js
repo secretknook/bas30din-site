@@ -21,6 +21,15 @@ window.SITE = {
   instagram: "https://www.instagram.com/bas30din/",
   email: "collab@bas30din.com",   // shown on About + footer as "Collabs"
   current: "ai-automation",
+  // Email list box ("Get it in your inbox"). Emails are collected by Netlify Forms (form name: "inbox").
+  inbox: {
+    on: true,
+    title: "Get it in your inbox",
+    text: "Every week: what I tested, what actually worked, and the files. Free.",
+    button: "Send it to me",
+    done: "You're in. Watch your inbox.",
+    small: "No spam. Unsubscribe any time. I never share your email."
+  },
   why: "I used to start everything and finish nothing. So now I pick one skill, give it a fixed number of days, and do it in public, so I can't quit quietly.",
 
   challenges: [
