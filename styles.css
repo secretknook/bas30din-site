@@ -225,7 +225,7 @@ a.drow { transition: background-color .15s; }
 .soonwrap .cover small, .soonwrap .cover span { display: none; }
 .soonbadge { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
 .soonbadge b { background: var(--ink); color: #fff; font: 800 clamp(22px, 4.2vw, 44px)/1 var(--display); text-transform: uppercase; letter-spacing: .05em; padding: .38em .7em .32em; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.18); }
-/* "In my words" note */
+/* "Why I'm here" note */
 .note { background: var(--ground); border-radius: var(--r); padding: 20px 22px; display: grid; gap: 10px; }
 .note p { font-size: 17px; color: var(--ink); }
 .note .note__hi { font-weight: 600; }
