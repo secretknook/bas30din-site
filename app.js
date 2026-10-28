@@ -79,7 +79,7 @@
   /* NOW: the current challenge only */
   function noteHTML() {
     var n = S.nowNote; if (!n || !n.length) return '';
-    return '<section class="note"><h2>Why?</h2>' + n.map(function (p, i) { return '<p' + (i === 0 ? ' class="note__hi"' : '') + '>' + esc(p) + '</p>'; }).join('') + '<div class="note__sign"><img src="assets/pfp.jpg" alt="">Alok</div></section>';
+    return '<section class="note">' + n.map(function (p, i) { return '<p' + (i === 0 ? ' class="note__hi"' : '') + '>' + esc(p) + '</p>'; }).join('') + '<div class="note__sign"><img src="assets/pfp.jpg" alt="">Alok</div></section>';
   }
   function now() {
     var c = byId[S.current] || S.challenges[0];
