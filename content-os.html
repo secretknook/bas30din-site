@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Content-OS</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Content-OS is Alok Mishra's personal Windows app for organising and publishing his own videos.">
+<link rel="icon" href="/assets/pfp.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@500;600&display=swap">
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/content-os/legal.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap co-bar">
+    <a class="mark" href="/" aria-label="Bas 30 Din home">30</a>
+    <span class="brand">CONTENT-OS</span>
+    <small>A personal tool by Bas 30 Din</small>
+  </div>
+</header>
+
+<main class="wrap page">
+  <article class="card co">
+    <h1>Content-OS</h1>
+    <p class="lead">Content-OS is a Windows desktop app that Alok Mishra, the creator of Bas 30 Din, built to organise his video projects and publish his own approved videos to his own YouTube channel and Instagram account.</p>
+    <p class="flag">Personal use only. It is not offered to the public and has no sign-up or download.</p>
+
+    <section>
+      <h2>What it does</h2>
+      <ul>
+        <li>Creates and organises video project folders on the PC.</li>
+        <li>Prepares finished videos with their title, description, caption and thumbnail.</li>
+        <li>Keeps a local schedule. Nothing is published until Alok approves the exact video, account and time.</li>
+        <li>Uploads approved videos to his YouTube channel with the official YouTube Data API. New uploads start private, and scheduled videos use YouTube's own scheduling.</li>
+        <li>Shows upload progress, publishing history and clear errors.</li>
+        <li>Backs up completed projects to his own drive.</li>
+      </ul>
+      <p>Instagram Reels publishing through Meta's official Instagram API is being tested and is not yet used for live posts.</p>
+    </section>
+
+    <section>
+      <h2>Google and YouTube access</h2>
+      <p>To upload to YouTube, Content-OS asks the account owner to sign in with Google and approve two permissions:</p>
+      <ul>
+        <li><code>youtube.upload</code>: upload videos and set their thumbnails.</li>
+        <li><code>youtube.readonly</code>: read the channel's ID and name to confirm it is the right channel, and check the status of videos Content-OS uploaded.</li>
+      </ul>
+      <p>The sign-in happens in Google's own page in the browser. The resulting access is stored only on Alok's PC, encrypted by Windows. It can be removed at any time from <a href="https://myaccount.google.com/permissions">your Google Account permissions</a>.</p>
+      <p>Content-OS is not made, endorsed or verified by Google, YouTube, Meta or Instagram.</p>
+    </section>
+
+    <section>
+      <h2>Contact</h2>
+      <p>Developer: Alok Mishra (Bas 30 Din). Email <a href="mailto:hello@bas30din.com">hello@bas30din.com</a>.</p>
+      <div class="co-actions">
+        <a class="btn" href="/content-os/privacy">Privacy policy</a>
+        <a class="btn btn--line" href="/content-os/terms">Terms of service</a>
+      </div>
+    </section>
+  </article>
+</main>
+
+<footer class="foot">
+  <div class="wrap"><span>Content-OS · A personal tool by Bas 30 Din</span><nav aria-label="Content-OS"><a href="/content-os/privacy">Privacy</a><a href="/content-os/terms">Terms</a><a href="mailto:hello@bas30din.com">Contact</a></nav></div>
+</footer>
+</body>
+</html>
