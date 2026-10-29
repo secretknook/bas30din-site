@@ -1,0 +1,14 @@
+.git/
+.github/
+node_modules/
+.wrangler/
+.env*
+.dev.vars*
+README.md
+package*.json
+wrangler.*
+src/
+test/
+tests/
+migrations/
+build-feed.cjs

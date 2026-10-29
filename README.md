@@ -45,3 +45,11 @@ Status: `now`, `paused`, `done` or `soon`. Cover color: `coral`, `dark` or `sand
 
 - YouTube videos play inside the page only on bas30din.com. Elsewhere they open on YouTube.
 - Hosting: any static host (Netlify, GitHub Pages, Cloudflare Pages).
+
+## Subscriber updates (Brevo)
+
+Signups use the public Brevo form in `site-data.js`, with email confirmation before joining the dedicated subscriber list. Netlify Forms is no longer used. Website updates are sent through Brevo's RSS Campaign integration, which checks `/rss.xml` daily and sends only when new entries appear.
+
+Cloudflare's build command must be `node build-feed.cjs`. The script refreshes `rss.xml` from published lessons and files before every deployment. Give a new lesson today's `date`. Draft lessons/files should use `published: false`. For a file added later to an older lesson, give that file its own current `date` (YYYY-MM-DD). Uploading an unlisted folder alone does not email anyone. Existing lesson/file IDs stay stable, so small text corrections do not create duplicate entries. A replacement file at the same URL needs a new URL to count as a separate update.
+
+Brevo's free plan has a total allowance of 300 email sends per day, including confirmation messages. Check the allowance as the subscriber list grows. Reply-to should use `alok@bas30din.com`, which remains in Zoho. No passwords or API keys are stored in this repository.

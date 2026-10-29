@@ -231,3 +231,5 @@ a.drow { transition: background-color .15s; }
 .note .note__hi { font-weight: 600; }
 .note__sign { display: flex; align-items: center; gap: 10px; font: 700 18px/1 var(--display); margin-top: 4px; }
 .note__sign img { width: 32px; height: 32px; border-radius: 50%; }
+
+.signup-frame{display:block;width:100%;height:360px;border:0;background:transparent}.inbox small{display:block;margin-top:12px}
