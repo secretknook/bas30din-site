@@ -1,12 +1,33 @@
 // Cloudflare Workers configuration for bas30din.com (static assets only, no Worker script).
-// Production settings are top-level. "previews" is required by `npx wrangler preview`
-// (Worker Previews); it is empty because this site has no bindings, variables or secrets.
-// Custom domains are managed in the Cloudflare dashboard and are not listed here.
+// Values mirror the live production Worker as read from the dashboard on 30 Oct 2026,
+// so that `npx wrangler deploy` (production) keeps today's behaviour.
+// "previews" is required by `npx wrangler preview` (Worker Previews); it is empty because
+// this site has no bindings, variables or secrets.
 {
   "name": "bas30din-site",
-  "compatibility_date": "2026-10-29",
+  "compatibility_date": "2026-10-23",
   "assets": {
     "directory": "."
+  },
+  // Both custom domains are already attached in the dashboard; listing them keeps them.
+  "routes": [
+    { "pattern": "bas30din.com", "custom_domain": true },
+    { "pattern": "www.bas30din.com", "custom_domain": true }
+  ],
+  "workers_dev": true,
+  "preview_urls": true,
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true,
+      "invocation_logs": true
+    },
+    "traces": {
+      "enabled": false
+    }
   },
   "previews": {}
 }
