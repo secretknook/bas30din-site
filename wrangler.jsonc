@@ -1,0 +1,12 @@
+// Cloudflare Workers configuration for bas30din.com (static assets only, no Worker script).
+// Production settings are top-level. "previews" is required by `npx wrangler preview`
+// (Worker Previews); it is empty because this site has no bindings, variables or secrets.
+// Custom domains are managed in the Cloudflare dashboard and are not listed here.
+{
+  "name": "bas30din-site",
+  "compatibility_date": "2026-10-29",
+  "assets": {
+    "directory": "."
+  },
+  "previews": {}
+}
