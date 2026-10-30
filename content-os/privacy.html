@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Content-OS Privacy Policy</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="How Content-OS handles Google, YouTube and Instagram data.">
+<link rel="icon" href="/assets/pfp.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@500;600&display=swap">
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/content-os/legal.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap co-bar">
+    <a class="mark" href="/" aria-label="Bas 30 Din home">30</a>
+    <a class="brand" href="/content-os">CONTENT-OS</a>
+    <small>Privacy policy</small>
+  </div>
+</header>
+
+<main class="wrap page">
+  <article class="card co">
+    <h1>Privacy policy</h1>
+    <p class="when">Effective 30 October 2026</p>
+    <p class="lead">Content-OS is a personal Windows desktop app. It runs on its developer's own PC and is used only with his own YouTube channel and Instagram account. This policy explains exactly what it does with data.</p>
+
+    <section>
+      <h2>1. Who runs Content-OS</h2>
+      <p>Content-OS is built and used by Alok Mishra, the creator of Bas 30 Din, as an individual. It is not a company service. Contact: <a href="mailto:hello@bas30din.com">hello@bas30din.com</a>.</p>
+    </section>
+
+    <section>
+      <h2>2. What the app does</h2>
+      <p>It organises video projects on the PC, keeps a local publishing schedule and, only after the owner approves an exact video, account and time, uploads that video to YouTube or Instagram using their official APIs. It also keeps a local history of what was published and any errors.</p>
+    </section>
+
+    <section>
+      <h2>3. Google and YouTube data it uses</h2>
+      <p>Content-OS uses YouTube API Services. When the account owner connects YouTube, Content-OS requests these Google permissions:</p>
+      <ul>
+        <li><code>https://www.googleapis.com/auth/youtube.upload</code>: to upload approved videos and set their thumbnails.</li>
+        <li><code>https://www.googleapis.com/auth/youtube.readonly</code>: to read the channel ID and name, so it can confirm the connected channel is the approved one, and to read the upload, processing and privacy status of videos it uploaded.</li>
+      </ul>
+      <p>It does not request permission to delete or edit existing videos, manage comments, or read analytics. If Google ever returns broader access, Content-OS refuses to store it.</p>
+      <p>From Google it receives an access token, a refresh token, the channel ID and name, and status information about the videos it uploads.</p>
+    </section>
+
+    <section>
+      <h2>4. How YouTube upload authorization works</h2>
+      <p>The owner signs in on Google's own page in the browser and approves the permissions above. Content-OS uses Google's recommended flow for desktop apps, with PKCE, and receives the result on the PC itself (a local address, <code>127.0.0.1</code>). It checks that the signed-in channel is the approved channel before saving anything. An access token lasts about an hour; Content-OS uses the refresh token to get a new one automatically.</p>
+      <p>Each upload needs a separate approval of the exact file, account and time. New YouTube uploads start as private. A scheduled video uses YouTube's own publish time.</p>
+    </section>
+
+    <section>
+      <h2>5. Instagram data it uses</h2>
+      <p>For Instagram, Content-OS connects to the owner's Instagram professional account through Meta's official Instagram API, using permissions such as <code>instagram_business_basic</code> and <code>instagram_business_content_publish</code> (Instagram Login), and for direct uploads from the PC, <code>instagram_basic</code>, <code>instagram_content_publish</code>, <code>pages_show_list</code> and <code>pages_read_engagement</code> (Facebook Login for Business). It reads the account ID and username to confirm the right account, the account's publishing limit, and the status and link of Reels it publishes. Instagram publishing is in testing.</p>
+    </section>
+
+    <section>
+      <h2>6. Where credentials are stored</h2>
+      <p>All tokens, and the Google OAuth client details, are stored only on the owner's Windows PC, in files inside the Content-OS folder. They are encrypted with Windows Data Protection (DPAPI), which ties them to the owner's Windows user account. There is no Content-OS server and no cloud copy.</p>
+    </section>
+
+    <section>
+      <h2>7. How data is protected</h2>
+      <ul>
+        <li>Credentials are encrypted with Windows DPAPI and never written in plain text.</li>
+        <li>Tokens and sign-in codes are not written to logs or shown on screen.</li>
+        <li>The app only connects over HTTPS to Google and Meta API addresses on a fixed allow list.</li>
+        <li>It checks the account identity before storing a sign-in and before each publishing job.</li>
+      </ul>
+      <p>No system is perfectly secure. Anyone with access to the owner's Windows account could use the stored sign-in.</p>
+    </section>
+
+    <section>
+      <h2>8. Local processing and sharing</h2>
+      <p>Everything runs on the owner's PC. Content-OS has no analytics, telemetry, advertising or tracking, and it does not sell or share data with anyone.</p>
+      <p>The only data that leaves the PC goes directly to the platform you are publishing to, and only to carry out an approved action: to Google (YouTube) the video file, title, description, thumbnail, privacy and schedule settings; to Meta (Instagram) the video file and caption. Those platforms then handle that content under their own terms and privacy policies.</p>
+    </section>
+
+    <section>
+      <h2>9. Revoking access</h2>
+      <ul>
+        <li>Google: remove Content-OS at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a> (Google's security settings page).</li>
+        <li>In the app: Settings, Accounts, Disconnect an account. This deletes the stored sign-in from the PC and, for YouTube, can also ask Google to revoke it.</li>
+        <li>Instagram: in Instagram, Settings, Website permissions, Apps and websites; for Facebook Login, Facebook Settings, Business integrations.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>10. Retention and deletion</h2>
+      <p>Stored sign-ins stay on the PC until they are disconnected, revoked or expire. The local publishing history (titles, captions, scheduled times, platform IDs, links and status) and project files stay in the Content-OS folder, and in the owner's own backup drive, until the owner deletes them. Nothing is kept on any Content-OS server, because there is none.</p>
+      <p>To delete everything: disconnect the accounts in the app, revoke access as above, then delete the Content-OS folder. Videos already published live on YouTube or Instagram and are deleted there. For any question or deletion request, email <a href="mailto:hello@bas30din.com">hello@bas30din.com</a>.</p>
+    </section>
+
+    <section>
+      <h2>11. Google API Services User Data Policy</h2>
+      <p>Content-OS's use and transfer of information received from Google APIs follows the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements. Google data is used only to upload and check the owner's own videos, is never used for advertising, and is never transferred to anyone else.</p>
+      <p>Because Content-OS uses YouTube API Services, the <a href="https://policies.google.com/privacy">Google Privacy Policy</a> also applies to data Google processes.</p>
+    </section>
+
+    <section>
+      <h2>12. This website</h2>
+      <p>These information pages set no cookies and contain no analytics. They are hosted by Cloudflare, which processes standard request data, such as IP addresses, to deliver web pages.</p>
+    </section>
+
+    <section>
+      <h2>13. Changes</h2>
+      <p>If Content-OS changes how it handles data, this page will be updated and the effective date above will change.</p>
+    </section>
+
+    <div class="co-actions">
+      <a class="btn btn--line" href="/content-os">About Content-OS</a>
+      <a class="btn btn--line" href="/content-os/terms">Terms of service</a>
+    </div>
+  </article>
+</main>
+
+<footer class="foot">
+  <div class="wrap"><span>Content-OS · A personal tool by Bas 30 Din</span><nav aria-label="Content-OS"><a href="/content-os">About</a><a href="/content-os/terms">Terms</a><a href="mailto:hello@bas30din.com">Contact</a></nav></div>
+</footer>
+</body>
+</html>

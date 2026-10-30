@@ -1,0 +1,19 @@
+/* Content-OS information pages. Reuses the site tokens in /styles.css; adds only page layout. */
+.co-bar { display: flex; align-items: center; gap: 12px; height: 62px; }
+.co-bar .brand { margin-right: auto; }
+.co-bar small { font-size: 13px; color: var(--ink-3); font-weight: 600; }
+.co { max-width: 820px; margin: 0 auto; padding: 24px; }
+.co h1 { font: 800 clamp(32px, 4.4vw, 46px)/1 var(--display); text-transform: uppercase; }
+.co .lead { margin-top: 14px; font-size: 19px; color: var(--ink-2); max-width: 60ch; }
+.co .flag { margin-top: 18px; display: inline-flex; gap: 8px; align-items: center; padding: 6px 12px; border-radius: 999px; background: var(--coral-wash); color: var(--coral-ink); font-size: 14px; font-weight: 600; }
+.co section { margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--line); }
+.co h2 { font: 800 23px/1.1 var(--display); text-transform: uppercase; letter-spacing: .02em; margin-bottom: 10px; }
+.co h3 { font: 700 18px/1.25 var(--text); margin: 16px 0 6px; }
+.co p, .co li { color: var(--ink-2); font-size: 17px; max-width: 66ch; }
+.co p + p, .co ul + p { margin-top: 12px; }
+.co ul { margin: 8px 0 0; padding-left: 22px; display: grid; gap: 6px; }
+.co a:not(.btn) { color: var(--coral-ink); text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
+.co code { font-size: 15px; background: var(--ground); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; overflow-wrap: anywhere; }
+.co .co-actions { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 10px; }
+.co .when { margin-top: 10px; font-size: 14px; color: var(--ink-3); font-weight: 600; }
+@media (max-width: 520px) { .co { padding: 18px; } .co p, .co li { font-size: 16px; } .co-bar small { display: none; } }
