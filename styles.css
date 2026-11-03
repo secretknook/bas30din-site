@@ -233,3 +233,30 @@ a.drow { transition: background-color .15s; }
 .note__sign img { width: 32px; height: 32px; border-radius: 50%; }
 
 .signup-frame{display:block;width:100%;height:360px;border:0;background:transparent}.inbox small{display:block;margin-top:12px}
+
+/* ===== UI refresh 3 Nov 2026 (skill #17 alok-website-ui v0.1) ===== */
+/* Readable buttons: ink text on coral (5.95:1). White on coral was 2.8:1. */
+.btn { color: var(--ink); font-weight: 700; min-height: 52px; padding: 0 24px; font-size: 17px; }
+@media (hover: hover) { .btn:hover { background: #FF5A44; } }
+.btn--line { color: var(--ink); }
+/* The one action under the headline, visible in the first phone screen */
+.hero-cta { margin-top: 16px; display: grid; gap: 8px; justify-items: start; }
+.hero-cta small { font-size: 14px; color: var(--ink-2); }
+/* Coming soon: no badge over the cover words, the cover's own tag says it */
+.cover.is-soon .cover__t span { background: var(--ink); color: #fff; }
+/* Email box inside the main column */
+.inbox--main { border: 1px solid var(--line); border-radius: var(--r); scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 130px); }
+/* Quiet text link instead of a second coral button */
+.tlink { display: inline-flex; align-items: center; min-height: 44px; font-weight: 600; color: var(--coral-ink); }
+.tlink::after { content: " →"; white-space: pre; }
+@media (hover: hover) { .tlink:hover { text-decoration: underline; } }
+/* Thumb-size tap targets (44 px) */
+.links a, .foot nav a, .back, .lesson .meta a, .pager .prev, .file a { min-height: 44px; display: inline-flex; align-items: center; }
+.tabs a { min-height: 44px; }
+.foot nav { gap: 20px; }
+@media (max-width: 520px) { .hero-cta, .hero-cta .btn { width: 100%; } }
+.brand, .out, .inbox small a { display: inline-flex; align-items: center; min-height: 44px; }
+.out { min-height: 40px; }
+.mark { position: relative; }
+.mark::after { content: ""; position: absolute; inset: -4px; }
+@media (max-width: 860px) { .out { display: none; } }

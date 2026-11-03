@@ -19,10 +19,10 @@
   }
   function cover(c, small) {
     var d = last(c), tag = c.status === 'soon' ? 'Coming soon' : (d ? 'Day ' + d.day + (c.totalDays ? ' of ' + c.totalDays : '') : '');
-    return '<div class="cover cover--' + (c.cover || 'coral') + '"><div class="cover__t">' +
-      (small ? '' : '<small>' + esc(label[c.status] || '') + '</small>') +
+    return '<div class="cover cover--' + (c.cover || 'coral') + ' is-' + c.status + '"><div class="cover__t">' +
+      (small || c.status === 'soon' ? '' : '<small>' + esc(label[c.status] || '') + '</small>') +
       '<b>' + esc(c.coverTitle || c.title) + '</b>' + (tag && !small ? '<span>' + esc(tag) + '</span>' : '') + '</div>' +
-      (c.photo ? '<img src="assets/alok.png" alt="">' : '') + '</div>';
+      (c.photo ? '<img src="assets/alok-540.webp" width="540" height="545" alt="">' : '') + '</div>';
   }
   function metaHTML(c) {
     var bits = [stateHTML(c), '<span>Free</span>'];
@@ -39,21 +39,22 @@
     if (withNext && c.status === 'now' && l && (!c.totalDays || l.day < c.totalDays)) rows += '<div class="drow drow--next"><span class="drow__n">DAY ' + (l.day + 1) + '</span><span class="drow__t">Coming next</span><span class="drow__d"></span></div>';
     return rows ? '<div class="daylist">' + rows + '</div>' : '<p class="muted">Day 1 goes up soon.</p>';
   }
-  function sideCard(c) {
+  function sideCard(c, onNow) {
     var posted = S.challenges.reduce(function (t, x) { return t + (x.days || []).length; }, 0);
     var running = S.challenges.filter(function (x) { return x.status !== 'soon'; }).length;
     var first = days(c)[0];
-    return '<aside class="card side"><div class="side__cover"><img src="assets/alok.png" alt="Alok Mishra"></div><div class="side__in">' +
+    return '<aside class="card side"><div class="side__cover"><img src="assets/alok-540.webp" width="540" height="545" alt="Alok Mishra"></div><div class="side__in">' +
       '<h3>' + esc(S.name) + '</h3><div class="url">' + esc(S.domain) + '</div>' +
       '<p>I learn one skill at a time, in public. You get the shortcut, free.</p>' +
       '<div class="links"><a href="' + esc(S.youtube) + '" target="_blank" rel="noopener">YouTube</a><a href="' + esc(S.instagram) + '" target="_blank" rel="noopener">Instagram</a></div>' +
       '<div class="stats"><div><b>' + posted + '</b><small>days posted</small></div><div><b>' + running + '</b><small>challenges</small></div><div><b>₹0</b><small>always free</small></div></div>' +
-      (first ? '<a class="btn" href="#d-' + c.id + '-' + first.day + '">Start from Day ' + first.day + '</a>' : '<a class="btn" href="#classroom">See all challenges</a>') +
-      '</div>' + inboxBox('sidebar') + '</aside>';
+      (onNow ? '<a class="tlink" href="#classroom">See all challenges</a>' :
+        (first ? '<a class="btn" href="#d-' + c.id + '-' + first.day + '">Start from Day ' + first.day + '</a>' : '<a class="btn" href="#classroom">See all challenges</a>')) +
+      '</div>' + (onNow ? '' : inboxBox('sidebar')) + '</aside>';
   }
   function inboxBox(where) {
     var I = S.inbox; if (!I || !I.on || !I.url) return '';
-    return '<section class="inbox"><h3>' + esc(I.title) + '</h3><p>' + esc(I.text) + '</p>' +
+    return '<section class="inbox inbox--' + where + '" id="inbox-' + where + '"><h3>' + esc(I.title) + '</h3><p>' + esc(I.text) + '</p>' +
       '<iframe class="signup-frame" src="' + esc(I.url.replace('/serve/', '/v2/serve/')) + '" title="Subscribe to Bas 30 Din updates" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>' +
       '<small><a href="' + esc(I.url) + '" target="_blank" rel="noopener">Open signup form</a>. Confirm your email to join. Unsubscribe any time.</small></section>';
   }
@@ -66,26 +67,33 @@
     var n = S.nowNote; if (!n || !n.length) return '';
     return '<section class="note">' + n.map(function (p, i) { return '<p' + (i === 0 ? ' class="note__hi"' : '') + '>' + esc(p) + '</p>'; }).join('') + '<div class="note__sign"><img src="assets/pfp.jpg" alt="">Alok</div></section>';
   }
+  function heroCTA(c) {
+    if (c.status === 'soon' && S.inbox && S.inbox.on && S.inbox.url)
+      return '<div class="hero-cta"><a class="btn" href="#now" data-jump="inbox-main">Get Day 0 in your inbox</a><small>Free. Confirm your email once. Unsubscribe any time.</small></div>';
+    var l = last(c);
+    if (l) return '<div class="hero-cta"><a class="btn" href="#d-' + c.id + '-' + l.day + '">Watch Day ' + l.day + '</a><small>Free. Notes and files included.</small></div>';
+    return '';
+  }
   function now() {
     var c = byId[S.current] || S.challenges[0];
     if (c.status === 'soon') {
       return '<div class="split"><article class="card main">' +
-        '<div class="soonwrap">' + cover(c) + '<div class="soonbadge"><b>Coming soon</b></div></div>' +
-        '<h1>' + esc(c.title) + '</h1>' + metaHTML(c) +
-        '<div class="prose">' + noteHTML() +
+        cover(c) +
+        '<h1>' + esc(c.title) + '</h1>' + metaHTML(c) + heroCTA(c) +
+        '<div class="prose">' + noteHTML() + inboxBox('main') +
           (c.learn && c.learn.length ? sec("What I'm going to find out", ticks(c.learn)) : '') +
           sec('Files', '<p class="muted">Coming soon. Every day\'s notes and files will be here, free.</p>') +
-        '</div></article>' + sideCard(c) + '</div>';
+        '</div></article>' + sideCard(c, true) + '</div>';
     }
     return '<div class="split"><article class="card main">' + cover(c) +
-      '<h1>' + esc(c.title) + '</h1>' + metaHTML(c) +
+      '<h1>' + esc(c.title) + '</h1>' + metaHTML(c) + heroCTA(c) +
       '<div class="prose">' +
         (c.about ? sec("What's happening", '<p>' + esc(c.about) + '</p>') : '') +
         sec('What you get, free', ticks(['Every day as a short lesson, in order', 'My notes: what worked and what didn\'t', 'The files I used, ready to open'])) +
         sec('The challenge so far', dayRows(c, true)) +
         (c.tools && c.tools.length ? sec('Tools', chips(c.tools)) : '') +
         sec("Why I'm doing this", '<p>' + esc(S.why) + '</p>') +
-      '</div></article>' + sideCard(c) + '</div>';
+      '</div></article>' + sideCard(c, true) + '</div>';
   }
 
   /* CLASSROOM: every challenge as a course */
@@ -163,7 +171,7 @@
 
   /* ABOUT */
   function about() {
-    return '<article class="card about"><div class="about__pic"><img src="assets/alok.png" alt="Alok Mishra"></div><div>' +
+    return '<article class="card about"><div class="about__pic"><img src="assets/alok-540.webp" width="540" height="545" alt="Alok Mishra"></div><div>' +
       '<h1>Hi, I\'m Alok</h1>' +
       '<p class="lead">For years I was the guy who started everything and finished nothing. New skill, new plan, new excitement, and then I\'d quit in a week.</p>' +
       '<div class="steps">' +
@@ -191,6 +199,11 @@
     view.innerHTML = html;
     document.querySelectorAll('[data-tab]').forEach(function (a) { if (a.dataset.tab === tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   }
+  view.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('[data-jump]'); if (!a) return;
+    var t = document.getElementById(a.dataset.jump); if (!t) return;
+    e.preventDefault(); t.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+  });
   addEventListener('hashchange', function () { route(); scrollTo(0, 0); view.focus({ preventScroll: true }); });
   route();
 })();
