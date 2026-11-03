@@ -260,3 +260,27 @@ a.drow { transition: background-color .15s; }
 .mark { position: relative; }
 .mark::after { content: ""; position: absolute; inset: -4px; }
 @media (max-width: 860px) { .out { display: none; } }
+
+/* ===== Signature: the 30-day board + receipt (3 Nov 2026) ===== */
+.kicker { margin-top: 18px; font: 700 13px/1.2 var(--display); letter-spacing: .12em; text-transform: uppercase; color: var(--coral-ink); }
+.kicker + h1, .main .kicker + h1 { margin-top: 6px; }
+.board { margin-top: 22px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--ground); display: grid; gap: 12px; }
+.board__h { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.board__h h2 { font: 800 20px/1 var(--display); text-transform: uppercase; letter-spacing: .02em; }
+.board__h small { font-size: 14px; color: var(--ink-2); }
+.board__g { display: grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 6px; }
+.bd { aspect-ratio: 1; min-height: 36px; border-radius: 7px; background: var(--card); border: 1px solid var(--line); display: grid; place-items: center; font: 700 14px/1 var(--display); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.bd.is-done { background: var(--ink); border-color: var(--ink); color: #fff; }
+a.bd.is-done { transition: background-color .15s; }
+@media (hover: hover) { a.bd.is-done:hover { background: var(--coral); color: var(--ink); border-color: var(--coral); } }
+.bd.is-next { border: 2px dashed var(--coral-ink); color: var(--coral-ink); }
+.receipt { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+.receipt div { padding: 12px 8px; text-align: center; }
+.receipt div + div { border-left: 1px dashed var(--line); }
+.receipt b { display: block; font: 800 26px/1.05 var(--display); font-variant-numeric: tabular-nums; }
+.receipt small { font-size: 12px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; }
+.receipt p { grid-column: 1 / -1; border-top: 1px dashed var(--line); padding: 9px 12px; font-size: 13px; color: var(--ink-2); text-align: center; }
+/* Classroom progress */
+.prog { height: 6px; border-radius: 99px; background: var(--sand); overflow: hidden; margin-top: 6px; }
+.prog i { display: block; height: 100%; background: var(--coral); border-radius: inherit; }
+@media (max-width: 520px) { .board { padding: 12px; } .board__g { grid-template-columns: repeat(8, 1fr); gap: 5px; } .bd { min-height: 0; font-size: 13px; } }

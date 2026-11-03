@@ -58,6 +58,29 @@
       '<iframe class="signup-frame" src="' + esc(I.url.replace('/serve/', '/v2/serve/')) + '" title="Subscribe to Bas 30 Din updates" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>' +
       '<small><a href="' + esc(I.url) + '" target="_blank" rel="noopener">Open signup form</a>. Confirm your email to join. Unsubscribe any time.</small></section>';
   }
+  function board(c) {
+    var total = c.totalDays || 30, have = {}, l = last(c);
+    (c.days || []).forEach(function (d) { have[d.day] = d; });
+    var next = c.status === 'now' && l ? l.day + 1 : (c.status === 'soon' ? 0 : -1);
+    var cells = '';
+    for (var i = 0; i <= total; i++) {
+      var d = have[i], cls = d ? 'is-done' : (i === next ? 'is-next' : '');
+      var inner = '<span>' + i + '</span>';
+      cells += d ? '<a class="bd ' + cls + '" href="#d-' + c.id + '-' + i + '" title="Day ' + i + ': ' + esc(d.title) + '">' + inner + '</a>'
+                 : '<span class="bd ' + cls + '" title="Day ' + i + '">' + inner + '</span>';
+    }
+    var posted = (c.days || []).length;
+    var cap = c.status === 'soon' ? 'Day 0 is coming soon.' : posted + ' of ' + (total + 1) + ' days posted' + (c.status === 'paused' ? ' · paused' : '');
+    return '<section class="board"><div class="board__h"><h2>The ' + total + '-day board</h2><small>' + esc(cap) + '</small></div><div class="board__g">' + cells + '</div>' + receipt(c) + '</section>';
+  }
+  function receipt(c) {
+    var L = c.ledger; if (!L) return '';
+    var v = function (x, pre) { return x == null ? '—' : (pre || '') + Number(x).toLocaleString('en-IN'); };
+    var started = L.hours != null || L.spent != null || L.earned != null;
+    return '<div class="receipt"><div><b>' + v(L.hours) + '</b><small>hours spent</small></div><div><b>' + v(L.spent, '₹') + '</b><small>money spent</small></div><div><b>' + v(L.earned, '₹') + '</b><small>money earned</small></div>' +
+      '<p>' + (started ? 'Every hour and every rupee goes on screen.' : 'Starts Day 0. Every hour and every rupee goes on screen.') + '</p></div>';
+  }
+  function kicker() { return S.kicker ? '<div class="kicker">' + esc(S.kicker) + '</div>' : ''; }
   function sec(title, inner) { return '<section><h2>' + esc(title) + '</h2>' + inner + '</section>'; }
   function ticks(a) { return '<ul class="ticks">' + a.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>'; }
   function chips(a) { return '<div class="chips">' + a.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('') + '</div>'; }
@@ -78,15 +101,15 @@
     var c = byId[S.current] || S.challenges[0];
     if (c.status === 'soon') {
       return '<div class="split"><article class="card main">' +
-        cover(c) +
-        '<h1>' + esc(c.title) + '</h1>' + metaHTML(c) + heroCTA(c) +
+        cover(c) + kicker() +
+        '<h1>' + esc(c.title) + '</h1>' + metaHTML(c) + heroCTA(c) + board(c) +
         '<div class="prose">' + noteHTML() + inboxBox('main') +
           (c.learn && c.learn.length ? sec("What I'm going to find out", ticks(c.learn)) : '') +
           sec('Files', '<p class="muted">Coming soon. Every day\'s notes and files will be here, free.</p>') +
         '</div></article>' + sideCard(c, true) + '</div>';
     }
     return '<div class="split"><article class="card main">' + cover(c) +
-      '<h1>' + esc(c.title) + '</h1>' + metaHTML(c) + heroCTA(c) +
+      kicker() + '<h1>' + esc(c.title) + '</h1>' + metaHTML(c) + heroCTA(c) + board(c) +
       '<div class="prose">' +
         (c.about ? sec("What's happening", '<p>' + esc(c.about) + '</p>') : '') +
         sec('What you get, free', ticks(['Every day as a short lesson, in order', 'My notes: what worked and what didn\'t', 'The files I used, ready to open'])) +
@@ -103,7 +126,9 @@
     return '<div class="head"><h1>Classroom</h1><p>Every challenge, day by day. All free.</p></div><div class="cgrid">' +
       list.map(function (c) {
         var n = (c.days || []).length, tag = c.status === 'soon' ? 'Season 1' : n + ' lesson' + (n === 1 ? '' : 's') + (c.tools && c.tools[0] ? ' · ' + c.tools[0] : '');
-        var inner = cover(c, true) + '<div class="course__b"><h2>' + esc(c.title) + '</h2><p>' + esc(c.oneLine) + '</p><div class="course__f"><span>' + esc(tag) + '</span>' + stateHTML(c) + '</div></div>';
+        var pct = c.totalDays ? Math.min(100, Math.round(n / (c.totalDays + 1) * 100)) : 0;
+        var inner = cover(c, true) + '<div class="course__b"><h2>' + esc(c.title) + '</h2><p>' + esc(c.oneLine) + '</p>' +
+          '<div class="prog" role="img" aria-label="' + n + ' of ' + ((c.totalDays || 0) + 1) + ' days"><i style="width:' + pct + '%"></i></div><div class="course__f"><span>' + esc(tag) + '</span>' + stateHTML(c) + '</div></div>';
         return c.status === 'soon' ? '<div class="card course">' + inner + '</div>' : '<a class="card course" href="#c-' + c.id + '">' + inner + '</a>';
       }).join('') + '</div>';
   }
@@ -111,7 +136,7 @@
   /* COURSE overview */
   function course(c) {
     return '<a class="back" href="#classroom">Classroom</a><div class="split"><article class="card main">' + cover(c) +
-      '<h1>' + esc(c.title) + '</h1>' + metaHTML(c) + '<div class="prose">' +
+      kicker() + '<h1>' + esc(c.title) + '</h1>' + metaHTML(c) + board(c) + '<div class="prose">' +
         (c.about ? sec('About this challenge', '<p>' + esc(c.about) + '</p>') : '') +
         (c.learn && c.learn.length ? sec("What you'll learn", ticks(c.learn)) : '') +
         (c.tools && c.tools.length ? sec('Tools', chips(c.tools)) : '') +

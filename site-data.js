@@ -39,6 +39,8 @@ window.SITE = {
     "Every hour and every rupee goes on screen. Friends and family don't count. And there's no course at the end. Just the truth, plus my notes and files so you can do it faster than I did.",
     "Day 0 is coming soon."
   ],
+  // Small line above every challenge title (approved brand line).
+  kicker: "The internet says a lot. I test it myself.",
   why: "I used to start everything and finish nothing. So now I pick one skill, give it a fixed number of days, and do it in public, so I can't quit quietly.",
 
   challenges: [
@@ -51,6 +53,9 @@ window.SITE = {
       cover: "coral", photo: true,
       totalDays: 30,
       started: null,
+      // The receipt: REAL numbers only. null = not started yet (shows "—").
+      // Update these as the challenge runs, e.g. hours: 12, spent: 499, earned: 0
+      ledger: { hours: null, spent: null, earned: null },
       about: "", learn: ["What the 'lakhs' claim really promises", "What it takes to get a first paying client", "What real earners do differently"], tools: [], days: []
     },
     {
