@@ -60,11 +60,27 @@
       '</div>' + (onNow ? '' : inboxBox('sidebar')) + '</aside>';
   }
   function inboxBox(where) {
-    var I = S.inbox; if (!I || !I.on || !I.url) return '';
+    var I = S.inbox; if (!I || !I.on || !I.sheetUrl) return '';
     return '<section class="inbox inbox--' + where + '" id="inbox-' + where + '"><h3>' + esc(I.title) + '</h3><p>' + esc(I.text) + '</p>' +
-      '<iframe class="signup-frame" src="' + esc(I.url.replace('/serve/', '/v2/serve/')) + '" title="Subscribe to Bas 30 Din updates" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>' +
-      '<small><a href="' + esc(I.url) + '" target="_blank" rel="noopener">Open signup form</a>. Confirm your email to join. Unsubscribe any time.</small></section>';
+      '<form class="inbox__row" data-inbox novalidate><label class="sr-only" for="em-' + where + '">Your email</label>' +
+      '<input id="em-' + where + '" type="email" name="email" required autocomplete="email" inputmode="email" placeholder="your email">' +
+      '<input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hp">' +
+      '<button class="btn" type="submit">' + esc(I.button) + '</button></form>' +
+      '<p class="inbox__msg" aria-live="polite"></p><small>' + esc(I.small) + '</small></section>';
   }
+  document.addEventListener('submit', function (e) {
+    var f = e.target; if (!f.matches || !f.matches('form[data-inbox]')) return;
+    e.preventDefault();
+    var box = f.closest('.inbox'), msg = box.querySelector('.inbox__msg'), btn = f.querySelector('button');
+    var email = f.email.value.trim();
+    msg.classList.remove('is-err');
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { msg.textContent = 'That email looks off. Try once more?'; msg.classList.add('is-err'); return; }
+    btn.disabled = true; msg.textContent = 'One sec...';
+    fetch(S.inbox.sheetUrl, { method: 'POST', mode: 'no-cors', body: new URLSearchParams({ email: email, website: f.website.value, source: 'bas30din.com/' + (box.id || '') }) })
+      .then(function () { box.classList.add('is-done'); msg.textContent = S.inbox.done; f.reset(); })
+      .catch(function () { msg.textContent = "That didn't go through. Try once more?"; msg.classList.add('is-err'); })
+      .then(function () { btn.disabled = false; });
+  });
   function board(c) {
     var total = c.totalDays || 30, have = {}, l = last(c);
     (c.days || []).forEach(function (d) { have[d.day] = d; });

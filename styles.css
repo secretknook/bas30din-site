@@ -303,3 +303,7 @@ a.bd.is-done { transition: background-color .15s; }
 .motif--rupee { right: -1%; bottom: -18%; font-size: clamp(150px, 22vw, 300px); }
 .course .motif--rupee { font-size: clamp(130px, 13vw, 175px); right: -2%; }
 @media (max-width: 520px) { .motif--flow { width: 34%; bottom: 10%; } .motif--rupee { font-size: 170px; } }
+
+/* Email signup (Google Sheet), 4 Nov 2026 */
+.inbox .hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}

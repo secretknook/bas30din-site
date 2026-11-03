@@ -21,15 +21,17 @@ window.SITE = {
   instagram: "https://www.instagram.com/bas30din/",
   email: "collab@bas30din.com",   // shown on About + footer as "Collabs"
   current: "ai-lakhs",
-  // Email list box ("Get it in your inbox"). Confirmed subscriptions are collected by Brevo.
+  // Email list box ("Get it in your inbox"). Since 4 Nov 2026 signups go to the Google Sheet
+  // "Bas 30 Din — Subscribers" (Apps Script web app); Alok's n8n sends the welcome email.
   inbox: {
     on: true,
-    url: "https://66da3047.sibforms.com/serve/MUIFAAQ7owXXWGUKUMojvD2015EnyAiYMA1buivm5iEVXyFDbUbNXaTND1vAfVFfiMiJ0c8xYemcJy3icaLhV2SYxB49h7HKGd9fZwUKXg-AE5AkK4q-Ot0TlgcswM5P7Dwg-_efXqXpAg_1uq-RZluEehbmjs_fl8Z3AGIzyi6mj_ils676NQ6bRt_97ZnyDyGefe0no0GmAQ8v0Q==",
+    sheetUrl: "https://script.google.com/macros/s/AKfycbw77dxWW3PrruoQHzEjXHkOLygZrZkIN-Z2kV_mNTJoeGyquqtDL2L3xapf3cxHuGUIcA/exec",
+    brevoUrl: "https://66da3047.sibforms.com/serve/MUIFAAQ7owXXWGUKUMojvD2015EnyAiYMA1buivm5iEVXyFDbUbNXaTND1vAfVFfiMiJ0c8xYemcJy3icaLhV2SYxB49h7HKGd9fZwUKXg-AE5AkK4q-Ot0TlgcswM5P7Dwg-_efXqXpAg_1uq-RZluEehbmjs_fl8Z3AGIzyi6mj_ils676NQ6bRt_97ZnyDyGefe0no0GmAQ8v0Q==",   // old Brevo form, kept as backup (not shown)
     title: "Get it in your inbox",
     text: "New lessons, notes and files when I publish them. Free.",
     button: "Send it to me",
-    done: "You're in. Watch your inbox.",
-    small: "No spam. Unsubscribe any time. I never share your email."
+    done: "You're in. Check your inbox in a few minutes (and Promotions, just in case).",
+    small: "No spam. Reply \"stop\" any time and I take you off. I never share your email."
   },
   // Now tab: a short note in Alok's own words (edit freely). A blank string hides it.
   nowNote: [
