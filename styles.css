@@ -284,3 +284,22 @@ a.bd.is-done { transition: background-color .15s; }
 .prog { height: 6px; border-radius: 99px; background: var(--sand); overflow: hidden; margin-top: 6px; }
 .prog i { display: block; height: 100%; background: var(--coral); border-radius: inherit; }
 @media (max-width: 520px) { .board { padding: 12px; } .board__g { grid-template-columns: repeat(8, 1fr); gap: 5px; } .bd { min-height: 0; font-size: 13px; } }
+
+/* ===== Covers per audience (3 Nov 2026) — same bold-type style as English Speaking + 3 Tools ===== */
+.cover--coral { color: var(--ink); }
+.cover--coral .cover__t span { background: var(--ink); color: #fff; }
+.cover--wash { background: var(--coral-wash); color: var(--coral-ink); }
+.cover--wash .cover__t span { background: var(--coral-ink); color: #fff; }
+.motif { position: absolute; z-index: 0; pointer-events: none; }
+.motif--rupee { right: 4%; bottom: -14%; font: 800 clamp(160px, 26vw, 340px)/1 var(--display); color: #E24F3B; }
+.course .motif--rupee { font-size: clamp(150px, 16vw, 210px); }
+.motif--flow { right: 4%; top: 50%; transform: translateY(-50%); width: 40%; max-width: 300px; color: var(--coral-ink); }
+.motif--flow rect { fill: #fff; stroke: var(--coral-ink); stroke-width: 4; }
+.motif--flow rect.on { fill: var(--coral); stroke: var(--coral); }
+.motif--flow .dot { fill: var(--coral); }
+.motif--flow .tick { stroke: var(--ink); }
+.cover__t { max-width: 58%; }
+.motif--flow { width: 30%; max-width: 230px; top: auto; bottom: 12%; transform: none; right: 4%; }
+.motif--rupee { right: -1%; bottom: -18%; font-size: clamp(150px, 22vw, 300px); }
+.course .motif--rupee { font-size: clamp(130px, 13vw, 175px); right: -2%; }
+@media (max-width: 520px) { .motif--flow { width: 34%; bottom: 10%; } .motif--rupee { font-size: 170px; } }

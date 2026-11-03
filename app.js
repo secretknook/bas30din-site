@@ -22,7 +22,14 @@
     return '<div class="cover cover--' + (c.cover || 'coral') + ' is-' + c.status + '"><div class="cover__t">' +
       (small || c.status === 'soon' ? '' : '<small>' + esc(label[c.status] || '') + '</small>') +
       '<b>' + esc(c.coverTitle || c.title) + '</b>' + (tag && !small ? '<span>' + esc(tag) + '</span>' : '') + '</div>' +
-      (c.photo ? '<img src="assets/alok-540.webp" width="540" height="545" alt="">' : '') + '</div>';
+      (c.photo ? '<img src="assets/alok-540.webp" width="540" height="545" alt="">' : '') + motif(c.motif) + '</div>';
+  }
+  function motif(m) {
+    var svg = {
+      rupee: '<span class="motif motif--rupee" aria-hidden="true">₹</span>',
+      flow: '<svg class="motif motif--flow" viewBox="0 0 220 150" aria-hidden="true"><path d="M58 40 H110 V110 H162" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 12"/><rect x="14" y="16" width="56" height="48" rx="12"/><rect x="82" y="86" width="56" height="48" rx="12"/><rect x="150" y="86" width="56" height="48" rx="12" class="on"/><circle cx="42" cy="40" r="7" class="dot"/><circle cx="110" cy="110" r="7" class="dot"/><path d="M168 110 l8 8 l16 -16" fill="none" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" class="tick"/></svg>'
+    };
+    return svg[m] || '';
   }
   function metaHTML(c) {
     var bits = [stateHTML(c), '<span>Free</span>'];
