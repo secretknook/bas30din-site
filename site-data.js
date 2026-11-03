@@ -12,7 +12,6 @@
                A Google Drive link works best.
    Status      now | paused | done | soon
    Cover       coral | dark | sand | wash   (photo: true puts Alok's photo on it)
-   Motif       optional small picture for that audience: rupee | flow | sheet | bubble
    Dates are "YYYY-MM-DD".
    ========================================================================== */
 window.SITE = {
@@ -51,7 +50,7 @@ window.SITE = {
       coverTitle: "AI automation: ₹ lakhs?",
       oneLine: "Can you really earn lakhs with AI automation? 30 days, every rupee shown.",
       status: "soon",
-      cover: "coral", photo: false, motif: "rupee",
+      cover: "coral", photo: true,
       totalDays: 30,
       started: null,
       // The receipt: REAL numbers only. null = not started yet (shows "—").
@@ -65,7 +64,7 @@ window.SITE = {
       coverTitle: "AI Automation from zero",
       oneLine: "Make your computer do boring work for you. No coding.",
       status: "paused",
-      cover: "wash", photo: false, motif: "flow",
+      cover: "wash", photo: true,
       totalDays: 14,
       started: "2026-10-14",
       about: "Paused after Day 3, on purpose. I'm learning the fundamentals of automation properly first. Then I test the biggest claim on Instagram: that AI automation earns people lakhs a month. Every rupee shown. The notes and files for every day land here, so you can do it in 10 minutes instead of a whole day.",
