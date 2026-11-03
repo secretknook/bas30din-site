@@ -233,3 +233,73 @@ a.drow { transition: background-color .15s; }
 .note__sign img { width: 32px; height: 32px; border-radius: 50%; }
 
 .signup-frame{display:block;width:100%;height:360px;border:0;background:transparent}.inbox small{display:block;margin-top:12px}
+
+/* ===== UI refresh 3 Nov 2026 (skill #17 alok-website-ui v0.1) ===== */
+/* Readable buttons: ink text on coral (5.95:1). White on coral was 2.8:1. */
+.btn { color: var(--ink); font-weight: 700; min-height: 52px; padding: 0 24px; font-size: 17px; }
+@media (hover: hover) { .btn:hover { background: #FF5A44; } }
+.btn--line { color: var(--ink); }
+/* The one action under the headline, visible in the first phone screen */
+.hero-cta { margin-top: 16px; display: grid; gap: 8px; justify-items: start; }
+.hero-cta small { font-size: 14px; color: var(--ink-2); }
+/* Coming soon: no badge over the cover words, the cover's own tag says it */
+.cover.is-soon .cover__t span { background: var(--ink); color: #fff; }
+/* Email box inside the main column */
+.inbox--main { border: 1px solid var(--line); border-radius: var(--r); scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 130px); }
+/* Quiet text link instead of a second coral button */
+.tlink { display: inline-flex; align-items: center; min-height: 44px; font-weight: 600; color: var(--coral-ink); }
+.tlink::after { content: " →"; white-space: pre; }
+@media (hover: hover) { .tlink:hover { text-decoration: underline; } }
+/* Thumb-size tap targets (44 px) */
+.links a, .foot nav a, .back, .lesson .meta a, .pager .prev, .file a { min-height: 44px; display: inline-flex; align-items: center; }
+.tabs a { min-height: 44px; }
+.foot nav { gap: 20px; }
+@media (max-width: 520px) { .hero-cta, .hero-cta .btn { width: 100%; } }
+.brand, .out, .inbox small a { display: inline-flex; align-items: center; min-height: 44px; }
+.out { min-height: 40px; }
+.mark { position: relative; }
+.mark::after { content: ""; position: absolute; inset: -4px; }
+@media (max-width: 860px) { .out { display: none; } }
+
+/* ===== Signature: the 30-day board + receipt (3 Nov 2026) ===== */
+.kicker { margin-top: 18px; font: 700 13px/1.2 var(--display); letter-spacing: .12em; text-transform: uppercase; color: var(--coral-ink); }
+.kicker + h1, .main .kicker + h1 { margin-top: 6px; }
+.board { margin-top: 22px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--ground); display: grid; gap: 12px; }
+.board__h { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.board__h h2 { font: 800 20px/1 var(--display); text-transform: uppercase; letter-spacing: .02em; }
+.board__h small { font-size: 14px; color: var(--ink-2); }
+.board__g { display: grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 6px; }
+.bd { aspect-ratio: 1; min-height: 36px; border-radius: 7px; background: var(--card); border: 1px solid var(--line); display: grid; place-items: center; font: 700 14px/1 var(--display); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.bd.is-done { background: var(--ink); border-color: var(--ink); color: #fff; }
+a.bd.is-done { transition: background-color .15s; }
+@media (hover: hover) { a.bd.is-done:hover { background: var(--coral); color: var(--ink); border-color: var(--coral); } }
+.bd.is-next { border: 2px dashed var(--coral-ink); color: var(--coral-ink); }
+.receipt { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+.receipt div { padding: 12px 8px; text-align: center; }
+.receipt div + div { border-left: 1px dashed var(--line); }
+.receipt b { display: block; font: 800 26px/1.05 var(--display); font-variant-numeric: tabular-nums; }
+.receipt small { font-size: 12px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; }
+.receipt p { grid-column: 1 / -1; border-top: 1px dashed var(--line); padding: 9px 12px; font-size: 13px; color: var(--ink-2); text-align: center; }
+/* Classroom progress */
+.prog { height: 6px; border-radius: 99px; background: var(--sand); overflow: hidden; margin-top: 6px; }
+.prog i { display: block; height: 100%; background: var(--coral); border-radius: inherit; }
+@media (max-width: 520px) { .board { padding: 12px; } .board__g { grid-template-columns: repeat(8, 1fr); gap: 5px; } .bd { min-height: 0; font-size: 13px; } }
+
+/* ===== Covers per audience (3 Nov 2026) — same bold-type style as English Speaking + 3 Tools ===== */
+.cover--coral { color: var(--ink); }
+.cover--coral .cover__t span { background: var(--ink); color: #fff; }
+.cover--wash { background: var(--coral-wash); color: var(--coral-ink); }
+.cover--wash .cover__t span { background: var(--coral-ink); color: #fff; }
+.motif { position: absolute; z-index: 0; pointer-events: none; }
+.motif--rupee { right: 4%; bottom: -14%; font: 800 clamp(160px, 26vw, 340px)/1 var(--display); color: #E24F3B; }
+.course .motif--rupee { font-size: clamp(150px, 16vw, 210px); }
+.motif--flow { right: 4%; top: 50%; transform: translateY(-50%); width: 40%; max-width: 300px; color: var(--coral-ink); }
+.motif--flow rect { fill: #fff; stroke: var(--coral-ink); stroke-width: 4; }
+.motif--flow rect.on { fill: var(--coral); stroke: var(--coral); }
+.motif--flow .dot { fill: var(--coral); }
+.motif--flow .tick { stroke: var(--ink); }
+.cover__t { max-width: 58%; }
+.motif--flow { width: 30%; max-width: 230px; top: auto; bottom: 12%; transform: none; right: 4%; }
+.motif--rupee { right: -1%; bottom: -18%; font-size: clamp(150px, 22vw, 300px); }
+.course .motif--rupee { font-size: clamp(130px, 13vw, 175px); right: -2%; }
+@media (max-width: 520px) { .motif--flow { width: 34%; bottom: 10%; } .motif--rupee { font-size: 170px; } }

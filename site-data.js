@@ -11,7 +11,7 @@
    Files?      files: [ { name: "n8n workflow", note: "Import into n8n", url: "https://..." } ]
                A Google Drive link works best.
    Status      now | paused | done | soon
-   Cover       coral | dark | sand   (photo: true puts Alok's photo on it)
+   Cover       coral | dark | sand | wash   (photo: true puts Alok's photo on it)
    Dates are "YYYY-MM-DD".
    ========================================================================== */
 window.SITE = {
@@ -39,6 +39,8 @@ window.SITE = {
     "Every hour and every rupee goes on screen. Friends and family don't count. And there's no course at the end. Just the truth, plus my notes and files so you can do it faster than I did.",
     "Day 0 is coming soon."
   ],
+  // Small line above every challenge title (approved brand line).
+  kicker: "The internet says a lot. I test it myself.",
   why: "I used to start everything and finish nothing. So now I pick one skill, give it a fixed number of days, and do it in public, so I can't quit quietly.",
 
   challenges: [
@@ -51,6 +53,9 @@ window.SITE = {
       cover: "coral", photo: true,
       totalDays: 30,
       started: null,
+      // The receipt: REAL numbers only. null = not started yet (shows "—").
+      // Update these as the challenge runs, e.g. hours: 12, spent: 499, earned: 0
+      ledger: { hours: null, spent: null, earned: null },
       about: "", learn: ["What the 'lakhs' claim really promises", "What it takes to get a first paying client", "What real earners do differently"], tools: [], days: []
     },
     {
@@ -59,7 +64,7 @@ window.SITE = {
       coverTitle: "AI Automation from zero",
       oneLine: "Make your computer do boring work for you. No coding.",
       status: "paused",
-      cover: "coral", photo: true,
+      cover: "wash", photo: true,
       totalDays: 14,
       started: "2026-10-14",
       about: "Paused after Day 3, on purpose. I'm learning the fundamentals of automation properly first. Then I test the biggest claim on Instagram: that AI automation earns people lakhs a month. Every rupee shown. The notes and files for every day land here, so you can do it in 10 minutes instead of a whole day.",
