@@ -151,7 +151,7 @@
         var n = (c.days || []).length, tag = c.status === 'soon' ? 'Season 1' : n + ' lesson' + (n === 1 ? '' : 's') + (c.tools && c.tools[0] ? ' · ' + c.tools[0] : '');
         var pct = c.totalDays ? Math.min(100, Math.round(n / (c.totalDays + 1) * 100)) : 0;
         var inner = cover(c, true) + '<div class="course__b"><h2>' + esc(c.title) + '</h2><p>' + esc(c.oneLine) + '</p>' +
-          '<div class="prog" role="img" aria-label="' + n + ' of ' + ((c.totalDays || 0) + 1) + ' days"><i style="width:' + pct + '%"></i></div><div class="course__f"><span>' + esc(tag) + '</span>' + stateHTML(c) + '</div></div>';
+          '<div class="prog" role="img" aria-label="' + n + ' of ' + ((c.totalDays || 0) + 1) + ' days"><i data-pct="' + pct + '"></i></div><div class="course__f"><span>' + esc(tag) + '</span>' + stateHTML(c) + '</div></div>';
         return c.status === 'soon' ? '<div class="card course">' + inner + '</div>' : '<a class="card course" href="#c-' + c.id + '">' + inner + '</a>';
       }).join('') + '</div>';
   }
@@ -245,6 +245,8 @@
     }
     else html = now();
     view.innerHTML = html;
+    // widths set from script: the site's security policy blocks inline style="" attributes
+    view.querySelectorAll('[data-pct]').forEach(function (el) { el.style.width = el.dataset.pct + '%'; });
     document.querySelectorAll('[data-tab]').forEach(function (a) { if (a.dataset.tab === tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   }
   view.addEventListener('click', function (e) {
