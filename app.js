@@ -32,9 +32,9 @@
     return svg[m] || '';
   }
   function metaHTML(c) {
-    var bits = [stateHTML(c), '<span>Free</span>'];
+    var bits = [stateHTML(c)];
     if (c.started) bits.push('<span>Started ' + esc(fmt(c.started)) + '</span>');
-    bits.push('<span class="by"><img src="assets/pfp.jpg" alt="">By Alok Mishra</span>');
+
     return '<div class="meta">' + bits.join('<span class="dot" aria-hidden="true"></span>') + '</div>';
   }
   function dayRows(c, withNext) {
@@ -46,7 +46,8 @@
     if (withNext && c.status === 'now' && l && (!c.totalDays || l.day < c.totalDays)) rows += '<div class="drow drow--next"><span class="drow__n">DAY ' + (l.day + 1) + '</span><span class="drow__t">Coming next</span><span class="drow__d"></span></div>';
     return rows ? '<div class="daylist">' + rows + '</div>' : '<p class="muted">Day 1 goes up soon.</p>';
   }
-  function sideCard(c, onNow) {
+  function sideCard() { return ''; }
+  function sideCardOld(c, onNow) {
     var posted = S.challenges.reduce(function (t, x) { return t + (x.days || []).length; }, 0);
     var running = S.challenges.filter(function (x) { return x.status !== 'soon'; }).length;
     var first = days(c)[0];
@@ -61,7 +62,7 @@
   }
   function inboxBox(where) {
     var I = S.inbox; if (!I || !I.on || !I.sheetUrl) return '';
-    return '<section class="inbox inbox--' + where + '" id="inbox-' + where + '"><h3>' + esc(I.title) + '</h3><p>' + esc(I.text) + '</p>' +
+    return '<section class="inbox inbox--' + where + '" id="inbox-' + where + '"><p><b>' + esc(I.title) + '.</b> ' + esc(I.text) + '</p>' +
       '<form class="inbox__row" data-inbox novalidate><label class="sr-only" for="em-' + where + '">Your email</label>' +
       '<input id="em-' + where + '" type="email" name="email" required autocomplete="email" inputmode="email" placeholder="your email">' +
       '<input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hp">' +
@@ -119,7 +120,7 @@
   var DONE_KEY = 'b30d-done';
   function doneGet() { try { return JSON.parse(localStorage.getItem(DONE_KEY) || '{}') || {}; } catch (e) { return {}; } }
   function doneSet(k, on) { var d = doneGet(); if (on) d[k] = 1; else delete d[k]; try { localStorage.setItem(DONE_KEY, JSON.stringify(d)); } catch (e) {} }
-  function kicker() { return S.kicker ? '<div class="kicker">' + esc(S.kicker) + '</div>' : ''; }
+  function kicker() { return ''; }
   function sec(title, inner) { return '<section><h2>' + esc(title) + '</h2>' + inner + '</section>'; }
   function ticks(a) { return '<ul class="ticks">' + a.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>'; }
   function chips(a) { return '<div class="chips">' + a.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('') + '</div>'; }
@@ -127,9 +128,10 @@
   /* NOW: the current challenge only */
   function noteHTML() {
     var n = S.nowNote; if (!n || !n.length) return '';
-    return '<section class="note">' + n.map(function (p, i) { return '<p' + (i === 0 ? ' class="note__hi"' : '') + '>' + esc(p) + '</p>'; }).join('') + '<div class="note__sign"><img src="assets/pfp.jpg" alt="">Alok</div></section>';
+    return '<section class="note"><img class="note__face" src="assets/alok-540.webp" width="540" height="545" alt="Alok Mishra">' + n.map(function (p, i) { return '<p' + (i === 0 ? ' class="note__hi"' : '') + '>' + esc(p) + '</p>'; }).join('') + '<div class="note__sign"><img src="assets/pfp.jpg" alt="">Alok</div></section>';
   }
-  function heroCTA(c) {
+  function heroCTA() { return ''; }
+  function heroCTAOld(c) {
     if (c.status === 'soon' && S.inbox && S.inbox.on && S.inbox.sheetUrl)
       return '<div class="hero-cta" id="hero-cta"><a class="btn" href="#now" data-jump="inbox-main">Get Day 0 in your inbox</a><small>Free. No spam.</small></div>';
     var l = last(c);
@@ -139,48 +141,46 @@
   function now() {
     var c = byId[S.current] || S.challenges[0];
     if (c.status === 'soon') {
-      return '<div class="split"><article class="card main">' +
-        cover(c) + kicker() +
-        '<h1>' + esc(c.title) + '</h1>' + metaHTML(c) + heroCTA(c) + board(c) +
-        '<div class="prose">' + noteHTML() + inboxBox('main') +
-          (c.learn && c.learn.length ? sec("What I'm going to find out", ticks(c.learn)) : '') +
-          sec('Files', '<p class="muted">Coming soon. Every day\'s notes and files will be here, free.</p>') +
-        '</div></article>' + sideCard(c, true) + '</div>';
+      return '<div class="col">' + noteHTML() +
+        '<article class="testnow"><a href="#t-' + c.id + '" tabindex="-1" aria-hidden="true">' + cover(c) + '</a>' +
+        '<h1>' + esc(c.title) + '</h1>' + metaHTML(c) + board(c) +
+        (c.learn && c.learn.length ? sec("What I'm going to find out", ticks(c.learn)) : '') +
+        '</article>' + inboxBox('main') + '</div>';
     }
-    return '<div class="split"><article class="card main">' + cover(c) +
-      kicker() + '<h1>' + esc(c.title) + '</h1>' + metaHTML(c) + heroCTA(c) + board(c) +
+    return '<div class="col">' + noteHTML() + '<article class="testnow">' + cover(c) +
+      '<h1>' + esc(c.title) + '</h1>' + metaHTML(c) + board(c) +
       '<div class="prose">' +
         (c.about ? sec("What's happening", '<p>' + esc(c.about) + '</p>') : '') +
         sec('What you get, free', ticks(['Every day as a short lesson, in order', 'My notes: what worked and what didn\'t', 'The files I used, ready to open'])) +
         sec('The challenge so far', dayRows(c, true)) +
         (c.tools && c.tools.length ? sec('Tools', chips(c.tools)) : '') +
         sec("Why I'm doing this", '<p>' + esc(S.why) + '</p>') +
-      '</div></article>' + sideCard(c, true) + '</div>';
+      '</div></article>' + inboxBox('main') + '</div>';
   }
 
   /* TESTS: every challenge, with its verdict stamp */
   function tests() {
     var order = { now: 0, paused: 1, done: 2, soon: 3 };
     var list = S.challenges.slice().sort(function (a, b) { return order[a.status] - order[b.status]; });
-    return '<div class="head"><h1>Tests</h1><p>' + esc(S.kicker || '') + ' Every day, every rupee, and an honest verdict at the end.</p></div><div class="cgrid">' +
+    return '<div class="col"><div class="head"><h1>Tests</h1><p>' + esc(S.kicker || '') + ' Every day, every rupee, and an honest verdict at the end.</p></div><div class="tlist">' +
       list.map(function (c) {
         var n = (c.days || []).length, tag = c.status === 'soon' ? 'Season 1' : n + ' day' + (n === 1 ? '' : 's') + ' posted' + (c.tools && c.tools[0] ? ' · ' + c.tools[0] : '');
         var pct = c.totalDays ? Math.min(100, Math.round(n / (c.totalDays + 1) * 100)) : 0;
         var inner = cover(c, true) + '<div class="course__b"><h2>' + esc(c.title) + '</h2><p>' + esc(c.oneLine) + '</p>' +
           '<div class="prog" role="img" aria-label="' + n + ' of ' + ((c.totalDays || 0) + 1) + ' days"><i data-pct="' + pct + '"></i></div><div class="course__f"><span>' + esc(tag) + '</span>' + stamp(c) + '</div></div>';
         return c.status === 'soon' ? '<div class="card course">' + inner + '</div>' : '<a class="card course" href="#t-' + c.id + '">' + inner + '</a>';
-      }).join('') + '</div>';
+      }).join('') + '</div></div>';
   }
 
   /* TEST page */
   function testPage(c) {
-    return '<a class="back" href="#tests">Tests</a><div class="split"><article class="card main">' + cover(c) +
+    return '<div class="col"><a class="back" href="#tests">Tests</a><article class="plain">' + cover(c) +
       kicker() + '<h1>' + esc(c.title) + '</h1>' + metaHTML(c) + board(c) + '<div class="prose">' +
         (c.about ? sec('About this challenge', '<p>' + esc(c.about) + '</p>') : '') +
         (c.learn && c.learn.length ? sec("What you'll learn", ticks(c.learn)) : '') +
         (c.tools && c.tools.length ? sec('Tools', chips(c.tools)) : '') +
         sec('Every day', dayRows(c, true)) + verdictBlock(c) + courseLink(c) +
-      '</div></article>' + sideCard(c) + '</div>';
+      '</div></article></div>';
   }
 
   /* LESSON */
@@ -230,16 +230,16 @@
   }
   function doneCount(k) { var d = doneGet(); return k.lessons.filter(function (l) { return d[k.id + ':' + l.n]; }).length; }
   function classroom() {
+    var d0 = doneGet();
     var cards = courses.map(function (k) {
-      var n = k.lessons.length, done = doneCount(k), first = k.lessons[0];
-      return '<a class="card kcard" href="#course-' + k.id + '">' +
-        '<div class="kcard__thumb">' + (first.thumb ? '<img src="assets/thumbs/' + esc(first.thumb) + '" alt="" loading="lazy">' : '') + '<span>' + n + ' lessons</span></div>' +
-        '<div class="kcard__b"><h2>' + esc(k.title) + '</h2><p>' + esc(k.oneLine) + '</p>' +
-        '<div class="prog"><i data-pct="' + Math.round(done / n * 100) + '"></i></div>' +
-        '<div class="course__f"><span>' + (done ? done + ' of ' + n + ' done' : 'Start with lesson 1') + '</span><span class="tlink">Open</span></div></div></a>';
+      var rows = k.lessons.map(function (l) {
+        var on = d0[k.id + ':' + l.n];
+        return '<a class="toc__row' + (on ? ' is-done' : '') + '" href="#l-' + k.id + '-' + l.n + '"><span class="toc__n">' + (on ? '✓' : l.n) + '</span><span class="toc__t">' + esc(l.title) + '</span><span class="toc__d">' + esc(l.length || '') + '</span></a>';
+      }).join('');
+      return '<section class="toc"><a class="toc__h" href="#course-' + k.id + '"><h2>' + esc(k.title) + '</h2><p>' + esc(k.oneLine) + '</p></a>' + rows + '</section>';
     }).join('');
-    return '<div class="head"><h1>Classroom</h1><p>' + esc(S.taught || 'I learn it in 30 days. You learn it in 10 minutes.') + '</p></div>' +
-      (cards ? '<div class="kgrid">' + cards + '</div>' : '<div class="card empty">The first course is being made from this season\'s teach videos.</div>');
+    return '<div class="col"><div class="head"><h1>Classroom</h1><p>' + esc(S.taught || 'I learn it in 30 days. You learn it in 10 minutes.') + '</p></div>' +
+      (cards ? cards : '<p class="muted">The first course is being made from this season\'s teach videos.</p>') + '</div>';
   }
   function coursePage(k) {
     var d = doneGet(), done = doneCount(k), n = k.lessons.length;
@@ -249,16 +249,13 @@
       return '<a class="lrow' + (on ? ' is-done' : '') + '" href="#l-' + k.id + '-' + l.n + '"><span class="lrow__n">' + (on ? '✓' : l.n) + '</span><span class="lrow__t">' + esc(l.title) + '</span><span class="lrow__d">' + esc(l.length || '') + '</span></a>';
     }).join('');
     var t = byId[k.fromTest];
-    return '<a class="back" href="#classroom">Classroom</a><div class="split"><article class="card main">' +
-      '<div class="khero"><small>Course · ' + n + ' lessons · free</small><h1>' + esc(k.title) + '</h1><p>' + esc(k.oneLine) + '</p>' +
-      '<div class="hero-cta"><a class="btn" href="#l-' + k.id + '-' + next.n + '">' + (done && done < n ? 'Continue: lesson ' + next.n : 'Start lesson ' + next.n) + '</a>' +
-      '<small>' + (done ? done + ' of ' + n + ' done on this phone' : 'No login. Your ticks stay on this device.') + '</small></div>' +
-      '<div class="prog prog--big"><i data-pct="' + Math.round(done / n * 100) + '"></i></div></div>' +
+    return '<div class="col"><a class="back" href="#classroom">Classroom</a><article class="plain">' +
+      '<div class="khero"><small>' + n + ' lessons' + (done ? ' · ' + done + ' done' : '') + '</small><h1>' + esc(k.title) + '</h1><p>' + esc(k.oneLine) + '</p></div>' +
       '<div class="prose">' + sec('Lessons', '<div class="lessons">' + rows + '</div>') +
         (k.tools && k.tools.length ? sec('Tools', chips(k.tools)) : '') +
         (t ? sec('Where this comes from', '<p>The messy version, day by day: <a class="tlink" href="#t-' + t.id + '">' + esc(t.title) + '</a></p>') : '') +
         (k.playlist ? sec('On YouTube', '<p><a class="tlink" href="' + esc(k.playlist) + '" target="_blank" rel="noopener">Watch the whole playlist</a></p>') : '') +
-      '</div></article>' + sideCard(byId[S.current] || S.challenges[0], true) + '</div>';
+      '</div></article></div>';
   }
   function lessonPage(k, l) {
     var i = k.lessons.indexOf(l), prev = k.lessons[i - 1], next = k.lessons[i + 1], key = k.id + ':' + l.n, on = doneGet()[key];
@@ -279,7 +276,7 @@
           sec('Steps', l.steps && l.steps.length ? '<ol class="steps-ol">' + l.steps.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ol>' : '<p class="muted">Steps for this lesson are on the way.</p>') +
           ((l.files || []).length ? sec('Files', '<ul class="files">' + l.files.map(function (f) { return fileRow(f); }).join('') + '</ul>') : '') +
         '</div>' +
-        '<button class="donebtn' + (on ? ' is-on' : '') + '" type="button" data-done="' + esc(key) + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + (on ? '✓ Done' : 'Mark as done') + '</button>' +
+        '<button class="donebtn' + (on ? ' is-on' : '') + '" type="button" data-done="' + esc(key) + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + '<i aria-hidden="true">' + (on ? '✓' : '') + '</i>' + (on ? 'Done' : 'I did this one') + '</button>' +
         '<div class="pager">' + (prev ? '<a class="prev" href="#l-' + k.id + '-' + prev.n + '">‹ Lesson ' + prev.n + '</a>' : '<span></span>') +
           (next ? '<a class="btn" href="#l-' + k.id + '-' + next.n + '">Lesson ' + next.n + ' ›</a>' : '<a class="btn btn--line" href="#course-' + k.id + '">Course page</a>') + '</div>' +
       '</article></div>';
@@ -303,8 +300,8 @@
       return rows ? '<section class="card fgroup"><h2>' + esc(k.title) + '</h2><ul class="files">' + rows + '</ul></section>' : '';
     }).join('');
     groups = cgroups + groups;
-    return '<div class="head"><h1>Toolkit</h1><p>Every file and template, from every test and course, in one place.</p></div>' +
-      (groups || '<div class="card empty">Files show up here as soon as a day has them. The first ones come with the next AI Automation lessons.</div>');
+    return '<div class="col"><div class="head"><h1>Toolkit</h1><p>Every file and template, from every test and course, in one place.</p></div>' +
+      (groups || '<p class="muted">Files show up here as soon as a day has them. The first ones come with the next AI Automation lessons.</p>') + '</div>';
   }
 
   /* ABOUT */
