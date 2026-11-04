@@ -43,6 +43,8 @@ window.SITE = {
   ],
   // Small line above every challenge title (approved brand line).
   kicker: "The internet says a lot. I test it myself.",
+  // Line under the Classroom title (approved brand line).
+  taught: "I learn it in 30 days. You learn it in 10 minutes.",
   why: "I used to start everything and finish nothing. So now I pick one skill, give it a fixed number of days, and do it in public, so I can't quit quietly.",
 
   challenges: [
@@ -55,6 +57,8 @@ window.SITE = {
       cover: "coral", photo: true,
       totalDays: 30,
       started: null,
+      // Verdict stamp: pending | works | no | depends. soFar = "what's true so far" in your words ("" hides it).
+      verdict: { stamp: "pending", line: "", soFar: "" },
       // The receipt: REAL numbers only. null = not started yet (shows "—").
       // Update these as the challenge runs, e.g. hours: 12, spent: 499, earned: 0
       ledger: { hours: null, spent: null, earned: null },
@@ -67,6 +71,7 @@ window.SITE = {
       oneLine: "Make your computer do boring work for you. No coding.",
       status: "paused",
       cover: "wash", photo: true,
+      verdict: { stamp: "pending", line: "", soFar: "" },
       totalDays: 14,
       started: "2026-10-14",
       about: "Paused after Day 3, on purpose. I'm learning the fundamentals of automation properly first. Then I test the biggest claim on Instagram: that AI automation earns people lakhs a month. Every rupee shown. The notes and files for every day land here, so you can do it in 10 minutes instead of a whole day.",
@@ -85,6 +90,7 @@ window.SITE = {
       oneLine: "Google Forms, Sheets and Looker Studio, free versions only.",
       status: "paused",
       cover: "dark", photo: false,
+      verdict: { stamp: "pending", line: "", soFar: "" },
       totalDays: 30,
       started: "2026-10-03",
       about: "Three tools companies actually pay people to know. I'm learning them using only the free versions.",
@@ -106,9 +112,34 @@ window.SITE = {
       oneLine: "From freezing to speaking. Season 1 starts soon.",
       status: "soon",
       cover: "sand", photo: false,
+      verdict: { stamp: "pending", line: "", soFar: "" },
       totalDays: 30,
       started: null,
       about: "", learn: [], tools: [], days: []
+    }
+  ],
+
+  /* ==========================================================================
+     CLASSROOM: clean courses (your weekly teach videos), not the daily story.
+     A course shows on the site only when it has 3+ lessons.
+     playlist = the YouTube playlist link for the course ("" = none yet).
+     steps    = short steps for the lesson page, one line each (your words).
+     PROTOTYPE: the first course uses your 3 AI Automation videos as lessons.
+     Replace them with your teach videos as you make them.
+     ========================================================================== */
+  courses: [
+    {
+      id: "n8n-zero",
+      title: "AI Automation from zero",
+      oneLine: "Make your computer do boring work for you. No coding.",
+      fromTest: "ai-automation",
+      playlist: "",
+      tools: ["n8n (free)", "Google Drive"],
+      lessons: [
+        { n: 1, title: "Learning AI automation in 14 days, zero coding", video: "heEGRYpJiGw", length: "11 min", thumb: "heEGRYpJiGw.jpg", steps: [], files: [] },
+        { n: 2, title: "My first n8n auto-posting workflow", video: "wTkddhJGJWg", length: "31 min", thumb: "wTkddhJGJWg.jpg", steps: [], files: [] },
+        { n: 3, title: "Build your first AI agent in under 15 minutes", video: "ggrnz_vEWjA", length: "14 min", thumb: "ggrnz_vEWjA.jpg", steps: [], files: [] }
+      ]
     }
   ]
 };
