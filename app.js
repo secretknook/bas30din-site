@@ -2,6 +2,8 @@
    All content comes from site-data.js. No inline styles: the site's security policy blocks them. */
 (function () {
   var S = window.SITE, view = document.getElementById('view');
+  // Paused challenges stay in site-data.js but are not shown anywhere on the site (Alok, 8 Nov 2026).
+  S.challenges = S.challenges.filter(function (c) { return c.status !== 'archive' && c.status !== 'paused'; });
   ['yt', 'yt2'].forEach(function (id) { var a = document.getElementById(id); if (a) a.href = S.youtube; });
   ['ig', 'ig2'].forEach(function (id) { var a = document.getElementById(id); if (a) a.href = S.instagram; });
   if (S.email) { var m2 = document.getElementById('mail2'); if (m2) { m2.href = 'mailto:' + S.email; m2.title = S.email; m2.hidden = false; } }
