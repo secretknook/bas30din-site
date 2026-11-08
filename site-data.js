@@ -10,7 +10,7 @@
                Lines starting with "- " become a list.
    Files?      files: [ { name: "n8n workflow", note: "Import into n8n", url: "https://..." } ]
                A Google Drive link works best.
-   Status      now | paused | done | soon
+   Status      now | archive | done | soon   (archive = earlier challenge, shown with no status label)
    Cover       coral | dark | sand | wash   (photo: true puts Alok's photo on it)
    Dates are "YYYY-MM-DD".
    ========================================================================== */
@@ -43,7 +43,14 @@ window.SITE = {
   ],
   // Small line above every challenge title (approved brand line).
   kicker: "The internet says a lot. I test it myself.",
-  why: "I used to start everything and finish nothing. So now I pick one skill, give it a fixed number of days, and do it in public, so I can't quit quietly.",
+  // About > My story. His own words (8 Nov 2026). Only voice-typing slips fixed. Edit freely.
+  story: [
+    "I have been thinking about this thing for a long time.",
+    "The internet says you can make lakhs of money using editing. You can make lots of money using AI. Take this free course and you will never need another course.",
+    "I always wondered whether this works or not. Because most of the time, people are selling courses and making money from there. Not from the actual work.",
+    "So I wanted to test it myself, and show other people how it worked for me, or not.",
+    "So now I pick one skill, give it 30 days, do everything that is needed, and check the claim, whether it was right or not."
+  ],
 
   challenges: [
     {
@@ -51,25 +58,35 @@ window.SITE = {
       title: "Instagram Says AI Automation Pays Lakhs. I'm Testing It.",
       coverTitle: "AI automation: ₹ lakhs?",
       oneLine: "Can you really earn lakhs with AI automation? 30 days, every rupee shown.",
-      status: "soon",
+      status: "now",
       cover: "coral", photo: true,
       totalDays: 30,
-      started: null,
+      started: "2026-11-08",   // Day 1. The live day moves on by itself every day from this date.
+      // The claim being tested: shown as "claim VS me" on the home page and every day page.
+      // img = a REAL post (no faces). url = where it came from (tap opens it).
+      claim: { img: "assets/claim-1lakh.jpg", url: "https://www.youtube.com/watch?v=RVaEJQaBNq4", by: "Vedantu Upskill Academy on YouTube", says: "Earn ₹1 lakh / monthly" },
+      // The Day 0 trailer for the big play tile on the home page. video = YouTube code. thumb = file in assets/thumbs/.
+      trailer: { video: "", short: true, thumb: "", length: "" },
       // The receipt: REAL numbers only. null = not started yet (shows "—").
       // Update these as the challenge runs, e.g. hours: 12, spent: 499, earned: 0
-      ledger: { hours: null, spent: null, earned: null },
-      about: "", learn: ["What the 'lakhs' claim really promises", "What it takes to get a first paying client", "What real earners do differently"], tools: [], days: []
+      ledger: { hours: null, spent: null, earned: 0 },
+      about: "", learn: ["What the 'lakhs' claim really promises", "What it takes to get a first paying client", "What real earners do differently"], tools: [],
+      // A day with video: "" shows "goes up today" until the link is added. published: false keeps it out of the email feed.
+      // pictures (optional) = "Today in 3 pictures": [{ img: "assets/days/d1-1.jpg", text: "What I tried" }, ...]
+      days: [
+        { day: 1, date: "2026-11-08", title: "", video: "", short: false, length: "", thumb: "", notes: "", files: [], pictures: [], published: false }
+      ]
     },
     {
       id: "ai-automation",
       title: "14 Days of AI Automation",
       coverTitle: "AI Automation from zero",
       oneLine: "Make your computer do boring work for you. No coding.",
-      status: "paused",
+      status: "archive",
       cover: "wash", photo: true,
       totalDays: 14,
       started: "2026-10-14",
-      about: "Paused after Day 3, on purpose. I'm learning the fundamentals of automation properly first. Then I test the biggest claim on Instagram: that AI automation earns people lakhs a month. Every rupee shown. The notes and files for every day land here, so you can do it in 10 minutes instead of a whole day.",
+      about: "",
       learn: ["What automation is, in simple words", "Make a reel post itself on Instagram", "Build your first AI agent"],
       tools: ["n8n (free)", "Google Drive"],
       days: [
@@ -83,7 +100,7 @@ window.SITE = {
       title: "3 Tools Companies Pay For",
       coverTitle: "3 tools in 30 days",
       oneLine: "Google Forms, Sheets and Looker Studio, free versions only.",
-      status: "paused",
+      status: "archive",
       cover: "dark", photo: false,
       totalDays: 30,
       started: "2026-10-03",
