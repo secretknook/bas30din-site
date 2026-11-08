@@ -1,77 +1,123 @@
+/* Bas 30 Din site. Picture-first design approved 8 Nov 2026 (home v3).
+   All content comes from site-data.js. No inline styles: the site's security policy blocks them. */
 (function () {
   var S = window.SITE, view = document.getElementById('view');
-  ['yt', 'yt2'].forEach(function (id) { document.getElementById(id).href = S.youtube; });
-  ['ig', 'ig2'].forEach(function (id) { document.getElementById(id).href = S.instagram; });
-  if (S.email) { var m2 = document.getElementById('mail2'); m2.href = 'mailto:' + S.email; m2.title = S.email; m2.hidden = false; }
+  ['yt', 'yt2'].forEach(function (id) { var a = document.getElementById(id); if (a) a.href = S.youtube; });
+  ['ig', 'ig2'].forEach(function (id) { var a = document.getElementById(id); if (a) a.href = S.instagram; });
+  if (S.email) { var m2 = document.getElementById('mail2'); if (m2) { m2.href = 'mailto:' + S.email; m2.title = S.email; m2.hidden = false; } }
 
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   var fmt = function (s) { return s ? new Date(s + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''; };
   var byId = {}; S.challenges.forEach(function (c) { byId[c.id] = c; });
   var embed = /(^|\.)bas30din\.com$/.test(location.hostname);
-  var label = { now: 'Happening now', paused: 'Paused', done: 'Finished', soon: 'Coming soon' };
+  var PHOTO = 'assets/alok-540.webp';
 
+  /* ---------- icons (Lucide, inline, aria-hidden) ---------- */
+  var I = {
+    play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="7 4 20 12 7 20 7 4"/></svg>',
+    lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
+    check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>',
+    video: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="3"/><polygon points="10 9 15 12 10 15 10 9"/></svg>',
+    notes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>',
+    down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>',
+    clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+    wallet: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>',
+    up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 7 13.5 15.5l-5-5L2 17"/><path d="M16 7h6v6"/></svg>',
+    cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+    no: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg>',
+    mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>',
+    yt: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="5" fill="#FF0000"/><polygon points="10 8.5 16 12 10 15.5" fill="#fff"/></svg>',
+    ig: '<svg viewBox="0 0 24 24" fill="none" stroke="#1E1E1E" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="#1E1E1E" stroke="none"/></svg>'
+  };
+
+  /* ---------- day logic ---------- */
   function days(c) { return (c.days || []).slice().sort(function (a, b) { return a.day - b.day; }); }
-  function last(c) { var d = days(c); return d.length ? d[d.length - 1] : null; }
-  function stateHTML(c) {
-    var t = label[c.status] || '';
-    if (c.status === 'paused' && last(c)) t = 'Paused at Day ' + last(c).day;
-    return '<span class="state state--' + c.status + '"><i></i>' + esc(t) + '</span>';
+  function dayOf(c, n) { return (c.days || []).filter(function (x) { return x.day === n; })[0]; }
+  function hasVideo(d) { return d && d.video; }
+  // The live day moves on by itself from `started` (Day 1) for a running challenge.
+  function liveDay(c) {
+    if (c.status !== 'now' || !c.started) return -1;
+    var start = new Date(c.started + 'T00:00:00'), t = new Date(); t.setHours(0, 0, 0, 0);
+    var n = Math.floor((t - start) / 864e5) + 1;
+    return Math.max(1, Math.min(c.totalDays || 30, n));
   }
-  function cover(c, small) {
-    var d = last(c), tag = c.status === 'soon' ? 'Coming soon' : (d ? 'Day ' + d.day + (c.totalDays ? ' of ' + c.totalDays : '') : '');
-    return '<div class="cover cover--' + (c.cover || 'coral') + ' is-' + c.status + '"><div class="cover__t">' +
-      (small || c.status === 'soon' ? '' : '<small>' + esc(label[c.status] || '') + '</small>') +
-      '<b>' + esc(c.coverTitle || c.title) + '</b>' + (tag && !small ? '<span>' + esc(tag) + '</span>' : '') + '</div>' +
-      (c.photo ? '<img src="assets/alok-540.webp" width="540" height="545" alt="">' : '') + motif(c.motif) + '</div>';
+  function dayState(c, n) {
+    var live = liveDay(c), d = dayOf(c, n);
+    if (n === live) return 'live';
+    if (live > 0) return n < live ? (d ? 'done' : 'missed') : (n === live + 1 ? 'next' : 'later');
+    return d ? 'done' : 'later';
   }
-  function motif(m) {
-    var svg = {
-      rupee: '<span class="motif motif--rupee" aria-hidden="true">₹</span>',
-      flow: '<svg class="motif motif--flow" viewBox="0 0 220 150" aria-hidden="true"><path d="M58 40 H110 V110 H162" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 12"/><rect x="14" y="16" width="56" height="48" rx="12"/><rect x="82" y="86" width="56" height="48" rx="12"/><rect x="150" y="86" width="56" height="48" rx="12" class="on"/><circle cx="42" cy="40" r="7" class="dot"/><circle cx="110" cy="110" r="7" class="dot"/><path d="M168 110 l8 8 l16 -16" fill="none" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" class="tick"/></svg>'
-    };
-    return svg[m] || '';
+  function yt(d) { return 'https://www.youtube.com/' + (d.short ? 'shorts/' : 'watch?v=') + d.video; }
+  function earned(c) { var L = c.ledger || {}; return L.earned == null ? 0 : L.earned; }
+  function inr(x) { return '₹' + Number(x).toLocaleString('en-IN'); }
+
+  /* ---------- shared blocks ---------- */
+  function liveDot() { return '<span class="ldot" aria-hidden="true"></span>'; }
+
+  // Story circles: the day menu, like Instagram stories.
+  function stories(c, current) {
+    var total = c.totalDays || 30, live = liveDay(c), first = dayOf(c, 0) ? 0 : 1, out = '';
+    for (var n = first; n <= total; n++) {
+      var st = dayState(c, n), d = dayOf(c, n), open = d || st === 'live';
+      var face = st === 'done' || st === 'live'
+        ? '<span class="st__ring"><img src="' + (d && d.thumb ? 'assets/thumbs/' + esc(d.thumb) : PHOTO) + '" alt="" loading="lazy"></span>'
+        : '<span class="st__ring st__ring--off">' + I.lock + '</span>';
+      var lab = 'Day ' + n + (st === 'done' ? ' ✓' : '');
+      var cls = 'st st--' + st + (n === current ? ' is-here' : '');
+      out += open
+        ? '<a class="' + cls + '" href="#d-' + c.id + '-' + n + '"' + (n === current ? ' aria-current="page"' : '') + '>' + face + (st === 'live' ? '<b class="st__tag">LIVE</b>' : '') + '<span class="st__l">' + lab + '</span></a>'
+        : '<span class="' + cls + '">' + face + '<span class="st__l">' + lab + '</span></span>';
+    }
+    return '<nav class="stories" aria-label="Days">' + out + '</nav>';
   }
-  function metaHTML(c) {
-    var bits = [stateHTML(c), '<span>Free</span>'];
-    if (c.started) bits.push('<span>Started ' + esc(fmt(c.started)) + '</span>');
-    bits.push('<span class="by"><img src="assets/pfp.jpg" alt="">By Alok Mishra</span>');
-    return '<div class="meta">' + bits.join('<span class="dot" aria-hidden="true"></span>') + '</div>';
+
+  // Claim VS me. Real claim post on the left, Alok's live result on the right.
+  function vs(c, n) {
+    if (!c.claim) return '';
+    var day = n || liveDay(c);
+    return '<section class="vs" aria-label="The claim versus my result">' +
+      '<a class="vs__claim" href="' + esc(c.claim.url) + '" target="_blank" rel="noopener" title="' + esc(c.claim.by) + '"><img src="' + esc(c.claim.img) + '" alt="' + esc('Real post: ' + (c.claim.says || '') + ' (' + c.claim.by + ')') + '"></a>' +
+      '<div class="vs__me"><img src="' + PHOTO + '" alt="Alok" width="540" height="545">' +
+        '<div class="vs__res"><b>' + liveDot() + esc(inr(earned(c))) + '</b><span>DAY ' + day + '/' + (c.totalDays || 30) + '</span></div></div>' +
+      '<span class="vs__vs" aria-hidden="true">VS</span></section>';
   }
-  function dayRows(c, withNext) {
-    var list = days(c);
-    var rows = list.map(function (d) {
-      return '<a class="drow" href="#d-' + c.id + '-' + d.day + '"><span class="drow__n">DAY ' + d.day + '</span><span class="drow__t">' + esc(d.title) + '</span><span class="drow__d">' + esc(fmt(d.date)) + '</span></a>';
-    }).join('');
-    var l = last(c);
-    if (withNext && c.status === 'now' && l && (!c.totalDays || l.day < c.totalDays)) rows += '<div class="drow drow--next"><span class="drow__n">DAY ' + (l.day + 1) + '</span><span class="drow__t">Coming next</span><span class="drow__d"></span></div>';
-    return rows ? '<div class="daylist">' + rows + '</div>' : '<p class="muted">Day 1 goes up soon.</p>';
+
+  // All 30 days as tiles (Day 30 = the verdict).
+  function grid(c) {
+    var total = c.totalDays || 30, live = liveDay(c), cells = '';
+    for (var n = 1; n <= total; n++) {
+      var st = dayState(c, n), d = dayOf(c, n), last = n === total;
+      if (st === 'live') {
+        cells += '<a class="tile tile--live" href="#d-' + c.id + '-' + n + '"><img src="' + (d && d.thumb ? 'assets/thumbs/' + esc(d.thumb) : PHOTO) + '" alt=""><b class="tile__tag">LIVE</b><span class="tile__n">DAY ' + n + '</span></a>';
+      } else if (st === 'done') {
+        cells += '<a class="tile tile--done" href="#d-' + c.id + '-' + n + '">' + (d.thumb ? '<img src="assets/thumbs/' + esc(d.thumb) + '" alt="">' : '') + '<span class="tile__n">DAY ' + n + '</span></a>';
+      } else if (last) {
+        cells += '<span class="tile tile--verdict"><b>' + n + '</b><small>VERDICT</small></span>';
+      } else if (st === 'next') {
+        cells += '<span class="tile tile--next"><b>' + n + '</b><small>TOMORROW</small></span>';
+      } else {
+        cells += '<span class="tile tile--later"><b>' + n + '</b>' + I.lock + '</span>';
+      }
+    }
+    var shown = live > 0 ? live : (c.days || []).length;
+    return '<section class="card g30"><div class="g30__h"><h2>All ' + total + ' days</h2>' + (live > 0 ? '<span class="g30__c">' + liveDot() + shown + ' / ' + total + '</span>' : '') + '</div>' +
+      '<div class="g30__g">' + cells + '</div>' +
+      '<div class="g30__k"><span class="k k--live">Live</span><span class="k k--next">Tomorrow</span><span class="k k--end">The answer</span></div></section>';
   }
-  function sideCard(c, onNow) {
-    var posted = S.challenges.reduce(function (t, x) { return t + (x.days || []).length; }, 0);
-    var running = S.challenges.filter(function (x) { return x.status !== 'soon'; }).length;
-    var first = days(c)[0];
-    return '<aside class="card side"><div class="side__cover"><img src="assets/alok-540.webp" width="540" height="545" alt="Alok Mishra"></div><div class="side__in">' +
-      '<h3>' + esc(S.name) + '</h3><div class="url">' + esc(S.domain) + '</div>' +
-      '<p>I learn one skill at a time, in public. You get the shortcut, free.</p>' +
-      '<div class="links"><a href="' + esc(S.youtube) + '" target="_blank" rel="noopener">YouTube</a><a href="' + esc(S.instagram) + '" target="_blank" rel="noopener">Instagram</a></div>' +
-      '<div class="stats"><div><b>' + posted + '</b><small>days posted</small></div><div><b>' + running + '</b><small>challenges</small></div><div><b>₹0</b><small>always free</small></div></div>' +
-      (onNow ? '<a class="tlink" href="#classroom">See all challenges</a>' :
-        (first ? '<a class="btn" href="#d-' + c.id + '-' + first.day + '">Start from Day ' + first.day + '</a>' : '<a class="btn" href="#classroom">See all challenges</a>')) +
-      '</div>' + (onNow ? '' : inboxBox('sidebar')) + '</aside>';
-  }
-  function inboxBox(where) {
-    var I = S.inbox; if (!I || !I.on || !I.sheetUrl) return '';
-    return '<section class="inbox inbox--' + where + '" id="inbox-' + where + '"><h3>' + esc(I.title) + '</h3><p>' + esc(I.text) + '</p>' +
-      '<form class="inbox__row" data-inbox novalidate><label class="sr-only" for="em-' + where + '">Your email</label>' +
-      '<input id="em-' + where + '" type="email" name="email" required autocomplete="email" inputmode="email" placeholder="your email">' +
+
+  function inboxBox(where, title) {
+    var B = S.inbox; if (!B || !B.on || !B.sheetUrl) return '';
+    return '<section class="card inbox2" id="inbox-' + where + '"><form class="inbox2__f" data-inbox novalidate>' +
+      '<label for="em-' + where + '">' + esc(title || B.title) + '</label>' +
+      '<div class="inbox2__row"><input id="em-' + where + '" type="email" name="email" required autocomplete="email" inputmode="email" placeholder="your email">' +
       '<input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hp">' +
-      '<button class="btn" type="submit">' + esc(I.button) + '</button></form>' +
-      '<p class="inbox__msg" aria-live="polite"></p><small>' + esc(I.small) + '</small></section>';
+      '<button type="submit">Send</button></div></form>' +
+      '<p class="inbox__msg" aria-live="polite"></p><small>' + esc(B.small) + '</small></section>';
   }
   document.addEventListener('submit', function (e) {
     var f = e.target; if (!f.matches || !f.matches('form[data-inbox]')) return;
     e.preventDefault();
-    var box = f.closest('.inbox'), msg = box.querySelector('.inbox__msg'), btn = f.querySelector('button');
+    var box = f.closest('section'), msg = box.querySelector('.inbox__msg'), btn = f.querySelector('button');
     var email = f.email.value.trim();
     msg.classList.remove('is-err');
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { msg.textContent = 'That email looks off. Try once more?'; msg.classList.add('is-err'); return; }
@@ -81,94 +127,26 @@
       .catch(function () { msg.textContent = "That didn't go through. Try once more?"; msg.classList.add('is-err'); })
       .then(function () { btn.disabled = false; });
   });
-  function board(c) {
-    var total = c.totalDays || 30, have = {}, l = last(c);
-    (c.days || []).forEach(function (d) { have[d.day] = d; });
-    var next = c.status === 'now' && l ? l.day + 1 : (c.status === 'soon' ? 0 : -1);
-    var cells = '';
-    for (var i = 0; i <= total; i++) {
-      var d = have[i], cls = d ? 'is-done' : (i === next ? 'is-next' : '');
-      var inner = '<span>' + i + '</span>';
-      cells += d ? '<a class="bd ' + cls + '" href="#d-' + c.id + '-' + i + '" title="Day ' + i + ': ' + esc(d.title) + '">' + inner + '</a>'
-                 : '<span class="bd ' + cls + '" title="Day ' + i + '">' + inner + '</span>';
-    }
-    var posted = (c.days || []).length;
-    var cap = c.status === 'soon' ? 'Day 0 is coming soon.' : posted + ' of ' + (total + 1) + ' days posted' + (c.status === 'paused' ? ' · paused' : '');
-    return '<section class="board"><div class="board__h"><h2>The ' + total + '-day board</h2><small>' + esc(cap) + '</small></div><div class="board__g">' + cells + '</div>' + receipt(c) + '</section>';
-  }
-  function receipt(c) {
-    var L = c.ledger; if (!L) return '';
-    var v = function (x, pre) { return x == null ? '—' : (pre || '') + Number(x).toLocaleString('en-IN'); };
-    var started = L.hours != null || L.spent != null || L.earned != null;
-    return '<div class="receipt"><div><b>' + v(L.hours) + '</b><small>hours spent</small></div><div><b>' + v(L.spent, '₹') + '</b><small>money spent</small></div><div><b>' + v(L.earned, '₹') + '</b><small>money earned</small></div>' +
-      '<p>' + (started ? 'Every hour and every rupee goes on screen.' : 'Starts Day 0. Every hour and every rupee goes on screen.') + '</p></div>';
-  }
-  function kicker() { return S.kicker ? '<div class="kicker">' + esc(S.kicker) + '</div>' : ''; }
-  function sec(title, inner) { return '<section><h2>' + esc(title) + '</h2>' + inner + '</section>'; }
-  function ticks(a) { return '<ul class="ticks">' + a.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>'; }
-  function chips(a) { return '<div class="chips">' + a.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('') + '</div>'; }
 
-  /* NOW: the current challenge only */
-  function noteHTML() {
-    var n = S.nowNote; if (!n || !n.length) return '';
-    return '<section class="note">' + n.map(function (p, i) { return '<p' + (i === 0 ? ' class="note__hi"' : '') + '>' + esc(p) + '</p>'; }).join('') + '<div class="note__sign"><img src="assets/pfp.jpg" alt="">Alok</div></section>';
-  }
-  function heroCTA(c) {
-    if (c.status === 'soon' && S.inbox && S.inbox.on && S.inbox.url)
-      return '<div class="hero-cta"><a class="btn" href="#now" data-jump="inbox-main">Get Day 0 in your inbox</a><small>Free. Confirm your email once. Unsubscribe any time.</small></div>';
-    var l = last(c);
-    if (l) return '<div class="hero-cta"><a class="btn" href="#d-' + c.id + '-' + l.day + '">Watch Day ' + l.day + '</a><small>Free. Notes and files included.</small></div>';
-    return '';
-  }
+  /* ---------- NOW (home) ---------- */
   function now() {
     var c = byId[S.current] || S.challenges[0];
-    if (c.status === 'soon') {
-      return '<div class="split"><article class="card main">' +
-        cover(c) + kicker() +
-        '<h1>' + esc(c.title) + '</h1>' + metaHTML(c) + heroCTA(c) + board(c) +
-        '<div class="prose">' + noteHTML() + inboxBox('main') +
-          (c.learn && c.learn.length ? sec("What I'm going to find out", ticks(c.learn)) : '') +
-          sec('Files', '<p class="muted">Coming soon. Every day\'s notes and files will be here, free.</p>') +
-        '</div></article>' + sideCard(c, true) + '</div>';
-    }
-    return '<div class="split"><article class="card main">' + cover(c) +
-      kicker() + '<h1>' + esc(c.title) + '</h1>' + metaHTML(c) + heroCTA(c) + board(c) +
-      '<div class="prose">' +
-        (c.about ? sec("What's happening", '<p>' + esc(c.about) + '</p>') : '') +
-        sec('What you get, free', ticks(['Every day as a short lesson, in order', 'My notes: what worked and what didn\'t', 'The files I used, ready to open'])) +
-        sec('The challenge so far', dayRows(c, true)) +
-        (c.tools && c.tools.length ? sec('Tools', chips(c.tools)) : '') +
-        sec("Why I'm doing this", '<p>' + esc(S.why) + '</p>') +
-      '</div></article>' + sideCard(c, true) + '</div>';
+    var live = liveDay(c), T = c.trailer || {};
+    var tHref = T.video ? yt(T) : '#d-' + c.id + '-' + (live > 0 ? live : 1);
+    var tExt = T.video ? ' target="_blank" rel="noopener"' : '';
+    var trailer = '<a class="ttile" href="' + esc(tHref) + '"' + tExt + '>' +
+      (T.thumb ? '<img src="assets/thumbs/' + esc(T.thumb) + '" alt="">' : '<img class="ttile__face" src="' + PHOTO + '" alt="">') +
+      '<span class="ttile__go">' + I.play + '</span>' +
+      '<span class="ttile__l">' + (T.video ? 'Watch' + (T.length ? ' · ' + esc(T.length) : '') : 'Watch Day ' + (live > 0 ? live : 1)) + '</span></a>';
+    return '<div class="home">' + stories(c) + vs(c) +
+      '<h1 class="home__q">Is it true? Watch me find out.</h1>' + trailer + grid(c) +
+      '<section class="gets"><div>' + I.video + '<span>Daily video</span></div><div>' + I.notes + '<span>My notes</span></div><div>' + I.down + '<span>Files</span></div></section>' +
+      '<p class="gets__s">All free. No course to sell.</p>' +
+      inboxBox('main', 'Get the answer on Day ' + (c.totalDays || 30)) + '</div>';
   }
 
-  /* CLASSROOM: every challenge as a course */
-  function classroom() {
-    var order = { now: 0, paused: 1, done: 2, soon: 3 };
-    var list = S.challenges.slice().sort(function (a, b) { return order[a.status] - order[b.status]; });
-    return '<div class="head"><h1>Classroom</h1><p>Every challenge, day by day. All free.</p></div><div class="cgrid">' +
-      list.map(function (c) {
-        var n = (c.days || []).length, tag = c.status === 'soon' ? 'Season 1' : n + ' lesson' + (n === 1 ? '' : 's') + (c.tools && c.tools[0] ? ' · ' + c.tools[0] : '');
-        var pct = c.totalDays ? Math.min(100, Math.round(n / (c.totalDays + 1) * 100)) : 0;
-        var inner = cover(c, true) + '<div class="course__b"><h2>' + esc(c.title) + '</h2><p>' + esc(c.oneLine) + '</p>' +
-          '<div class="prog" role="img" aria-label="' + n + ' of ' + ((c.totalDays || 0) + 1) + ' days"><i style="width:' + pct + '%"></i></div><div class="course__f"><span>' + esc(tag) + '</span>' + stateHTML(c) + '</div></div>';
-        return c.status === 'soon' ? '<div class="card course">' + inner + '</div>' : '<a class="card course" href="#c-' + c.id + '">' + inner + '</a>';
-      }).join('') + '</div>';
-  }
-
-  /* COURSE overview */
-  function course(c) {
-    return '<a class="back" href="#classroom">Classroom</a><div class="split"><article class="card main">' + cover(c) +
-      kicker() + '<h1>' + esc(c.title) + '</h1>' + metaHTML(c) + board(c) + '<div class="prose">' +
-        (c.about ? sec('About this challenge', '<p>' + esc(c.about) + '</p>') : '') +
-        (c.learn && c.learn.length ? sec("What you'll learn", ticks(c.learn)) : '') +
-        (c.tools && c.tools.length ? sec('Tools', chips(c.tools)) : '') +
-        sec('Lessons', dayRows(c, true)) +
-      '</div></article>' + sideCard(c) + '</div>';
-  }
-
-  /* LESSON */
-  function notes(t) {
+  /* ---------- DAY page ---------- */
+  function notesHTML(t) {
     return t.split(/\n\s*\n/).map(function (b) {
       var ls = b.split('\n');
       if (ls.every(function (l) { return /^\s*-\s+/.test(l); })) return '<ul class="ticks">' + ls.map(function (l) { return '<li>' + esc(l.replace(/^\s*-\s+/, '')) + '</li>'; }).join('') + '</ul>';
@@ -176,82 +154,148 @@
     }).join('');
   }
   function ext(u) { var m = /\.([a-z0-9]{2,5})(?:$|\?)/i.exec(u || ''); return /drive\.google|docs\.google/.test(u || '') ? 'LINK' : (m ? m[1].toUpperCase() : 'FILE'); }
-  function fileRow(f, sub) {
-    return '<li class="file"><span class="file__ic">' + esc(ext(f.url)) + '</span><span class="file__n">' + esc(f.name) + '<small>' + esc(sub || f.note || '') + '</small></span><a href="' + esc(f.url) + '" target="_blank" rel="noopener">Open</a></li>';
+  function fileTile(f, dayN, isLive) {
+    return '<a class="ftile" href="' + esc(f.url) + '" target="_blank" rel="noopener"><span class="ftile__ic">' + esc(ext(f.url)) + '</span>' +
+      '<span class="ftile__n">' + esc(f.name) + '</span><span class="ftile__f">' + (dayN != null ? '<b class="' + (isLive ? 'is-live' : '') + '">DAY ' + dayN + '</b>' : '<i></i>') + I.down + '</span></a>';
   }
-  function lesson(c, d) {
-    var list = days(c), k = list.indexOf(d), prev = list[k - 1], next = list[k + 1];
-    var yt = 'https://www.youtube.com/' + (d.short ? 'shorts/' : 'watch?v=') + d.video;
-    var player = embed
-      ? '<div class="player' + (d.short ? ' player--short' : '') + '"><iframe src="https://www.youtube-nocookie.com/embed/' + esc(d.video) + '?rel=0" title="' + esc(d.title) + '" allow="encrypted-media; picture-in-picture" allowfullscreen></iframe></div>'
-      : '<a class="player' + (d.short ? ' player--short' : '') + '" href="' + esc(yt) + '" target="_blank" rel="noopener">' + (d.thumb ? '<img src="assets/thumbs/' + esc(d.thumb) + '" alt="">' : '') + '<span class="player__go"><i></i>Watch on YouTube</span></a>';
-    var mods = list.map(function (x) {
-      return '<a class="mi" href="#d-' + c.id + '-' + x.day + '"' + (x === d ? ' aria-current="page"' : '') + '><b>DAY ' + x.day + '</b><span>' + esc(x.title) + '</span></a>';
-    }).join('');
-    var l = last(c);
-    if (c.status === 'now' && l && (!c.totalDays || l.day < c.totalDays)) mods += '<div class="mi mi--next"><b>DAY ' + (l.day + 1) + '</b><span>Coming next</span></div>';
-    var files = d.files || [];
-    return '<a class="back" href="#c-' + c.id + '">' + esc(c.title) + '</a><div class="lgrid">' +
-      '<nav class="card mods" aria-label="Days"><h3>' + esc(c.title) + '</h3>' + mods + '</nav>' +
-      '<article class="card lesson">' + player +
-        '<h1>Day ' + d.day + ' · ' + esc(d.title) + '</h1>' +
-        '<div class="meta"><span>' + esc(fmt(d.date)) + '</span>' + (d.length ? '<span class="dot" aria-hidden="true"></span><span>' + esc(d.length) + '</span>' : '') + '<span class="dot" aria-hidden="true"></span><a href="' + esc(yt) + '" target="_blank" rel="noopener">Open on YouTube</a></div>' +
-        '<div class="prose">' +
-          sec('Notes', d.notes ? notes(d.notes) : '<p class="muted">Notes for this day are on the way.</p>') +
-          (files.length ? sec('Files', '<ul class="files">' + files.map(function (f) { return fileRow(f); }).join('') + '</ul>') : '') +
-        '</div>' +
-        '<div class="pager">' + (prev ? '<a class="prev" href="#d-' + c.id + '-' + prev.day + '">‹ Day ' + prev.day + '</a>' : '<span></span>') +
-          (next ? '<a class="btn" href="#d-' + c.id + '-' + next.day + '">Day ' + next.day + ' ›</a>' : '<a class="btn btn--line" href="#c-' + c.id + '">All lessons</a>') + '</div>' +
-      '</article></div>';
+  function lesson(c, n) {
+    var d = dayOf(c, n) || { day: n, title: '', video: '', files: [] }, st = dayState(c, n), list = days(c);
+    var player;
+    if (hasVideo(d)) {
+      player = embed
+        ? '<div class="player' + (d.short ? ' player--short' : '') + '"><iframe src="https://www.youtube-nocookie.com/embed/' + esc(d.video) + '?rel=0" title="' + esc(d.title || 'Day ' + n) + '" allow="encrypted-media; picture-in-picture" allowfullscreen></iframe></div>'
+        : '<a class="player' + (d.short ? ' player--short' : '') + '" href="' + esc(yt(d)) + '" target="_blank" rel="noopener">' + (d.thumb ? '<img src="assets/thumbs/' + esc(d.thumb) + '" alt="">' : '') + '<span class="player__go"><i></i>Watch on YouTube</span></a>';
+    } else {
+      player = '<div class="player player--soon"><img src="' + PHOTO + '" alt=""><span class="player__soon">' + (st === 'live' ? liveDot() + 'Day ' + n + ' video goes up today' : 'Coming on Day ' + n) + '</span></div>';
+    }
+    var L = c.ledger || {};
+    var nums = c.ledger ? '<section class="nums">' +
+      '<div><b>' + (L.hours == null ? '—' : esc(L.hours) + 'h') + '</b>' + I.clock + '<span class="sr-only">hours so far</span></div>' +
+      '<div><b>' + (L.spent == null ? '—' : esc(inr(L.spent))) + '</b>' + I.wallet + '<span class="sr-only">money spent so far</span></div>' +
+      '<div class="is-earn"><b>' + esc(inr(earned(c))) + '</b>' + I.up + '<span class="sr-only">money earned so far</span></div></section>' : '';
+    var pics = (d.pictures || []).filter(function (p) { return p && p.img; });
+    var picsHTML = pics.length ? '<section class="pics"><h2>Today in ' + pics.length + ' picture' + (pics.length === 1 ? '' : 's') + '</h2>' +
+      pics.map(function (p, i) { return '<div class="pic"><span class="pic__img"><img src="' + esc(p.img) + '" alt="" loading="lazy"><b>' + (i + 1) + '</b></span><span>' + esc(p.text) + '</span></div>'; }).join('') + '</section>' : '';
+    var files = (d.files || []);
+    var filesHTML = files.length ? '<section class="ftiles">' + files.map(function (f) { return fileTile(f, null); }).join('') + '</section>' : '';
+    var k = list.indexOf(d), prev = k > 0 ? list[k - 1] : null;
+    var nextN = n + 1, nextD = dayOf(c, nextN), nextOpen = nextD && (hasVideo(nextD) || dayState(c, nextN) === 'live');
+    var tomorrow = (c.status === 'now' && !nextOpen && n < (c.totalDays || 30))
+      ? '<section class="card tmrw"><span class="tmrw__ic">' + I.lock + '<b>DAY ' + nextN + '</b></span>' + inboxBox('day', 'Tomorrow. Get it first?').replace('<section class="card inbox2"', '<section class="inbox2 inbox2--bare"') + '</section>'
+      : '';
+    return '<a class="back" href="' + (c.id === S.current ? '#now' : '#c-' + c.id) + '">' + esc(c.id === S.current ? 'Home' : c.title) + '</a>' +
+      '<div class="day">' + stories(c, n) + vs(c, n) + player +
+      '<h1 class="day__t">' + (d.title ? 'Day ' + n + ' · ' + esc(d.title) : 'Day ' + n) + '</h1>' +
+      (hasVideo(d) ? '<div class="meta">' + (d.date ? '<span>' + esc(fmt(d.date)) + '</span>' : '') + (d.length ? '<span>' + esc(d.length) + '</span>' : '') + '<a href="' + esc(yt(d)) + '" target="_blank" rel="noopener">Open on YouTube</a></div>' : '') +
+      (c.status === 'now' ? nums : '') + picsHTML + filesHTML +
+      (d.notes ? '<section class="card dnotes"><h2>My notes</h2>' + notesHTML(d.notes) + '</section>' : '') +
+      tomorrow +
+      '<div class="pager">' + (prev ? '<a class="pager__b" href="#d-' + c.id + '-' + prev.day + '">‹ Day ' + prev.day + '</a>' : '<span></span>') +
+        (nextOpen ? '<a class="pager__b pager__b--go" href="#d-' + c.id + '-' + nextN + '">Day ' + nextN + ' ›</a>' : '') + '</div>' +
+      '</div>';
   }
 
-  /* FILES */
+  /* ---------- CLASSROOM ---------- */
+  function coverHTML(c) {
+    return '<div class="cv cv--' + (c.cover || 'coral') + '"><b>' + esc(c.coverTitle || c.title) + '</b>' +
+      (c.photo ? '<img src="' + PHOTO + '" alt="" width="540" height="545" loading="lazy">' : '') + '</div>';
+  }
+  function bars(c) {
+    var total = c.totalDays || 30, live = liveDay(c), out = '';
+    for (var n = 1; n <= total; n++) out += '<i class="' + (n < live ? 'is-done' : n === live ? 'is-live' : '') + '"></i>';
+    return '<span class="bars" aria-hidden="true">' + out + '</span>';
+  }
+  function classroom() {
+    var live = S.challenges.filter(function (c) { return c.status === 'now'; });
+    var past = S.challenges.filter(function (c) { return c.status === 'archive' || c.status === 'done' || c.status === 'paused'; });
+    var soon = S.challenges.filter(function (c) { return c.status === 'soon'; });
+    return '<div class="room"><h1 class="ptitle">Classroom</h1>' +
+      live.map(function (c) {
+        return '<a class="room__live" href="#now">' + coverHTML(c) + '<span class="chip">' + liveDot() + '<b>LIVE</b> · DAY ' + liveDay(c) + '/' + (c.totalDays || 30) + '</span>' + bars(c) + '</a>';
+      }).join('') +
+      (past.length ? '<h2 class="room__h">Watch any time</h2><div class="room__past">' + past.map(function (c) {
+        var n = (c.days || []).filter(hasVideo).length;
+        return '<a class="room__tile" href="#c-' + c.id + '" aria-label="' + esc(c.title + ', ' + n + ' videos') + '">' + coverHTML(c) + '<span class="cnt">' + I.play + n + '</span></a>';
+      }).join('') + '</div>' : '') +
+      (soon.length ? '<h2 class="room__h">Next</h2>' + soon.map(function (c) {
+        return '<div class="room__soon">' + coverHTML(c) + '<span class="chip chip--soon">' + I.clock + 'COMING SOON</span></div>';
+      }).join('') : '') + '</div>';
+  }
+
+  /* ---------- one earlier challenge ---------- */
+  function course(c) {
+    if (c.id === S.current) return now();
+    var list = days(c).filter(hasVideo);
+    return '<a class="back" href="#classroom">Classroom</a><div class="past">' + coverHTML(c) +
+      '<h1 class="ptitle ptitle--s">' + esc(c.title) + '</h1>' +
+      '<div class="past__g">' + list.map(function (d) {
+        return '<a class="pcard" href="#d-' + c.id + '-' + d.day + '">' + (d.thumb ? '<img src="assets/thumbs/' + esc(d.thumb) + '" alt="" loading="lazy">' : '<span class="pcard__ph"></span>') +
+          '<span class="pcard__d">DAY ' + d.day + '</span><span class="pcard__t">' + esc(d.title) + '</span></a>';
+      }).join('') + '</div></div>';
+  }
+
+  /* ---------- FILES ---------- */
   function filesPage() {
-    var groups = S.challenges.map(function (c) {
-      var rows = days(c).filter(function (d) { return (d.files || []).length; }).map(function (d) {
-        return d.files.map(function (f) { return fileRow(f, 'Day ' + d.day + (f.note ? ' · ' + f.note : '')); }).join('');
-      }).join('');
-      return rows ? '<section class="card fgroup"><h2>' + esc(c.title) + '</h2><ul class="files">' + rows + '</ul></section>' : '';
-    }).join('');
-    return '<div class="head"><h1>Files</h1><p>Every file from every challenge, in one place.</p></div>' +
-      (groups || '<div class="card empty">Files show up here as soon as a day has them. The first ones come with the next AI Automation lessons.</div>');
+    var all = [];
+    S.challenges.forEach(function (c) {
+      days(c).forEach(function (d) { (d.files || []).forEach(function (f) { all.push({ c: c, d: d, f: f }); }); });
+    });
+    var used = S.challenges.filter(function (c) { return all.some(function (x) { return x.c === c; }); });
+    var chips = used.length > 1 ? '<div class="fchips" role="group" aria-label="Filter files"><button type="button" class="is-on" data-f="">All</button>' +
+      used.map(function (c) { return '<button type="button" data-f="' + esc(c.id) + '">' + esc(c.coverTitle || c.title) + '</button>'; }).join('') + '</div>' : '';
+    return '<div class="files2"><div class="files2__h"><h1 class="ptitle">Files</h1><span>FREE · NO SIGN-UP</span></div>' + chips +
+      (all.length ? '<div class="ftiles ftiles--page">' + all.map(function (x) {
+        return fileTile(x.f, x.d.day, dayState(x.c, x.d.day) === 'live').replace('<a class="ftile"', '<a class="ftile" data-c="' + esc(x.c.id) + '"');
+      }).join('') + '</div>' : '<div class="card empty">' + I.down + '<p>Every day\'s files land here, free.</p></div>') + '</div>';
   }
+  view.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('.fchips button'); if (!b) return;
+    var f = b.getAttribute('data-f');
+    view.querySelectorAll('.fchips button').forEach(function (x) { x.classList.toggle('is-on', x === b); });
+    view.querySelectorAll('.ftiles--page .ftile').forEach(function (t) { t.hidden = !!f && t.getAttribute('data-c') !== f; });
+  });
 
-  /* ABOUT */
+  /* ---------- ABOUT ---------- */
   function about() {
-    return '<article class="card about"><div class="about__pic"><img src="assets/alok-540.webp" width="540" height="545" alt="Alok Mishra"></div><div>' +
-      '<h1>Hi, I\'m Alok</h1>' +
-      '<p class="lead">For years I was the guy who started everything and finished nothing. New skill, new plan, new excitement, and then I\'d quit in a week.</p>' +
-      '<div class="steps">' +
-        '<div class="step"><b>1</b><p>I pick one skill and give it a fixed number of days.</p></div>' +
-        '<div class="step"><b>2</b><p>I do it on camera, so I can\'t quit quietly.</p></div>' +
-        '<div class="step"><b>3</b><p>Whatever works, I put here as short lessons, notes and files. Free.</p></div>' +
-      '</div>' +
-      '<p class="lead">The internet says a lot. I test it myself.</p>' +
-      '<div class="contact"><a class="btn" href="' + esc(S.youtube) + '" target="_blank" rel="noopener">Watch on YouTube</a><a class="btn btn--line" href="' + esc(S.instagram) + '" target="_blank" rel="noopener">Instagram</a>' +
-      (S.email ? '<a class="mail" href="mailto:' + esc(S.email) + '">Collabs: ' + esc(S.email) + '</a>' : '') + '</div>' + inboxBox('about') +
-      '</div></article>';
+    var c = byId[S.current] || S.challenges[0], mini = '';
+    for (var i = 0; i < 24; i++) mini += '<i class="' + (i < 2 ? 'is-done' : i === 2 ? 'is-live' : '') + '"></i>';
+    var first = S.challenges.filter(function (x) { return x.started; }).map(function (x) { return x.started; }).sort()[0];
+    var since = first ? new Date(first + 'T12:00:00').toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : '';
+    return '<div class="about2">' +
+      '<section class="poster"><img src="' + PHOTO + '" alt="Alok Mishra" width="540" height="545"><h1>Hi, I\'m<br>Alok.</h1></section>' +
+      (S.story && S.story.length ? '<section class="card story"><h2>My story</h2>' + S.story.map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('') +
+        '<div class="story__sign"><img src="' + PHOTO + '" alt="">Alok</div></section>' : '') +
+      '<section class="facts">' +
+        (since ? '<div>' + I.cal + '<span>In public since ' + esc(since) + '</span></div>' : '') +
+        '<div><b>30</b><span>days per claim</span></div>' +
+        '<div>' + I.no + '<span>No course to sell</span></div></section>' +
+      '<section class="how"><h2>How it works</h2><div class="how__g">' +
+        '<div><span class="how__p how__p--claim">' + (c.claim ? '<img src="' + esc(c.claim.img) + '" alt="A real claim post">' : '') + '</span><b>1 · A claim</b></div>' +
+        '<div><span class="how__p how__p--grid">' + mini + '</span><b>2 · 30 days, live</b></div>' +
+        '<div><span class="how__p how__p--end"><strong>TRUE?</strong><small>VERDICT</small></span><b>3 · The truth</b></div>' +
+      '</div></section>' +
+      '<section class="reach"><a href="' + esc(S.youtube) + '" target="_blank" rel="noopener">' + I.yt + '<span>YouTube</span></a>' +
+        '<a href="' + esc(S.instagram) + '" target="_blank" rel="noopener">' + I.ig + '<span>Instagram</span></a>' +
+        (S.email ? '<a href="mailto:' + esc(S.email) + '">' + I.mail + '<span>Collabs</span></a>' : '') + '</section>' +
+      '</div>';
   }
 
+  /* ---------- routing ---------- */
   function route() {
     var h = (location.hash || '#now').slice(1), html, tab = 'now', m;
     if (h === 'classroom') { html = classroom(); tab = 'classroom'; }
     else if (h === 'files') { html = filesPage(); tab = 'files'; }
     else if (h === 'about') { html = about(); tab = 'about'; }
-    else if ((m = h.match(/^c-([a-z0-9-]+)$/)) && byId[m[1]]) { html = course(byId[m[1]]); tab = 'classroom'; }
+    else if ((m = h.match(/^c-([a-z0-9-]+)$/)) && byId[m[1]]) { html = course(byId[m[1]]); tab = byId[m[1]].id === S.current ? 'now' : 'classroom'; }
     else if ((m = h.match(/^d-([a-z0-9-]+)-(\d+)$/)) && byId[m[1]]) {
-      var c = byId[m[1]], d = (c.days || []).filter(function (x) { return x.day === +m[2]; })[0];
-      if (d) { html = lesson(c, d); tab = c.id === S.current ? 'now' : 'classroom'; } else html = now();
+      var c = byId[m[1]], n = +m[2], d = dayOf(c, n);
+      if (d || dayState(c, n) === 'live') { html = lesson(c, n); tab = c.id === S.current ? 'now' : 'classroom'; } else html = now();
     }
     else html = now();
     view.innerHTML = html;
     document.querySelectorAll('[data-tab]').forEach(function (a) { if (a.dataset.tab === tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    var here = view.querySelector('.st.is-here'); if (here && here.scrollIntoView) here.scrollIntoView({ block: 'nearest', inline: 'center' });
   }
-  view.addEventListener('click', function (e) {
-    var a = e.target.closest && e.target.closest('[data-jump]'); if (!a) return;
-    var t = document.getElementById(a.dataset.jump); if (!t) return;
-    e.preventDefault(); t.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
-  });
   addEventListener('hashchange', function () { route(); scrollTo(0, 0); view.focus({ preventScroll: true }); });
   route();
 })();
