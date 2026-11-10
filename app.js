@@ -78,7 +78,7 @@
     if (!c.claim) return '';
     var day = n || liveDay(c);
     return '<section class="vs" aria-label="The claim versus my result">' +
-      '<a class="vs__claim" href="' + esc(c.claim.url) + '" target="_blank" rel="noopener" title="' + esc(c.claim.by) + '"><img src="' + esc(c.claim.img) + '" alt="' + esc('Real post: ' + (c.claim.says || '') + ' (' + c.claim.by + ')') + '"></a>' +
+      '<div class="vs__claim"><img src="' + esc(c.claim.img) + '" alt="' + esc('Real post: ' + (c.claim.says || '') + ' (' + c.claim.by + ')') + '"></div>' +
       '<div class="vs__me"><img src="' + PHOTO + '" alt="Alok" width="540" height="545">' +
         '<div class="vs__res"><b>' + liveDot() + esc(inr(earned(c))) + '</b><span>DAY ' + day + '/' + (c.totalDays || 30) + '</span></div></div>' +
       '<span class="vs__vs" aria-hidden="true">VS</span></section>';

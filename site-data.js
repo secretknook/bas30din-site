@@ -63,7 +63,7 @@ window.SITE = {
       totalDays: 30,
       started: "2026-11-10",   // Day 1. The live day moves on by itself every day from this date.
       // The claim being tested: shown as "claim VS me" on the home page and every day page.
-      // img = a REAL post (no faces). url = where it came from (tap opens it).
+      // img = a REAL post (no faces). url = where it came from (kept for our records; the picture is not a link).
       claim: { img: "assets/claim-1lakh.jpg", url: "https://www.youtube.com/watch?v=RVaEJQaBNq4", by: "Vedantu Upskill Academy on YouTube", says: "Earn ₹1 lakh / monthly" },
       // The Day 0 trailer for the big play tile on the home page. video = YouTube code. thumb = file in assets/thumbs/.
       trailer: { video: "", short: true, thumb: "", length: "" },
