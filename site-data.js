@@ -61,7 +61,7 @@ window.SITE = {
       status: "now",
       cover: "coral", photo: true,
       totalDays: 30,
-      started: "2026-11-08",   // Day 1. The live day moves on by itself every day from this date.
+      started: "2026-11-10",   // Day 1. The live day moves on by itself every day from this date.
       // The claim being tested: shown as "claim VS me" on the home page and every day page.
       // img = a REAL post (no faces). url = where it came from (tap opens it).
       claim: { img: "assets/claim-1lakh.jpg", url: "https://www.youtube.com/watch?v=RVaEJQaBNq4", by: "Vedantu Upskill Academy on YouTube", says: "Earn ₹1 lakh / monthly" },
@@ -74,7 +74,7 @@ window.SITE = {
       // A day with video: "" shows "goes up today" until the link is added. published: false keeps it out of the email feed.
       // pictures (optional) = "Today in 3 pictures": [{ img: "assets/days/d1-1.jpg", text: "What I tried" }, ...]
       days: [
-        { day: 1, date: "2026-11-08", title: "", video: "", short: false, length: "", thumb: "", notes: "", files: [], pictures: [], published: false }
+        { day: 1, date: "2026-11-10", title: "", video: "", short: false, length: "", thumb: "", notes: "", files: [], pictures: [], published: false }
       ]
     },
     {
