@@ -36,6 +36,8 @@
   function days(c) { return (c.days || []).slice().sort(function (a, b) { return a.day - b.day; }); }
   function dayOf(c, n) { return (c.days || []).filter(function (x) { return x.day === n; })[0]; }
   function hasVideo(d) { return d && d.video; }
+  // A day can be opened once it has happened (or is today), even before its video/notes are added.
+  function isOpen(c, n) { var st = dayState(c, n); return !!dayOf(c, n) || st === 'live' || st === 'done'; }
   // The live day moves on by itself from `started` (Day 1) for a running challenge.
   function liveDay(c) {
     if (c.status !== 'now' || !c.started) return -1;
@@ -46,7 +48,7 @@
   function dayState(c, n) {
     var live = liveDay(c), d = dayOf(c, n);
     if (n === live) return 'live';
-    if (live > 0) return n < live ? (d ? 'done' : 'missed') : (n === live + 1 ? 'next' : 'later');
+    if (live > 0) return n < live ? 'done' : (n === live + 1 ? 'next' : 'later');
     return d ? 'done' : 'later';
   }
   function yt(d) { return 'https://www.youtube.com/' + (d.short ? 'shorts/' : 'watch?v=') + d.video; }
@@ -60,7 +62,7 @@
   function stories(c, current) {
     var total = c.totalDays || 30, live = liveDay(c), first = dayOf(c, 0) ? 0 : 1, out = '';
     for (var n = first; n <= total; n++) {
-      var st = dayState(c, n), d = dayOf(c, n), open = d || st === 'live';
+      var st = dayState(c, n), d = dayOf(c, n), open = isOpen(c, n);
       var face = st === 'done' || st === 'live'
         ? '<span class="st__ring"><img src="' + (d && d.thumb ? 'assets/thumbs/' + esc(d.thumb) : PHOTO) + '" alt="" loading="lazy"></span>'
         : '<span class="st__ring st__ring--off">' + I.lock + '</span>';
@@ -92,7 +94,7 @@
       if (st === 'live') {
         cells += '<a class="tile tile--live" href="#d-' + c.id + '-' + n + '"><img src="' + (d && d.thumb ? 'assets/thumbs/' + esc(d.thumb) : PHOTO) + '" alt=""><b class="tile__tag">LIVE</b><span class="tile__n">DAY ' + n + '</span></a>';
       } else if (st === 'done') {
-        cells += '<a class="tile tile--done" href="#d-' + c.id + '-' + n + '">' + (d.thumb ? '<img src="assets/thumbs/' + esc(d.thumb) + '" alt="">' : '') + '<span class="tile__n">DAY ' + n + '</span></a>';
+        cells += '<a class="tile tile--done" href="#d-' + c.id + '-' + n + '">' + (d && d.thumb ? '<img src="assets/thumbs/' + esc(d.thumb) + '" alt="">' : '') + '<span class="tile__n">DAY ' + n + '</span></a>';
       } else if (last) {
         cells += '<span class="tile tile--verdict"><b>' + n + '</b><small>VERDICT</small></span>';
       } else if (st === 'next') {
@@ -168,7 +170,7 @@
         ? '<div class="player' + (d.short ? ' player--short' : '') + '"><iframe src="https://www.youtube-nocookie.com/embed/' + esc(d.video) + '?rel=0" title="' + esc(d.title || 'Day ' + n) + '" allow="encrypted-media; picture-in-picture" allowfullscreen></iframe></div>'
         : '<a class="player' + (d.short ? ' player--short' : '') + '" href="' + esc(yt(d)) + '" target="_blank" rel="noopener">' + (d.thumb ? '<img src="assets/thumbs/' + esc(d.thumb) + '" alt="">' : '') + '<span class="player__go"><i></i>Watch on YouTube</span></a>';
     } else {
-      player = '<div class="player player--soon"><img src="' + PHOTO + '" alt=""><span class="player__soon">' + (st === 'live' ? liveDot() + 'Day ' + n + ' video goes up today' : 'Coming on Day ' + n) + '</span></div>';
+      player = '<div class="player player--soon"><img src="' + PHOTO + '" alt=""><span class="player__soon">' + (st === 'live' ? liveDot() + 'Day ' + n + ' video goes up today' : st === 'done' ? 'Day ' + n + ' video coming soon' : 'Coming on Day ' + n) + '</span></div>';
     }
     var L = c.ledger || {};
     var nums = c.ledger ? '<section class="nums">' +
@@ -180,8 +182,8 @@
       pics.map(function (p, i) { return '<div class="pic"><span class="pic__img"><img src="' + esc(p.img) + '" alt="" loading="lazy"><b>' + (i + 1) + '</b></span><span>' + esc(p.text) + '</span></div>'; }).join('') + '</section>' : '';
     var files = (d.files || []);
     var filesHTML = files.length ? '<section class="ftiles">' + files.map(function (f) { return fileTile(f, null); }).join('') + '</section>' : '';
-    var k = list.indexOf(d), prev = k > 0 ? list[k - 1] : null;
-    var nextN = n + 1, nextD = dayOf(c, nextN), nextOpen = nextD && (hasVideo(nextD) || dayState(c, nextN) === 'live');
+    var first = dayOf(c, 0) ? 0 : 1, prev = n - 1 >= first && isOpen(c, n - 1) ? { day: n - 1 } : null;
+    var nextN = n + 1, nextOpen = n < (c.totalDays || 30) && isOpen(c, nextN);
     var tomorrow = (c.status === 'now' && !nextOpen && n < (c.totalDays || 30))
       ? '<section class="card tmrw"><span class="tmrw__ic">' + I.lock + '<b>DAY ' + nextN + '</b></span>' + inboxBox('day', 'Tomorrow. Get it first?').replace('<section class="card inbox2"', '<section class="inbox2 inbox2--bare"') + '</section>'
       : '';
@@ -291,7 +293,7 @@
     else if ((m = h.match(/^c-([a-z0-9-]+)$/)) && byId[m[1]]) { html = course(byId[m[1]]); tab = byId[m[1]].id === S.current ? 'now' : 'classroom'; }
     else if ((m = h.match(/^d-([a-z0-9-]+)-(\d+)$/)) && byId[m[1]]) {
       var c = byId[m[1]], n = +m[2], d = dayOf(c, n);
-      if (d || dayState(c, n) === 'live') { html = lesson(c, n); tab = c.id === S.current ? 'now' : 'classroom'; } else html = now();
+      if (isOpen(c, n)) { html = lesson(c, n); tab = c.id === S.current ? 'now' : 'classroom'; } else html = now();
     }
     else html = now();
     view.innerHTML = html;

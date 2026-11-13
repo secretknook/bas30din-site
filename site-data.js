@@ -61,7 +61,7 @@ window.SITE = {
       status: "now",
       cover: "coral", photo: true,
       totalDays: 30,
-      started: "2026-11-10",   // Day 1. The live day moves on by itself every day from this date.
+      started: "2026-11-11",   // Day 1 (Day 0 was 10 Nov). The live day moves on by itself every day from this date; past days unlock by themselves.
       // The claim being tested: shown as "claim VS me" on the home page and every day page.
       // img = a REAL post (no faces). url = where it came from (kept for our records; the picture is not a link).
       claim: { img: "assets/claim-1lakh.jpg", url: "https://www.youtube.com/watch?v=RVaEJQaBNq4", by: "Vedantu Upskill Academy on YouTube", says: "Earn ₹1 lakh / monthly" },
@@ -74,7 +74,10 @@ window.SITE = {
       // A day with video: "" shows "goes up today" until the link is added. published: false keeps it out of the email feed.
       // pictures (optional) = "Today in 3 pictures": [{ img: "assets/days/d1-1.jpg", text: "What I tried" }, ...]
       days: [
-        { day: 1, date: "2026-11-10", title: "", video: "", short: false, length: "", thumb: "", notes: "", files: [], pictures: [], published: false }
+        { day: 0, date: "2026-11-10", title: "I tried the ₹1 lakh/month AI automation side hustle from ₹0", video: "Uk9jR-sHN1g", short: false, length: "7 min", thumb: "Uk9jR-sHN1g.jpg", notes: "", files: [], pictures: [], published: false },
+        { day: 1, date: "2026-11-11", title: "AI automation se ₹0 kyun?", video: "FEhyYIcny8g", short: true, length: "1 min", thumb: "FEhyYIcny8g.jpg", notes: "", files: [], pictures: [], published: false },
+        { day: 2, date: "2026-11-12", title: "4 cold calls, ₹0 so far", video: "Dt04NZnXxZU", short: true, length: "2 min", thumb: "Dt04NZnXxZU.jpg", notes: "", files: [], pictures: [], published: false },
+        { day: 3, date: "2026-11-13", title: "", video: "", short: true, length: "", thumb: "", notes: "", files: [], pictures: [], published: false }
       ]
     },
     {
