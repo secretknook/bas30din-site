@@ -77,7 +77,7 @@ window.SITE = {
         { day: 0, date: "2026-11-10", title: "I tried the ₹1 lakh/month AI automation side hustle from ₹0", video: "Uk9jR-sHN1g", short: false, length: "7 min", thumb: "Uk9jR-sHN1g.jpg", notes: "", files: [], pictures: [], published: false },
         { day: 1, date: "2026-11-11", title: "AI automation se ₹0 kyun?", video: "FEhyYIcny8g", short: true, length: "1 min", thumb: "FEhyYIcny8g.jpg", notes: "", files: [], pictures: [], published: false },
         { day: 2, date: "2026-11-12", title: "4 cold calls, ₹0 so far", video: "Dt04NZnXxZU", short: true, length: "2 min", thumb: "Dt04NZnXxZU.jpg", notes: "", files: [], pictures: [], published: false },
-        { day: 3, date: "2026-11-13", title: "", video: "", short: true, length: "", thumb: "", notes: "", files: [], pictures: [], published: false }
+        { day: 3, date: "2026-11-13", title: "7 cold calls, ₹0 so far", video: "5777tYUiKJI", short: true, length: "3 min", thumb: "5777tYUiKJI.jpg", notes: "", files: [], pictures: [], published: false }
       ]
     },
     {
