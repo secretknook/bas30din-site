@@ -10,3 +10,6 @@
 
 /content-os/*
   X-Robots-Tag: noindex, nofollow
+
+/clinic-bot/*
+  X-Robots-Tag: noindex, nofollow
