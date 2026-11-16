@@ -66,7 +66,7 @@ window.SITE = {
       // img = a REAL post (no faces). url = where it came from (kept for our records; the picture is not a link).
       claim: { img: "assets/claim-1lakh.jpg", url: "https://www.youtube.com/watch?v=RVaEJQaBNq4", by: "Vedantu Upskill Academy on YouTube", says: "Earn ₹1 lakh / monthly" },
       // The Day 0 trailer for the big play tile on the home page. video = YouTube code. thumb = file in assets/thumbs/.
-      trailer: { video: "", short: true, thumb: "", length: "" },
+      trailer: { video: "8c9g6EDp3z8", short: true, thumb: "8c9g6EDp3z8.jpg", length: "47 sec" },
       // The receipt: REAL numbers only. null = not started yet (shows "—").
       // Update these as the challenge runs, e.g. hours: 12, spent: 499, earned: 0
       ledger: { hours: null, spent: null, earned: 0 },
@@ -77,7 +77,10 @@ window.SITE = {
         { day: 0, date: "2026-11-10", title: "I tried the ₹1 lakh/month AI automation side hustle from ₹0", video: "Uk9jR-sHN1g", short: false, length: "7 min", thumb: "Uk9jR-sHN1g.jpg", notes: "", files: [], pictures: [], published: false },
         { day: 1, date: "2026-11-11", title: "AI automation se ₹0 kyun?", video: "FEhyYIcny8g", short: true, length: "1 min", thumb: "FEhyYIcny8g.jpg", notes: "", files: [], pictures: [], published: false },
         { day: 2, date: "2026-11-12", title: "4 cold calls, ₹0 so far", video: "Dt04NZnXxZU", short: true, length: "2 min", thumb: "Dt04NZnXxZU.jpg", notes: "", files: [], pictures: [], published: false },
-        { day: 3, date: "2026-11-13", title: "7 cold calls, ₹0 so far", video: "5777tYUiKJI", short: true, length: "3 min", thumb: "5777tYUiKJI.jpg", notes: "", files: [], pictures: [], published: false }
+        { day: 3, date: "2026-11-13", title: "7 cold calls, ₹0 so far", video: "5777tYUiKJI", short: true, length: "3 min", thumb: "5777tYUiKJI.jpg", notes: "", files: [], pictures: [], published: false },
+        { day: 4, date: "2026-11-14", title: "So excited to build this. Then my PG owner surprised me", video: "u5EwRIGARcA", short: true, length: "2 min", thumb: "u5EwRIGARcA.jpg", notes: "", files: [], pictures: [], published: false },
+        { day: 5, date: "2026-11-15", title: "54 business emails, ₹0 so far", video: "vWrSxOe8J70", short: true, length: "1 min", thumb: "vWrSxOe8J70.jpg", notes: "", files: [], pictures: [], published: false },
+        { day: 6, date: "2026-11-16", title: "PC off, bot still replies, ₹0 so far", video: "D8s94KfRwY4", short: true, length: "1 min", thumb: "D8s94KfRwY4.jpg", notes: "", files: [], pictures: [], published: false }
       ]
     },
     {
