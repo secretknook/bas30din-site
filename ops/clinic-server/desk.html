@@ -459,7 +459,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         '<button class="dbtn2" data-setup="1">Edit clinic setup</button></div>';
       h += '<div class="dsec"><span>Team</span><span>Who can log in</span></div><div style="padding:0 16px">' + (d.team || []).map(function (t) {
         return '<div class="drow"><span class="icol"><span style="font-size:15px;font-weight:600">' + esc(t.name) + (t.me ? ' <span style="font-weight:500;color:#667085">(you)</span>' : '') + '</span><span class="dsub">' + esc(t.role === 'owner' ? 'Owner' : t.role === 'doctor' ? 'Doctor' : 'Reception') + ' · ' + esc(t.phone) + '</span><span class="dsub">Last login: ' + esc(t.last) + (t.pw ? '' : ' · no password yet') + '</span></span>' +
-          (!t.me && t.role !== 'owner' ? '<button class="dmini" data-trm="' + esc(t.phone) + '" data-trmname="' + esc(t.name) + '" style="color:#B42318">Remove</button>' : '') + '</div>'; }).join('') +
+          (!t.me && t.role !== 'owner' ? '<span style="display:flex;flex-direction:column;gap:6px"><button class="dmini" data-trole2="' + (t.role === 'doctor' ? 'reception' : 'doctor') + '" data-tph="' + esc(t.phone) + '" data-tnm="' + esc(t.name) + '">' + (t.role === 'doctor' ? 'Make reception' : 'Make doctor') + '</button><button class="dmini" data-trm="' + esc(t.phone) + '" data-trmname="' + esc(t.name) + '" style="color:#B42318">Remove</button></span>' : '') + '</div>'; }).join('') +
         '<button class="drow" data-sheet="team" style="color:#175CD3;font-weight:600;font-size:15px">+ Add person</button></div><div style="padding:6px 16px 0;font-size:12.5px;color:#667085">A new person logs in the first time by sending LOGIN on WhatsApp from their number, then sets a password.</div>';
       h += '<div class="dsec"><span>Payments</span><span></span></div><div style="padding:0 16px"><div class="drow"><span class="icol"><span style="font-size:15px;font-weight:600">Clinic UPI ID</span><span class="dsub">Shown as a QR when reception bills by UPI</span></span></div>' +
         '<div style="display:flex;gap:8px;margin-top:4px"><input id="upi" class="dinput" placeholder="name@okhdfc" value="' + esc(c.upiId || '') + '" autocomplete="off" style="flex:1"><button class="dmini" id="saveupi" style="height:44px">Save</button></div></div>';
@@ -480,14 +480,15 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
           '<div class="dsub" style="margin-top:6px">This sets the treatments the WhatsApp bot offers. You can change them later.</div>' +
           '<label class="dlab" for="cn">Clinic name</label><input class="dinput" id="cn" value="' + esc(c.clinicName) + '">' +
           '<label class="dlab" for="dn">Doctor name</label><input class="dinput" id="dn" value="' + esc(c.doctorName) + '">' +
-          '<label class="dlab" for="cf">Consultation fee (₹)</label><input class="dinput" id="cf" inputmode="numeric" value="' + esc(c.fee) + '">';
+          '<label class="dlab" for="cf">Consultation fee (₹)</label><input class="dinput" id="cf" inputmode="numeric" value="' + esc(c.fee) + '">' +
+          '<label class="dlab" for="dp">Doctor\'s mobile number</label><input class="dinput" id="dp" type="tel" inputmode="tel" placeholder="Leave empty if this is your number" value="' + esc(c.docPhone || '') + '"><div class="dsub" style="margin-top:6px">The doctor logs in with this number and sees the doctor app.</div>';
       } else if (st === 2) {
         body = '<h1 class="dh">Clinic timings</h1><div class="dlab">Open on</div><div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px">' + DAYS.map(function (x, i) { var on = c.days.indexOf(x[0]) >= 0; return '<button class="dopt" data-cday="' + x[0] + '" aria-label="' + x[0] + '" aria-pressed="' + on + '" style="height:44px;border:' + (on ? '1.5px solid #175CD3' : '1px solid #EAECF0') + ';background:' + (on ? '#EFF4FF' : '#FFF') + ';color:' + (on ? '#175CD3' : '#667085') + '">' + x[1] + '</button>'; }).join('') + '</div>' +
           '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div><label class="dlab" for="co">Opens</label><input class="dinput" id="co" type="time" value="' + esc(c.open) + '"></div><div><label class="dlab" for="cc">Closes</label><input class="dinput" id="cc" type="time" value="' + esc(c.close) + '"></div></div>' +
           '<div class="dsub" style="margin-top:8px">Patients can book and take tokens only in these hours.</div>';
       } else if (st === 3) {
         body = '<h1 class="dh">Team and payments</h1><div class="dlab">Who uses the app</div>' + (S.d.team || []).map(function (t) { return '<div class="drow"><span class="icol"><span style="font-size:15px;font-weight:600">' + esc(t.name) + (t.me ? ' (you)' : '') + '</span><span class="dsub">' + esc(t.role === 'reception' ? 'Reception' : t.role === 'doctor' ? 'Doctor' : 'Owner') + ' · ' + esc(t.phone) + '</span></span></div>'; }).join('') +
-          '<button class="drow" data-sheet="team" style="color:#175CD3;font-weight:600;font-size:15px">+ Add receptionist</button>' +
+          '<button class="drow" data-sheet="team" style="color:#175CD3;font-weight:600;font-size:15px">+ Add person (reception or doctor)</button>' +
           '<label class="dlab" for="cu">Clinic UPI ID (optional)</label><input class="dinput" id="cu" placeholder="name@okhdfc" value="' + esc(c.upiId) + '" autocomplete="off"><div class="dsub" style="margin-top:6px">Reception can show this as a QR when a patient pays by UPI. Money goes straight to you.</div>';
       } else {
         body = '<h1 class="dh">Your QR poster</h1><div class="dcard" style="align-items:center;text-align:center;gap:10px;padding:24px 16px">' + qrSvg(S.d.links.qr, 200) + '<span style="font-size:18px;font-weight:700">Token chahiye? Scan karein</span><span class="dsub" style="font-size:14px">' + esc(c.clinicName) + ' · ' + esc(c.doctorName) + '</span></div>' +
@@ -501,7 +502,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     function readSetup() {
       var c = S.cfgDraft, g = function (id) { var e = document.getElementById(id); return e ? e.value : null; };
       if (g('cn') !== null) c.clinicName = g('cn'); if (g('dn') !== null) c.doctorName = g('dn'); if (g('cf') !== null) c.fee = Number(g('cf').replace(/\D/g, '')) || 0;
-      if (g('co') !== null) c.open = g('co'); if (g('cc') !== null) c.close = g('cc'); if (g('cu') !== null) c.upiId = g('cu').trim();
+      if (g('dp') !== null) c.docPhone = g('dp'); if (g('co') !== null) c.open = g('co'); if (g('cc') !== null) c.close = g('cc'); if (g('cu') !== null) c.upiId = g('cu').trim();
     }
     function startSetup(step) { var c = S.d.cfg || {}; S.cfgDraft = { type: c.type || 'skin', clinicName: c.clinicName || '', doctorName: c.doctorName || '', fee: c.fee || 0, open: c.open || '10:00', close: c.close || '20:00', days: (c.days || ['mon', 'tue', 'wed', 'thu', 'fri', 'sat']).slice(), upiId: c.upiId || '' }; S.setup = step || 1; draw(); window.scrollTo(0, 0); }
 
@@ -624,15 +625,18 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         if (S.setup === 1 && (!c.clinicName.trim() || !c.doctorName.trim())) return toast('Add the clinic and doctor name');
         if (S.setup === 2 && !c.days.length) return toast('Pick at least one day');
         if (S.setup < 4) { S.setup++; draw(); window.scrollTo(0, 0); return; }
-        el.disabled = true; call({ action: 'setup_save', cfg: { type: c.type, clinicName: c.clinicName, doctorName: c.doctorName, fee: c.fee, open: c.open, close: c.close, days: c.days, upiId: c.upiId, done: true } }, function (r) { if (r.saved) { S.setup = null; S.tab = 'today'; toast('Setup saved · your clinic is live'); } }); });
+        el.disabled = true; var dp = (c.docPhone || '').replace(/\D/g, '');
+        var fin = function () { call({ action: 'setup_save', cfg: { type: c.type, clinicName: c.clinicName, doctorName: c.doctorName, fee: c.fee, open: c.open, close: c.close, days: c.days, upiId: c.upiId, done: true } }, function (r) { if (r.saved) { S.setup = null; S.tab = 'today'; toast('Setup saved · your clinic is live'); } }); };
+        if (dp.length >= 10 && dp.slice(-10) !== String(S.d.me.phone || '').slice(-10)) call({ action: 'team_add', name: c.doctorName, phone: dp, role: 'doctor' }, fin); else fin(); });
       on('[data-trm]', function (el) { if (!confirm('Remove ' + el.getAttribute('data-trmname') + '? They will be logged out.')) return; call({ action: 'team_remove', phone: el.getAttribute('data-trm') }, function (r) { if (r.removed) toast('Removed'); }); });
       on('[data-trole]', function (el) { var n = document.getElementById('tn'), p = document.getElementById('tp'); S.sheet.name = n ? n.value : ''; S.sheet.phone = p ? p.value : ''; S.sheet.role = el.getAttribute('data-trole'); draw(); });
       on('#tadd', function (el) { var n = document.getElementById('tn').value.trim(), p = document.getElementById('tp').value; if (!n) return document.getElementById('tn').focus(); el.disabled = true; call({ action: 'team_add', name: n, phone: p, role: S.sheet.role || 'reception' }, function (r) { if (r.added) { S.sheet = null; toast(n + ' added · they send LOGIN on WhatsApp'); } }); });
+      on('[data-trole2]', function (el) { var r = el.getAttribute('data-trole2'), n = el.getAttribute('data-tnm'); call({ action: 'team_add', name: n, phone: el.getAttribute('data-tph'), role: r }, function (x) { if (x.added) toast(n + ' is now ' + (r === 'doctor' ? 'a doctor · sees the doctor app' : 'reception')); }); });
       on('#saveupi', function () { call({ action: 'setup_save', cfg: { upiId: document.getElementById('upi').value } }, function (r) { if (r.saved) toast('UPI ID saved'); }); });
       on('#asrec', function () { S.viewAs = 'reception'; S.tab = 'queue'; draw(); window.scrollTo(0, 0); });
       on('[data-asdoc]', function () { S.viewAs = null; S.tab = 'today'; draw(); window.scrollTo(0, 0); });
       on('#seed', function () { if (!confirm('Load demo data? This replaces the current patients, queue and register with sample data.')) return; call({ action: 'demo_seed' }, function (r) { if (r.seeded) { S.appts = null; toast('Demo data loaded'); } }); });
-      ['cn', 'dn', 'cf', 'co', 'cc', 'cu'].forEach(function (id) { var e = document.getElementById(id); if (e) e.addEventListener('input', readSetup); });
+      ['cn', 'dn', 'cf', 'dp', 'co', 'cc', 'cu'].forEach(function (id) { var e = document.getElementById(id); if (e) e.addEventListener('input', readSetup); });
       var ps = document.getElementById('psearch');
       if (ps) { var tm; ps.addEventListener('input', function () { S.q = ps.value; clearTimeout(tm); tm = setTimeout(function () { call({}); }, 300); }); }
       var fee = document.getElementById('fee');
