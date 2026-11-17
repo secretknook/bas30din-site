@@ -128,6 +128,11 @@ button.irow:active,a.irow:active{background:#E5E5EA}
 .itabs.dtabs button.on{color:#175CD3;font-weight:600}
 .asbar{position:sticky;top:0;z-index:7;background:#101828;color:#FFF;font-size:13px;display:flex;justify-content:space-between;align-items:center;padding:calc(env(safe-area-inset-top) + 8px) 12px 8px 16px}
 .asbar button{border:none;background:#FFF;color:#101828;border-radius:14px;height:28px;padding:0 12px;font-size:13px;font-weight:600;font-family:inherit}
+
+.phonein{margin-top:26px;height:56px;border-radius:12px;background:#F2F2F7;display:flex;align-items:center;gap:10px;padding:0 16px;font-size:20px}
+.phonein span{color:#6C6C70}
+.phonein input{border:none;outline:none;background:transparent;font:inherit;font-size:20px;flex:1;min-width:0;letter-spacing:.5px;color:#000}
+.otpin{margin-top:26px;height:64px;border:none;border-radius:12px;background:#F2F2F7;text-align:center;font-size:32px;letter-spacing:12px;font-family:inherit;outline:none;width:100%;box-sizing:border-box;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -224,29 +229,35 @@ button.irow:active,a.irow:active{background:#E5E5EA}
       var bn = load('cd_bot') || '15551823589'; mode = mode || 'login';
       var top = '<div class="wrap i" style="padding:calc(env(safe-area-inset-top) + 72px) 24px calc(env(safe-area-inset-bottom) + 28px);background:#FFF">';
       var err = msg ? '<div style="margin-top:16px;padding:12px 14px;border-radius:12px;background:#FFF2F2;color:' + C.bad + ';font-size:15px">' + esc(msg) + '</div>' : '';
-      if (mode === 'forgot') {
-        $app.innerHTML = top + '<button class="iback" data-lmode="login" style="padding:0;margin-bottom:18px"><svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2L2 10l8 8"/></svg>Log in</button>' +
-          '<div style="font-size:30px;font-weight:700;line-height:1.15">Forgot password</div><div style="margin-top:10px;font-size:17px;line-height:1.45;color:#3C3C43">Send <b>RESET</b> on WhatsApp from your own number. You will get a link to set a new password.</div>' +
-          '<div style="flex:1"></div><a class="ib pri" style="text-decoration:none" href="https://wa.me/' + esc(bn) + '?text=RESET">Send RESET on WhatsApp</a><div style="margin-top:12px;text-align:center;font-size:13px;color:' + C.sec + '">The link only goes to your own WhatsApp, so nobody else can reset your password.</div></div>';
-      } else if (mode === 'setpw') {
-        $app.innerHTML = top + '<div style="font-size:30px;font-weight:700;line-height:1.15">Set your password</div><div style="margin-top:10px;font-size:17px;line-height:1.45;color:#3C3C43">Next time, log in with your phone number and this password.</div>' + err +
-          '<div class="ilist" style="margin:24px 0 0;background:#F2F2F7"><label class="ifield" style="background:#F2F2F7"><span style="width:110px">Password</span><input id="np1" type="password" autocomplete="new-password" placeholder="6+ characters"></label><label class="ifield" style="border:none;background:#F2F2F7"><span style="width:110px">Again</span><input id="np2" type="password" autocomplete="new-password"></label></div>' +
-          '<div style="flex:1"></div><button class="ib pri" id="setpw">Save password</button></div>';
+      if (mode === 'code') {
+        $app.innerHTML = top + '<button class="iback" data-lmode="login" style="padding:0;margin-bottom:18px"><svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2L2 10l8 8"/></svg>Change number</button>' +
+          '<div style="font-size:30px;font-weight:700;line-height:1.15">Enter the code</div><div style="margin-top:10px;font-size:17px;line-height:1.45;color:#3C3C43">We sent a 6-digit code on WhatsApp to ' + esc(S.sentTo || 'your number') + '.</div>' + err +
+          '<input id="otp" class="otpin" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••" aria-label="6-digit code">' +
+          '<button class="ib pri" id="verify" style="margin-top:16px">Log in</button><button class="ilink" id="resend" style="margin-top:14px;align-self:center">Send the code again</button>' +
+          '<div style="flex:1"></div><div style="text-align:center;font-size:13px;color:' + C.sec + '">No code after a minute? Send <a href="https://wa.me/' + esc(bn) + '?text=LOGIN">LOGIN on WhatsApp</a> and tap the link you get.</div></div>';
       } else {
-        $app.innerHTML = top + '<div style="font-size:34px;font-weight:700;line-height:1.1">Clinic Desk</div><div style="margin-top:8px;font-size:17px;color:#3C3C43">Log in to your clinic</div>' + err +
-          '<div class="ilist" style="margin:26px 0 0;background:#F2F2F7"><label class="ifield" style="background:#F2F2F7"><span style="width:84px">Phone</span><input id="lp" type="tel" inputmode="tel" autocomplete="tel" placeholder="10-digit mobile" value="' + esc(load('cd_ph') || '') + '"></label><label class="ifield" style="border:none;background:#F2F2F7"><span style="width:84px">Password</span><input id="lw" type="password" autocomplete="current-password"></label></div>' +
-          '<button class="ib pri" id="dologin" style="margin-top:16px">Log in</button><button class="ilink" data-lmode="forgot" style="margin-top:14px;align-self:center">Forgot password?</button>' +
-          '<div style="flex:1"></div><div style="text-align:center;font-size:15px;color:' + C.sec + '">First time here?</div><a class="ib" style="text-decoration:none;background:#F2F2F7" href="https://wa.me/' + esc(bn) + '?text=LOGIN">Get login link on WhatsApp</a>' +
-          '<div style="margin-top:10px;text-align:center;font-size:13px;color:' + C.sec + '">Doctor and reception each log in with their own number and see their own app.</div></div>';
+        $app.innerHTML = top + '<div style="font-size:34px;font-weight:700;line-height:1.1">Clinic Desk</div><div style="margin-top:8px;font-size:17px;color:#3C3C43">Log in with your mobile number</div>' + err +
+          '<label class="phonein"><span>+91</span><input id="lp" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="10" placeholder="10-digit mobile" value="' + esc(load('cd_ph') || '') + '" aria-label="Mobile number"></label>' +
+          '<button class="ib pri" id="sendcode" style="margin-top:16px">Get code on WhatsApp</button>' +
+          '<div style="flex:1"></div><div style="text-align:center;font-size:13px;line-height:1.5;color:' + C.sec + '">The doctor and the receptionist each use their own number.<br>No password needed.</div></div>';
       }
       [].forEach.call($app.querySelectorAll('[data-lmode]'), function (b) { b.onclick = function () { drawLogin('', b.getAttribute('data-lmode')); }; });
-      var dl = document.getElementById('dologin');
-      if (dl) { var go = function () { var ph = document.getElementById('lp').value.replace(/\D/g, ''), pw = document.getElementById('lw').value; if (ph.length < 10) return drawLogin('Enter your 10-digit mobile number.'); store('cd_ph', ph.slice(-10)); dl.disabled = true;
-          post({ action: 'pw_login', phone: ph, pw: pw, ua: uaShort() }).then(function (r) { if (!r.ok) return drawLogin(r.error || 'Could not log in.'); store('cd_sid', r.sid); store('cd_role', r.role); S.sid = r.sid; S.role = r.role; S.d = null; draw(); call({}); }).catch(function () { drawLogin('No internet. Try again.'); }); };
-        dl.onclick = go; document.getElementById('lw').onkeydown = function (e) { if (e.key === 'Enter') go(); }; }
-      var sp = document.getElementById('setpw');
-      if (sp) sp.onclick = function () { var a = document.getElementById('np1').value, b2 = document.getElementById('np2').value; if (a.length < 6) return drawLogin('Use at least 6 characters.', 'setpw'); if (a !== b2) return drawLogin('The two passwords are not the same.', 'setpw');
-        sp.disabled = true; post({ action: 'set_pw', pw: a, sid: S.sid }).then(function (r) { if (r.pwSet) { S.needPw = false; toast('Password saved'); draw(); call({}); } else drawLogin(r.error || 'Could not save.', 'setpw'); }); };
+      function send(btn) {
+        var ph = (S.loginPh || '').replace(/\D/g, '').slice(-10); if (ph.length < 10) return drawLogin('Enter your 10-digit mobile number.');
+        if (btn) btn.disabled = true;
+        post({ action: 'otp_send', phone: ph }).then(function (r) { if (!r.ok) return drawLogin(r.error || 'Could not send the code.', mode === 'code' ? 'code' : 'login'); S.sentTo = r.sentTo; drawLogin('', 'code'); var o = document.getElementById('otp'); if (o) o.focus(); })
+          .catch(function () { drawLogin('No internet. Try again.', mode); });
+      }
+      var sc = document.getElementById('sendcode');
+      if (sc) { var lp = document.getElementById('lp'); lp.focus(); sc.onclick = function () { S.loginPh = lp.value; store('cd_ph', lp.value.replace(/\D/g, '').slice(-10)); send(sc); }; lp.onkeydown = function (e) { if (e.key === 'Enter') sc.onclick(); }; }
+      var vf = document.getElementById('verify');
+      if (vf) {
+        var otp = document.getElementById('otp');
+        var go = function () { var c = otp.value.replace(/\D/g, ''); if (c.length !== 6) return; vf.disabled = true;
+          post({ action: 'otp_verify', phone: S.loginPh, code: c, ua: uaShort() }).then(function (r) { if (!r.ok) return drawLogin(r.error || 'Could not log in.', 'code'); store('cd_sid', r.sid); store('cd_role', r.role); S.sid = r.sid; S.role = r.role; S.d = null; draw(); call({}); }).catch(function () { drawLogin('No internet. Try again.', 'code'); }); };
+        vf.onclick = go; otp.oninput = function () { otp.value = otp.value.replace(/\D/g, '').slice(0, 6); if (otp.value.length === 6) go(); };
+        document.getElementById('resend').onclick = function () { send(this); };
+      }
     }
     var isDoc = function () { return S.role === 'doctor' || S.role === 'owner'; };
     function tabsFor(role) { return (role === 'doctor' || role === 'owner') && S.viewAs !== 'reception' ? ['today', 'patients', 'register', 'clinic'] : ['queue', 'inbox', 'patients']; }
@@ -451,9 +462,9 @@ button.irow:active,a.irow:active{background:#E5E5EA}
         '<div class="dcard" style="margin:16px 16px 0;gap:6px"><span style="font-size:18px;font-weight:700">' + esc(c.clinicName) + '</span><span class="dsub" style="font-size:14px">' + esc(tl) + ' · ' + esc(c.doctorName) + ' · fee ' + rupee(c.fee) + '</span><span class="dsub" style="font-size:14px">' + esc(days.join(', ')) + ' · ' + fmt12(c.open) + ' – ' + fmt12(c.close) + '</span>' +
         '<button class="dbtn2" data-setup="1">Edit clinic setup</button></div>';
       h += '<div class="dsec"><span>Team</span><span>Who can log in</span></div><div style="padding:0 16px">' + (d.team || []).map(function (t) {
-        return '<div class="drow"><span class="icol"><span style="font-size:15px;font-weight:600">' + esc(t.name) + (t.me ? ' <span style="font-weight:500;color:#667085">(you)</span>' : '') + '</span><span class="dsub">' + esc(t.role === 'owner' ? 'Owner' : t.role === 'doctor' ? 'Doctor' : 'Reception') + ' · ' + esc(t.phone) + '</span><span class="dsub">Last login: ' + esc(t.last) + (t.pw ? '' : ' · no password yet') + '</span></span>' +
+        return '<div class="drow"><span class="icol"><span style="font-size:15px;font-weight:600">' + esc(t.name) + (t.me ? ' <span style="font-weight:500;color:#667085">(you)</span>' : '') + '</span><span class="dsub">' + esc(t.role === 'owner' ? 'Owner' : t.role === 'doctor' ? 'Doctor' : 'Reception') + ' · ' + esc(t.phone) + '</span><span class="dsub">Last login: ' + esc(t.last)  + '</span></span>' +
           (!t.me && t.role !== 'owner' ? '<span style="display:flex;flex-direction:column;gap:6px"><button class="dmini" data-trole2="' + (t.role === 'doctor' ? 'reception' : 'doctor') + '" data-tph="' + esc(t.phone) + '" data-tnm="' + esc(t.name) + '">' + (t.role === 'doctor' ? 'Make reception' : 'Make doctor') + '</button><button class="dmini" data-trm="' + esc(t.phone) + '" data-trmname="' + esc(t.name) + '" style="color:#B42318">Remove</button></span>' : '') + '</div>'; }).join('') +
-        '<button class="drow" data-sheet="team" style="color:#175CD3;font-weight:600;font-size:15px">+ Add person</button></div><div style="padding:6px 16px 0;font-size:12.5px;color:#667085">A new person logs in the first time by sending LOGIN on WhatsApp from their number, then sets a password.</div>';
+        '<button class="drow" data-sheet="team" style="color:#175CD3;font-weight:600;font-size:15px">+ Add person</button></div><div style="padding:6px 16px 0;font-size:12.5px;color:#667085">They log in with their own mobile number. The code comes on their WhatsApp.</div>';
       h += '<div class="dsec"><span>Payments</span><span></span></div><div style="padding:0 16px"><div class="drow"><span class="icol"><span style="font-size:15px;font-weight:600">Clinic UPI ID</span><span class="dsub">Shown as a QR when reception bills by UPI</span></span></div>' +
         '<div style="display:flex;gap:8px;margin-top:4px"><input id="upi" class="dinput" placeholder="name@okhdfc" value="' + esc(c.upiId || '') + '" autocomplete="off" style="flex:1"><button class="dmini" id="saveupi" style="height:44px">Save</button></div></div>';
       h += '<div class="dsec"><span>Waiting room</span><span></span></div><div style="padding:0 16px">' +
@@ -555,7 +566,6 @@ button.irow:active,a.irow:active{background:#E5E5EA}
     // ---------- draw ----------
     function draw() {
       if (!S.sid) return drawLogin();
-      if (S.needPw) return drawLogin('', 'setpw');
       if (!S.d) { $app.innerHTML = '<div class="wrap i"><div class="ifoot" style="padding-top:120px;text-align:center">Loading…</div></div>'; return; }
       var tabs = tabsFor(S.d.me.role); if (tabs.indexOf(S.tab) < 0) S.tab = tabs[0];
       var ae = document.activeElement;
@@ -623,7 +633,7 @@ button.irow:active,a.irow:active{background:#E5E5EA}
         if (dp.length >= 10 && dp.slice(-10) !== String(S.d.me.phone || '').slice(-10)) call({ action: 'team_add', name: c.doctorName, phone: dp, role: 'doctor' }, fin); else fin(); });
       on('[data-trm]', function (el) { if (!confirm('Remove ' + el.getAttribute('data-trmname') + '? They will be logged out.')) return; call({ action: 'team_remove', phone: el.getAttribute('data-trm') }, function (r) { if (r.removed) toast('Removed'); }); });
       on('[data-trole]', function (el) { var n = document.getElementById('tn'), p = document.getElementById('tp'); S.sheet.name = n ? n.value : ''; S.sheet.phone = p ? p.value : ''; S.sheet.role = el.getAttribute('data-trole'); draw(); });
-      on('#tadd', function (el) { var n = document.getElementById('tn').value.trim(), p = document.getElementById('tp').value; if (!n) return document.getElementById('tn').focus(); el.disabled = true; call({ action: 'team_add', name: n, phone: p, role: S.sheet.role || 'reception' }, function (r) { if (r.added) { S.sheet = null; toast(n + ' added · they send LOGIN on WhatsApp'); } }); });
+      on('#tadd', function (el) { var n = document.getElementById('tn').value.trim(), p = document.getElementById('tp').value; if (!n) return document.getElementById('tn').focus(); el.disabled = true; call({ action: 'team_add', name: n, phone: p, role: S.sheet.role || 'reception' }, function (r) { if (r.added) { S.sheet = null; toast(n + ' added · they can log in with their number now'); } }); });
       on('[data-trole2]', function (el) { var r = el.getAttribute('data-trole2'), n = el.getAttribute('data-tnm'); call({ action: 'team_add', name: n, phone: el.getAttribute('data-tph'), role: r }, function (x) { if (x.added) toast(n + ' is now ' + (r === 'doctor' ? 'a doctor · sees the doctor app' : 'reception')); }); });
       on('#saveupi', function () { call({ action: 'setup_save', cfg: { upiId: document.getElementById('upi').value } }, function (r) { if (r.saved) toast('UPI ID saved'); }); });
       on('#asrec', function () { S.viewAs = 'reception'; S.tab = 'queue'; draw(); window.scrollTo(0, 0); });
@@ -644,7 +654,7 @@ button.irow:active,a.irow:active{background:#E5E5EA}
       post({ action: 'login', code: code, ua: uaShort() }).then(function (r) {
         if (!r.ok) return drawLogin(r.error || 'Login link not valid.');
         store('cd_sid', r.sid); store('cd_role', r.role); if (r.clinic && r.clinic.botNumber) store('cd_bot', r.clinic.botNumber);
-        S.sid = r.sid; S.role = r.role; if (r.needPw) { S.needPw = true; return drawLogin('', 'setpw'); } call({});
+        S.sid = r.sid; S.role = r.role; call({});
       }).catch(function () { drawLogin('Could not reach the server. Try again.'); });
     } else if (S.sid) { draw(); call({}); } else drawLogin();
     setInterval(poll, 8000);

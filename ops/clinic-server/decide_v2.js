@@ -526,7 +526,40 @@ if (mode === 'desk') {
     else { const sid = rid(28); if (!mem.sess) mem.sess = {}; mem.sess[sid] = { phone: c.phone, role: c.role, name: c.name, exp: now.plus({ days: 30 }).toISO() };
       delete mem.codes[String(b.code).toLowerCase()]; if (!mem.users) mem.users = {};
       const u = mem.users[c.phone] || (mem.users[c.phone] = {}); u.last = { at: now.toISO(), ua: String(b.ua || '').slice(0, 40) };
-      res = { ok: true, sid, role: c.role, name: c.name, clinic, needPw: !u.hash || !!c.reset }; }
+      res = { ok: true, sid, role: c.role, name: c.name, clinic, needPw: false }; }
+  } else if (b.action === 'otp_send' || b.action === 'otp_verify') {
+    let ph = String(b.phone || '').replace(/\D/g, ''); if (ph.length === 10) ph = '91' + ph;
+    const st = staffRec(ph); if (!mem.otp) mem.otp = {};
+    for (const k of Object.keys(mem.otp)) if (DateTime.fromISO(mem.otp[k].exp) < now.minus({ hours: 2 })) delete mem.otp[k];
+    if (!st) res = { ok: false, error: 'This number is not added to any clinic yet. Ask your doctor to add you in Clinic → Team.' };
+    else {
+      const full = String(st.phone).replace(/\D/g, ''); const o = mem.otp[full] || {};
+      if (b.action === 'otp_send') {
+        const sends = (o.sends || []).filter(t => DateTime.fromISO(t) > now.minus({ hours: 1 }));
+        if (o.last && DateTime.fromISO(o.last) > now.minus({ seconds: 30 })) res = { ok: false, error: 'Please wait 30 seconds before asking for a new code.' };
+        else if (sends.length >= 5) res = { ok: false, error: 'Too many codes asked. Try again in an hour.' };
+        else {
+          const code = String(Math.floor(100000 + Math.random() * 900000)); const salt = rid(8);
+          mem.otp[full] = { salt, h: sha256(salt + code), exp: now.plus({ minutes: 10 }).toISO(), tries: 0, last: now.toISO(), sends: sends.concat([now.toISO()]) };
+          if (S.templates && S.templates.otp && !inWindow(full)) out.push({ messaging_product: 'whatsapp', to: full, type: 'template', template: { name: S.templates.otp, language: { code: 'en' }, components: [{ type: 'body', parameters: [{ type: 'text', text: code }] }, { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: code }] }] } });
+          else out.push(textTo(full, `*${code}* is your Clinic Desk login code.\nIt works for 10 minutes. Do not share it with anyone.`));
+          res = { ok: true, sentTo: '+' + full.slice(0, 2) + ' ••••• ' + full.slice(-5), name: st.name };
+        }
+      } else {
+        const c = String(b.code || '').replace(/\D/g, '');
+        if (!o.h || DateTime.fromISO(o.exp) < now) res = { ok: false, error: 'This code has expired. Ask for a new one.' };
+        else if ((o.tries || 0) >= 5) res = { ok: false, error: 'Too many wrong codes. Ask for a new one.' };
+        else if (sha256(o.salt + c) !== o.h) { o.tries = (o.tries || 0) + 1; res = { ok: false, error: 'Wrong code. Check WhatsApp and try again.' }; }
+        else {
+          delete mem.otp[full];
+          if (!mem.users) mem.users = {}; const u = mem.users[full] || (mem.users[full] = {}); u.last = { at: now.toISO(), ua: String(b.ua || '').slice(0, 40) };
+          const sid = rid(28); if (!mem.sess) mem.sess = {};
+          for (const k of Object.keys(mem.sess)) if (DateTime.fromISO(mem.sess[k].exp) < now) delete mem.sess[k];
+          mem.sess[sid] = { phone: full, role: st.role || 'reception', name: st.name || 'Staff', exp: now.plus({ days: 60 }).toISO() };
+          res = { ok: true, sid, role: st.role || 'reception', name: st.name || 'Staff', clinic };
+        }
+      }
+    }
   } else if (b.action === 'pw_login') {
     let ph = String(b.phone || '').replace(/\D/g, ''); if (ph.length === 10) ph = '91' + ph;
     const st = staffRec(ph); if (!mem.users) mem.users = {};
