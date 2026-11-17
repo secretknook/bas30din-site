@@ -318,6 +318,11 @@ function callNext(q, out) {
   if (nx) { nx.st = 's'; nx.calledAt = now.toISO(); }
   queueNotify(q, out);
 }
+function finishCur(q, out) {
+  const cur = servingOf(q); if (!cur) return;
+  cur.st = 'd'; addVisit(cur); const m = DateTime.fromISO(cur.calledAt).isValid ? now.diff(DateTime.fromISO(cur.calledAt), 'minutes').minutes : 0; if (m > 1 && m < 90) q.durs = (q.durs || []).concat([Math.round(m)]).slice(-10);
+  queueNotify(q, out);
+}
 function notHere(q, out) {
   const cur = servingOf(q); if (!cur) return callNext(q, out);
   cur.st = 'w'; cur.missed = (cur.missed || 0) + 1; cur.toldTurn = false; cur.told2 = true;
@@ -589,12 +594,16 @@ if (mode === 'desk') {
   } else {
     const stNow = staffRec(sess.phone); const role = stNow.role || sess.role; const isDoc = role === 'doctor' || role === 'owner'; if (stNow.name && sess.name !== stNow.name) sess.name = stNow.name;
     const q0 = qRead();
-    if (b.action === 'call_next') { const q = qWrite(); const cur = servingOf(q);
+    const callBy = S.callBy === 'reception' ? 'reception' : 'doctor';
+    if (['call_next', 'finish', 'call_now'].includes(b.action) && role === 'reception' && callBy === 'doctor' && b.action !== 'finish') { res.error = 'The doctor calls the next patient in this clinic.'; }
+    else if (['call_next', 'finish', 'call_now'].includes(b.action)) { const q = qWrite(); const cur = servingOf(q);
       if (cur && isDoc && b.forTok === cur.tok) {
         if (b.note && String(b.note).trim()) { if (!mem.notes) mem.notes = {}; mem.notes[patKey(cur.phone, cur.name)] = { t: String(b.note).trim().slice(0, 600), at: now.toISO(), by: sess.name }; }
         if (b.fup !== undefined) cur.fupDays = Math.max(0, Math.min(400, Number(b.fup) || 0));
       }
-      callNext(q, out); }
+      if (b.action === 'call_now') { const tk = q.list.find(x => x.key === b.key && x.st === 'w');
+        if (tk) { const rest = q.list.filter(x => x !== tk); const i = rest.findIndex(x => x.st === 'w'); rest.splice(i < 0 ? rest.length : i, 0, tk); q.list = rest; } }
+      if (b.action === 'finish' || (b.action === 'call_next' && isDoc && callBy === 'reception')) finishCur(q, out); else callNext(q, out); }
     else if (b.action === 'not_here') { const q = qWrite(); notHere(q, out); }
     else if (b.action === 'add_token') { const q = qWrite(); const ph = digits(b.phone || ''); const full = ph.length === 10 ? '91' + ph : ph;
       const tk = issueToken(q, full, String(b.name || 'Walk-in').slice(0, 40), b.src === 'book' ? 'book' : 'desk'); if (b.prob) tk.prob = String(b.prob).slice(0, 120); if (b.bookAt) tk.bookAt = String(b.bookAt).slice(0, 10);
@@ -620,6 +629,7 @@ if (mode === 'desk') {
       if (c0.open && c0.close && Array.isArray(c0.days)) {
         const ok = t => /^\d{2}:\d{2}$/.test(t); if (ok(c0.open) && ok(c0.close)) { const H = {}; ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].forEach(d => { H[d] = c0.days.includes(d) ? [`${c0.open}-${c0.close}`] : []; }); cfg.hours = H; cfg.open = c0.open; cfg.close = c0.close; cfg.days = c0.days.filter(d => H[d]); }
       }
+      if (['doctor', 'reception'].includes(c0.callBy)) cfg.callBy = c0.callBy;
       if (c0.done) cfg.setupDone = true;
       mem.cfg = cfg; Object.assign(S, cfg); res.saved = true;
     }
@@ -673,7 +683,7 @@ if (mode === 'desk') {
       for (const d of days) { const x = (mem.vis[d] || []).find(y => patKey(y.ph, y.name) === key && (y.m === 'cash' || y.m === 'upi')); if (x) return d; } return null; };
     res.toBill = todayV.filter(v => !v.m).map(v => { const lp = freeDays ? lastPaid(v) : null;
       return { k: v.k, tok: v.tok, name: v.name, seen: `${hm(v.in)} – ${hm(v.out)}`, fupSug: v.fupSug || 0, freeFollow: !!lp, lastPaid: lp ? DateTime.fromISO(lp).toFormat('d LLL') : '', prob: v.prob || '' }; });
-    res.freeDays = freeDays;
+    res.freeDays = freeDays; res.callBy = S.callBy === 'reception' ? 'reception' : 'doctor';
     res.today = { seen: todayV.length, waiting: waitingOf(q).length };
     if (isDoc) {
       const t0 = regSum(todayStr, todayStr); res.today.money = t0.money; res.today.nobill = t0.nobill;
@@ -695,8 +705,8 @@ if (mode === 'desk') {
         return { visits: p ? p.n : 0, last: p ? (p.last === todayStr ? 'today' : DateTime.fromISO(p.last).toFormat('d LLL')) : '', note: nt ? nt.t : '', fu: !!fu, pk: p ? p.key : '' }; };
       const cur2 = servingOf(q); const w2 = waitingOf(q);
       res.boon = {
-        now: cur2 ? Object.assign({ tok: cur2.tok, name: cur2.name, prob: cur2.prob || '' }, hist(cur2)) : null,
-        next: w2.slice(0, 4).map(x => Object.assign({ tok: x.tok, name: x.name, prob: x.prob || '' }, hist(x))),
+        now: cur2 ? Object.assign({ tok: cur2.tok, key: cur2.key, name: cur2.name, prob: cur2.prob || '' }, hist(cur2)) : null,
+        next: w2.slice(0, 4).map(x => Object.assign({ tok: x.tok, key: x.key, name: x.name, prob: x.prob || '' }, hist(x))),
         done: q.list.filter(x => x.st === 'd').slice(-2).map(x => ({ tok: x.tok, name: x.name, pk: patKey(x.phone, x.name) })),
         more: Math.max(0, w2.length - 4),
         finish: (w2.length || cur2) ? now.plus({ minutes: (w2.length + (cur2 ? 0.5 : 0)) * avgMin(q) }).toFormat('h:mm a') : '',
