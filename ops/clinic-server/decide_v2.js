@@ -538,7 +538,7 @@ if (mode === 'summary' && (now.hour >= 20 || now.hour < 3)) {
   if (mem.nightSent === dk) return [];
   for (const ph of to) {
     if (inWindow(ph)) more.push(ctaTo(ph, body, 'Open register', `${APP}`));
-    else if (S.templates && S.templates.night) more.push(templateTo(ph, S.templates.night, [day.toFormat('ccc d LLL'), String(R.seen), rupees(R.money), look.length ? look.join(', ') : 'Every visit billed'], []));
+    else if (S.templates && S.templates.night) more.push(templateTo(ph, S.templates.night, [`${C}, ${day.toFormat('ccc d LLL')}`, String(R.seen), rupees(R.money), look.length ? look.join(', ') : 'nothing, every visit is billed'], []));
   }
   mem.nightSent = dk;
   if (!more.length) return [];
