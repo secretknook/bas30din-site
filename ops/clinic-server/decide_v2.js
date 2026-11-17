@@ -5,7 +5,7 @@ const S = $('Clinic Settings').first().json;
 const TZ = 'Asia/Kolkata';
 const now = DateTime.now().setZone(TZ);
 const mem = $getWorkflowStaticData('global');
-mem.lang = mem.lang || {}; mem.seen = mem.seen || {}; mem.svc = mem.svc || {}; mem.wait = mem.wait || {};
+mem.lang = mem.lang || {}; mem.seen = mem.seen || {}; mem.svc = mem.svc || {}; mem.wait = mem.wait || {}; mem.live = mem.live || {}; mem.liveAdmin = mem.liveAdmin || {};
 let msg = null;
 try { msg = $('Parse message').first().json; } catch (e) { msg = null; }
 const mode = msg ? 'chat' : 'summary';
@@ -124,6 +124,10 @@ const T = {
     slotOpen: (d) => `Good news: a slot just opened on ${d}. Tap below to book it before someone else does.`, bookIt: 'Book this slot',
     feeLine: f => `\n💰 Consultation fee ₹${f}, pay at the clinic. No booking charge.`,
     morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening',
+    liveRow: 'Live Chat', liveRowD: 'Chat with the clinic team',
+    liveOn: open => open ? 'You are now on live chat with the clinic team. They will reply here shortly.\n\nType *END* anytime to go back to booking.' : `You are now on live chat. The clinic is closed right now, so the team will reply when it opens.\n\nClinic timings:\n${timingsText('en')}\n\nType *END* anytime to go back to booking.`,
+    liveOff: 'Live chat ended. Thank you! Send *Hi* anytime to book an appointment.',
+    livePhoto: 'Photos can not be shared on live chat yet. Please describe it in text, or the team can call you.',
     dateBtn: 'Choose date', datesTitle: 'Available dates', slotsFree: n => `${n} slot${n > 1 ? 's' : ''} available`,
     noSlots: `Sorry, there are no free slots in the next ${S.daysAhead} days. Please call us on ${S.clinicPhone}.`,
     dayFull: 'That day is now full. Please choose another date.',
@@ -147,10 +151,10 @@ const T = {
     talk: `You can reach ${C} on ${S.clinicPhone}.\n\nClinic timings:\n${timingsText('en')}`,
     textOnly: 'Sorry, I can only read text messages. Please type your message or choose an option below.',
     yourAppts: (n, l) => `Hello ${n}, here are your upcoming appointments at ${C}:\n\n${l}`,
-    bookBtn: 'Book appointment', anotherBtn: 'Book another', cancelBookingBtn: 'Cancel booking', talkBtn: 'Contact clinic',
+    bookBtn: 'Book appointment', anotherBtn: 'Book another', cancelBookingBtn: 'Cancel booking', talkBtn: 'Live Chat',
     mcQ: 'Sure, please type your question here and the clinic will reply shortly.',
     mcCall: 'Thank you. The clinic will call you back shortly.',
-    foot: 'Type TALK to contact the clinic',
+    foot: 'Need help? Tap Live Chat',
     lateMsg: (m, t2) => `${D} is running about ${m} minutes late today. Your appointment may start at around ${t2}. We are sorry for the wait.`,
     leaveMsg: d => `${D} will not be available on ${d}. We are sorry for the inconvenience. Please choose a new time or cancel below.`,
     okBtn: 'Okay', newTimeBtn: 'Choose new time',
@@ -167,6 +171,10 @@ const T = {
     slotOpen: (d) => `Good news: ${d} ka ek slot abhi khula hai. Kisi aur ke lene se pehle neeche dabakar book kar lijiye.`, bookIt: 'Ye slot book karein',
     feeLine: f => `\n💰 Consultation fee ₹${f}, clinic par dena hai. Koi booking charge nahi.`,
     morning: 'Subah', afternoon: 'Dopahar', evening: 'Shaam',
+    liveRow: 'Live Chat', liveRowD: 'Clinic team se chat karein',
+    liveOn: open => open ? 'Aap live chat par clinic team se jud gaye hain. Team yahin jaldi reply karegi.\n\nBooking par wapas jaane ke liye kabhi bhi *END* likhein.' : `Aap live chat par jud gaye hain. Clinic abhi band hai, team clinic khulte hi reply karegi.\n\nClinic timings:\n${timingsText('hl')}\n\nBooking par wapas jaane ke liye kabhi bhi *END* likhein.`,
+    liveOff: 'Live chat band ho gayi. Thank you! Appointment ke liye kabhi bhi *Hi* bhej dijiye.',
+    livePhoto: 'Live chat par abhi photo share nahi ho sakti. Please text mein likh dijiye, ya team aapko call kar legi.',
     dateBtn: 'Date select karein', datesTitle: 'Available dates', slotsFree: n => `${n} slot${n > 1 ? 's' : ''} available`,
     noSlots: `Sorry, agle ${S.daysAhead} din ke saare slots full hain. Please clinic ko call kar lijiye: ${S.clinicPhone}`,
     dayFull: 'Sorry, ye din full ho gaya hai. Please koi aur date select karein.',
@@ -190,10 +198,10 @@ const T = {
     talk: `${C} se baat karne ke liye call karein: ${S.clinicPhone}\n\nClinic timings:\n${timingsText('hl')}`,
     textOnly: 'Sorry, abhi hum sirf text message hi padh paate hain. Please likh kar bhejiye ya neeche se option select karein.',
     yourAppts: (n, l) => `Namaste ${n} ji 🙏\nAapke upcoming appointments:\n\n${l}`,
-    bookBtn: 'Book appointment', anotherBtn: 'Ek aur book karein', cancelBookingBtn: 'Cancel karein', talkBtn: 'Clinic se baat',
+    bookBtn: 'Book appointment', anotherBtn: 'Ek aur book karein', cancelBookingBtn: 'Cancel karein', talkBtn: 'Live Chat',
     mcQ: 'Zaroor, apna sawaal yahin likh dijiye. Clinic jaldi reply karega.',
     mcCall: 'Thank you 🙏 Clinic aapko jaldi call back karega.',
-    foot: 'Clinic se baat ke liye TALK likhein',
+    foot: 'Madad chahiye? Live Chat dabaiye',
     lateMsg: (m, t2) => `Namaste 🙏 Aaj ${D} thoda late hain, lagbhag ${m} minute. Aapka appointment ab lagbhag ${t2} tak shuru hoga. Wait karwane ke liye sorry.`,
     leaveMsg: d => `Namaste 🙏 ${D} ${d} ko clinic mein available nahi honge, asuvidha ke liye sorry. Please neeche se naya time select karein ya appointment cancel kar dijiye.`,
     okBtn: 'Theek hai', newTimeBtn: 'Naya time chunein',
@@ -313,7 +321,7 @@ const svcs = S.services || [];
 const svcName = sid => { const x = svcs.find(v => v.id === sid); return x ? x.name : ''; };
 function svcList(intro) {
   if (!svcs.length) return dateList(intro);
-  return list(intro, L.svcBtn, L.svcTitle, svcs.slice(0, 10).map(v => ({ id: `TR|${v.id}`, title: v.name.slice(0, 24), description: (lang === 'hl' ? v.hl : v.en || '').slice(0, 72) })));
+  return sectionsTo(msg.from, intro, L.svcBtn, [{ title: L.svcTitle, rows: svcs.slice(0, 9).map(v => ({ id: `TR|${v.id}`, title: v.name.slice(0, 24), description: (lang === 'hl' ? v.hl : v.en || '').slice(0, 72) })) }, { title: L.liveRow, rows: [{ id: 'LIVE', title: L.liveRow, description: L.liveRowD }] }], lang);
 }
 const cleanName = s => s.replace(/[^\p{L}\p{M}\s.'-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 40).replace(/\b\p{L}/gu, c => c.toUpperCase());
 const confirmMsg = r => buttons(L.confirmed(r, W(r)), [[`RR|${r.row_number}`, L.changeBtn], [`RX|${r.row_number}`, L.cancelBtn]],
@@ -343,7 +351,40 @@ function notifyPatient(r, bodyByLang, tplParams, btns) {
     [r.name || 'Patient', C, whenText(r.date, r.time, lg), bodyByLang(lg)], btns.map(b => b[0])));
 }
 
-if (adminCmd) {
+const liveOpen = p => { const l = mem.live[p]; return l && DateTime.fromISO(l.last) > now.minus({ hours: 2 }); };
+const adminTarget = isAdmin ? mem.liveAdmin[me] : null;
+let liveHandled = false;
+if (!adminCmd && isAdmin && adminTarget && liveOpen(adminTarget) && !id) {
+  liveHandled = true;
+  const pl = langOf(adminTarget, '');
+  if (cmd === 'END') {
+    delete mem.live[adminTarget]; delete mem.liveAdmin[me];
+    payload = textTo(adminTarget, T[pl].liveOff);
+    more.push(text('Live chat closed.'));
+  } else if (raw) {
+    mem.live[adminTarget].last = now.toISO();
+    payload = textTo(adminTarget, raw);
+  } else payload = text('Only text can be sent on live chat for now.');
+}
+else if (!isAdmin && liveOpen(me) && !id) {
+  liveHandled = true;
+  const admins = (S.adminNumbers || []).map(digits);
+  if (cmd === 'END') {
+    delete mem.live[me];
+    admins.forEach(a => { if (mem.liveAdmin[a] === me) delete mem.liveAdmin[a]; more.push(textTo(a, `Live chat with ${msg.name || 'patient'} (+${me}) was ended by the patient.`)); });
+    payload = menuBtns().length ? buttons(L.liveOff, menuBtns()) : text(L.liveOff);
+  } else if (msg.type !== 'text') {
+    payload = text(L.livePhoto);
+  } else {
+    mem.live[me].last = now.toISO();
+    admins.forEach(a => { mem.liveAdmin[a] = me; });
+    const first = admins[0];
+    payload = textTo(first, `${msg.name || 'Patient'} (+${me}): ${raw}`);
+    admins.slice(1).forEach(a => more.push(textTo(a, `${msg.name || 'Patient'} (+${me}): ${raw}`)));
+  }
+}
+if (liveHandled) {}
+else if (adminCmd) {
   const today = now.toFormat('yyyy-MM-dd');
   if (/^(TODAY|AAJ)/.test(cmd)) {
     const l = rows.filter(r => r.date === today && active(r)).sort((a, b) => a.time.localeCompare(b.time));
@@ -375,7 +416,7 @@ else if (id === 'MC_Q') { payload = text(L.mcQ); }
 else if (id === 'MC_CALL') { notify = true; payload = text(L.mcCall); }
 else if (!['text', 'interactive', 'button'].includes(msg.type)) { payload = buttons(L.textOnly, menuBtns()); }
 else if (!mem.lang[me] && !id && !upcoming.length && !holding) {
-  payload = buttons(T.en.pickLang, [['LANG|en', 'English'], ['LANG|hl', 'Hinglish']]);
+  payload = buttons(T.en.pickLang, [['LANG|en', 'English'], ['LANG|hl', 'Hinglish'], ['LIVE', 'Live Chat']]);
 }
 else if (!id && has(['language', 'bhasha', 'lang'])) {
   payload = buttons(T.en.pickLang, [['LANG|en', 'English'], ['LANG|hl', 'Hinglish']]);
@@ -446,8 +487,18 @@ else if (id === 'CONFIRM' || (!id && ['confirm', 'yes', 'haan', 'ha'].includes(t
   if (upcoming.length) { const r = upcoming[0]; setStatus(r, 'Confirmed'); payload = text(L.thanksConfirm(W(r))); pin(); }
   else payload = buttons(L.noUpcoming, [['NEW', L.bookBtn]]);
 }
-else if (id === 'TALK' || (!id && has(['talk', 'call', 'human', 'help', 'baat', 'emergency', 'address', 'location', 'kahan']))) {
-  payload = text(L.talk); pin();
+else if (!id && has(['address', 'location', 'kahan', 'timing', 'timings'])) {
+  payload = buttons(L.talk, [['NEW', L.bookBtn], ['LIVE', L.talkBtn]]); pin();
+}
+else if (id === 'TALK' || id === 'LIVE' || (!id && has(['talk', 'human', 'help', 'baat', 'live', 'chat', 'emergency', 'call']))) {
+  const admins = (S.adminNumbers || []).map(digits).filter(a => a.slice(-10) !== me.slice(-10));
+  const dnow = now.toFormat('ccc').toLowerCase(); const hm = now.toFormat('HH:mm');
+  const open = ((S.hours || {})[dnow] || []).some(r => { const [a, b] = r.split('-').map(x => x.trim()); return hm >= a && hm < b; }) && !holidays.includes(now.toFormat('yyyy-MM-dd'));
+  mem.live[me] = { since: now.toISO(), last: now.toISO(), name: msg.name || '' };
+  admins.forEach(a => { mem.liveAdmin[a] = me; });
+  payload = text(L.liveOn(open));
+  notify = true;
+  admins.forEach(a => more.push(textTo(a, `💬 Live chat request\n${msg.name || 'Patient'} (+${me})${raw && !id ? `\n"${raw}"` : ''}\n\nJust reply to this chat and your message goes to the patient. Send END to close the chat.`)));
 }
 else {
   const faq = (S.faq || []).find(f => !id && f.keywords.some(k => has([k])));
