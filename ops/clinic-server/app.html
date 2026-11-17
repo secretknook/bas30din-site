@@ -53,7 +53,7 @@ input.f{height:48px;border:1px solid #D0D5DD;border-radius:10px;padding:0 12px;f
 <script>/*QRLIB*/</script>
 <script>
 (function () {
-  var API = location.origin + '/webhook/desk-api';
+  var API = location.origin + (location.hostname.indexOf('desk.') === 0 ? '/api' : '/webhook/desk-api');
   var qs = new URLSearchParams(location.search);
   var $app = document.getElementById('app');
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }

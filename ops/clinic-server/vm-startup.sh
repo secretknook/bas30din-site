@@ -41,6 +41,22 @@ volumes:
   n8n_data:
   caddy_data:
 YML
-printf 'bot.bas30din.com {\n  reverse_proxy n8n:5678\n}\n' > Caddyfile
+cat > Caddyfile <<'CADDY'
+bot.bas30din.com {
+  reverse_proxy n8n:5678
+}
+desk.bas30din.com {
+  handle /api {
+    rewrite * /webhook/desk-api
+    reverse_proxy n8n:5678
+  }
+  handle {
+    rewrite * /webhook/desk?{query}
+    reverse_proxy n8n:5678 {
+      header_down -Content-Security-Policy
+    }
+  }
+}
+CADDY
 docker compose up -d
 echo "== $(date) done"
