@@ -90,22 +90,20 @@ function dayWord(d, lg) {
 function whenText(dStr, tStr, lg) {
   const dt = at(dStr, tStr);
   const w = dayWord(dt, lg);
-  if (lg === 'hl') return `${w ? w + ', ' : ''}${HDAY[dt.toFormat('ccc')]} ${dt.toFormat('d LLL')}, ${partOfDay(dt)} ${dt.toFormat('h:mm')}`;
   return `${w ? w + ', ' : ''}${dt.toFormat('ccc d LLL')} at ${dt.toFormat('h:mm a')}`;
 }
 function dateLabel(dStr, lg) {
   const d = DateTime.fromISO(dStr, { zone: TZ });
   const w = dayWord(d, lg);
-  if (lg === 'hl') return `${w ? w + ', ' : HDAY[d.toFormat('ccc')] + ', '}${d.toFormat('d LLL')}`;
   return `${w ? w + ', ' : d.toFormat('ccc') + ', '}${d.toFormat('d LLL')}`;
 }
-const timeLabel = (dStr, tStr, lg) => { const dt = at(dStr, tStr); return lg === 'hl' ? `${partOfDay(dt)} ${dt.toFormat('h:mm')}` : dt.toFormat('h:mm a'); };
+const timeLabel = (dStr, tStr, lg) => { const dt = at(dStr, tStr); return dt.toFormat('h:mm a'); };
 function timingsText(lg) {
   const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
   return days.map(k => {
-    const label = lg === 'hl' ? HDAY[k[0].toUpperCase() + k.slice(1)] : k[0].toUpperCase() + k.slice(1);
+    const label = k[0].toUpperCase() + k.slice(1);
     const r = (S.hours[k] || []);
-    const v = r.length ? r.map(x => x.split('-').map(y => DateTime.fromFormat(y.trim(), 'HH:mm').toFormat('h:mm a')).join(' - ')).join(', ') : (lg === 'hl' ? 'Band' : 'Closed');
+    const v = r.length ? r.map(x => x.split('-').map(y => DateTime.fromFormat(y.trim(), 'HH:mm').toFormat('h:mm a')).join(' - ')).join(', ') : 'Closed';
     return `${label}: ${v}`;
   }).join('\n');
 }
@@ -151,41 +149,41 @@ const T = {
     okBtn: 'Okay', newTimeBtn: 'Choose new time',
   },
   hl: {
-    pickLang: `Namaste, ${C} mein aapka swagat hai.\nApni bhasha chuniye.\n\nHello, please choose your language.`,
-    welcome: n => `Namaste ${n} ji, ${C} mein aapka swagat hai.\n${D} ke saath appointment book karne ke liye neeche treatment chuniye.`,
-    pickDate: 'Appointment ke liye date chuniye.',
-    pickSvc: 'Aap kis cheez ke liye appointment lena chahte hain?', svcBtn: 'Chuniye', svcTitle: 'Treatments',
-    svcChosen: n => `${n}. Ab date chuniye.`,
-    dateBtn: 'Date chuniye', datesTitle: 'Khaali dates', slotsFree: n => `${n} slot khaali`,
-    noSlots: `Maaf kijiye, agle ${S.daysAhead} din mein koi slot khaali nahi hai. Kripya clinic ko call karein: ${S.clinicPhone}`,
-    dayFull: 'Ye din ab full ho gaya hai. Kripya doosri date chuniye.',
-    timesFor: d => `${d} ke khaali time:`, timeBtn: 'Time chuniye', timesTitle: 'Khaali time', later: 'Aur time',
-    held: w => `${w} aapke liye ${S.holdMinutes} minute ke liye rok diya gaya hai.\n\nAppointment kiske liye hai? *Mere liye* dabaiye ya patient ka naam likhiye.`,
+    pickLang: `Namaste 🙏 ${C} mein aapka swagat hai.\nAap kis language mein baat karna chahenge?\n\nHello! Please choose your language.`,
+    welcome: n => `Namaste ${n} ji 🙏\n${C} mein aapka swagat hai. Yahan aap ${D} ke saath appointment book kar sakte hain.\n\nBataiye, aapko kis cheez ke liye milna hai?`,
+    pickDate: 'Aap kis din aana chahenge?',
+    pickSvc: 'Bataiye, aapko kis cheez ke liye appointment chahiye?', svcBtn: 'Select karein', svcTitle: 'Treatments',
+    svcChosen: n => `${n} 👍\nAb bataiye, aap kis din aana chahenge?`,
+    dateBtn: 'Date select karein', datesTitle: 'Available dates', slotsFree: n => `${n} slot${n > 1 ? 's' : ''} available`,
+    noSlots: `Sorry, agle ${S.daysAhead} din ke saare slots full hain. Please clinic ko call kar lijiye: ${S.clinicPhone}`,
+    dayFull: 'Sorry, ye din full ho gaya hai. Please koi aur date select karein.',
+    timesFor: d => `${d} ke available slots 👇`, timeBtn: 'Time select karein', timesTitle: 'Available slots', later: 'Aur slots dekhein',
+    held: w => `${w} ka slot aapke liye ${S.holdMinutes} minute ke liye hold kar diya hai.\n\nAppointment kiske liye hai? Apne liye hai toh *Mere liye* dabaiye, warna patient ka naam likh dijiye.`,
     selfBtn: 'Mere liye',
-    askName: 'Kripya patient ka poora naam likhiye (jaise: Riya Sharma), ya *Mere liye* dabaiye.',
-    confirmed: (r, w) => `Aapka appointment confirm ho gaya hai.\n\n*${D}*\n${C}\n\n📅 ${w}\n👤 ${r.name}${r.service ? `\n💆 ${r.service}` : ''}\n\nKripya 10 minute pehle aayein aur purani reports ya prescription saath layein. Visit se pehle hum aapko reminder bhejenge.`,
-    changeBtn: 'Time badlein', cancelBtn: 'Cancel karein',
-    holdCancelled: 'Koi baat nahi, slot chhod diya gaya hai. Jab chahein *Hi* bhejkar dobara book kar sakte hain.',
-    limit: n => `Aapke ${n} appointment pehle se hain, jo maximum hai. Naya time lene ke liye pehle ek cancel karein.`,
-    noUpcoming: 'Aapka koi upcoming appointment nahi hai.',
+    askName: 'Please patient ka poora naam likh dijiye (jaise: Riya Sharma), ya *Mere liye* dabaiye.',
+    confirmed: (r, w) => `Aapka appointment confirm ho gaya hai ✅\n\n*${D}*\n${C}\n\n📅 ${w}\n👤 ${r.name}${r.service ? `\n💆 ${r.service}` : ''}\n\nPlease 10 minute pehle aa jaiye. Koi purani report ya prescription ho toh saath le aaiye. Visit se pehle hum aapko reminder bhej denge.`,
+    changeBtn: 'Time change karein', cancelBtn: 'Cancel karein',
+    holdCancelled: 'Koi baat nahi, slot cancel kar diya hai. Jab bhi book karna ho, bas *Hi* bhej dijiye.',
+    limit: n => `Aapke already ${n} appointments booked hain. Naya book karne ke liye pehle ek cancel karna hoga.`,
+    noUpcoming: 'Abhi aapka koi appointment booked nahi hai.',
     cancelQ: (r, w) => `Kya aap ye appointment cancel karna chahte hain?\n\n👤 ${r.name || 'Patient'}\n📅 ${w}`,
     yesCancel: 'Haan, cancel karein', keepBtn: 'Nahi, rehne dein',
-    whichCancel: 'Kaunsa appointment cancel karna hai?', chooseBtn: 'Chuniye', yourTitle: 'Aapke appointment',
-    cancelled: w => `${w} wala appointment cancel ho gaya hai.\nJab chahein *Hi* bhejkar dobara book kar sakte hain.`,
-    gone: 'Ye appointment pehle hi cancel ya poora ho chuka hai.',
-    kept: 'Theek hai, aapka appointment jaisa tha waisa hi rahega.',
-    thanksConfirm: w => `Confirm karne ke liye dhanyavaad. ${D} aapse ${w} milenge.`,
-    reschedule: 'Zaroor. Aapka purana slot chhod diya gaya hai. Kripya nayi date chuniye.',
-    talk: `${C} se baat karne ke liye call karein: ${S.clinicPhone}\n\nClinic ka samay:\n${timingsText('hl')}`,
-    textOnly: 'Maaf kijiye, main sirf text message padh sakta hoon. Kripya likhkar bhejiye ya neeche se option chuniye.',
-    yourAppts: (n, l) => `Namaste ${n} ji, ${C} mein aapke upcoming appointment:\n\n${l}`,
-    bookBtn: 'Appointment lein', anotherBtn: 'Ek aur book karein', cancelBookingBtn: 'Cancel karein', talkBtn: 'Clinic se baat',
-    mcQ: 'Zaroor, apna sawaal yahin likhiye. Clinic jaldi jawab dega.',
-    mcCall: 'Dhanyavaad. Clinic aapko jaldi call karega.',
+    whichCancel: 'Kaunsa appointment cancel karna hai?', chooseBtn: 'Select karein', yourTitle: 'Aapke appointments',
+    cancelled: w => `Aapka ${w} ka appointment cancel ho gaya hai.\nDobara book karna ho toh bas *Hi* bhej dijiye.`,
+    gone: 'Ye appointment pehle hi cancel ya complete ho chuka hai.',
+    kept: 'Theek hai, aapka appointment waise hi rahega 👍',
+    thanksConfirm: w => `Confirm karne ke liye thank you 🙏\n${D} aapse ${w} milenge.`,
+    reschedule: 'Ho jayega. Aapka purana slot cancel kar diya hai, ab nayi date select kar lijiye.',
+    talk: `${C} se baat karne ke liye call karein: ${S.clinicPhone}\n\nClinic timings:\n${timingsText('hl')}`,
+    textOnly: 'Sorry, abhi hum sirf text message hi padh paate hain. Please likh kar bhejiye ya neeche se option select karein.',
+    yourAppts: (n, l) => `Namaste ${n} ji 🙏\nAapke upcoming appointments:\n\n${l}`,
+    bookBtn: 'Book appointment', anotherBtn: 'Ek aur book karein', cancelBookingBtn: 'Cancel karein', talkBtn: 'Clinic se baat',
+    mcQ: 'Zaroor, apna sawaal yahin likh dijiye. Clinic jaldi reply karega.',
+    mcCall: 'Thank you 🙏 Clinic aapko jaldi call back karega.',
     foot: 'Clinic se baat ke liye TALK likhein',
-    lateMsg: (m, t2) => `${D} aaj lagbhag ${m} minute late hain. Aapka appointment lagbhag ${t2} tak shuru hoga. Intezaar ke liye maafi chahte hain.`,
-    leaveMsg: d => `${D} ${d} ko clinic mein nahi honge. Asuvidha ke liye maafi chahte hain. Kripya neeche se naya time chuniye ya cancel karein.`,
-    okBtn: 'Theek hai', newTimeBtn: 'Naya time chuniye',
+    lateMsg: (m, t2) => `Namaste 🙏 Aaj ${D} thoda late hain, lagbhag ${m} minute. Aapka appointment ab lagbhag ${t2} tak shuru hoga. Wait karwane ke liye sorry.`,
+    leaveMsg: d => `Namaste 🙏 ${D} ${d} ko clinic mein available nahi honge, asuvidha ke liye sorry. Please neeche se naya time select karein ya appointment cancel kar dijiye.`,
+    okBtn: 'Theek hai', newTimeBtn: 'Naya time chunein',
   },
 };
 
@@ -413,7 +411,7 @@ else if (id === 'TALK' || (!id && has(['talk', 'call', 'human', 'help', 'baat', 
 else {
   const faq = (S.faq || []).find(f => !id && f.keywords.some(k => has([k])));
   if (faq) {
-    const answer = faq.answer === '{timings}' ? (lang === 'hl' ? 'Clinic ka samay:\n' : 'Clinic timings:\n') + timingsText(lang) : faq.answer;
+    const answer = faq.answer === '{timings}' ? 'Clinic timings:\n' + timingsText(lang) : faq.answer;
     payload = buttons(answer, [['NEW', L.bookBtn], ['TALK', L.talkBtn]]);
   } else if (upcoming.length) {
     payload = buttons(L.yourAppts(msg.name, upcoming.map(r => `• ${r.name || 'Patient'}: ${W(r)}`).join('\n')), menuBtns());
