@@ -305,7 +305,7 @@ function queueNotify(q, out) {
 }
 function callNext(q, out) {
   const cur = servingOf(q);
-  if (cur) { cur.st = 'd'; const m = DateTime.fromISO(cur.calledAt).isValid ? now.diff(DateTime.fromISO(cur.calledAt), 'minutes').minutes : 0; if (m > 1 && m < 90) q.durs = (q.durs || []).concat([Math.round(m)]).slice(-10); }
+  if (cur) { cur.st = 'd'; addVisit(cur); const m = DateTime.fromISO(cur.calledAt).isValid ? now.diff(DateTime.fromISO(cur.calledAt), 'minutes').minutes : 0; if (m > 1 && m < 90) q.durs = (q.durs || []).concat([Math.round(m)]).slice(-10); }
   const nx = waitingOf(q)[0];
   if (nx) { nx.st = 's'; nx.calledAt = now.toISO(); }
   queueNotify(q, out);
@@ -363,6 +363,38 @@ function setDoc(status, mins, out) {
 const mask = p => p ? `+${String(p).slice(0, 4)}••• ••${String(p).slice(-3)}` : '';
 const chatLog = (phone, who, txt) => { if (!mem.chat) mem.chat = {}; const l = mem.chat[phone] || []; l.push({ who, t: String(txt).slice(0, 500), at: now.toISO() }); mem.chat[phone] = l.slice(-40); };
 
+
+// ---------- register: every visit, every bill, patients, follow-ups ----------
+const hm = iso => { const d = DateTime.fromISO(iso || ''); return d.isValid ? d.setZone(TZ).toFormat('h:mm a') : ''; };
+const visOf = d => (mem.vis && mem.vis[d]) || [];
+const patKey = (ph, name) => ph ? 'p' + ph : 'n' + String(name || '').trim().toLowerCase();
+const rupees = n => '₹' + Number(n || 0).toLocaleString('en-IN');
+function addVisit(tk) {
+  if (!mem.vis) mem.vis = {};
+  const l = mem.vis[todayStr] || (mem.vis[todayStr] = []);
+  if (l.some(v => v.k === tk.key)) return;
+  l.push({ k: tk.key, tok: tk.tok, name: tk.name || 'Patient', ph: tk.phone || '', in: tk.calledAt || now.toISO(), out: now.toISO(), fee: null, m: null });
+  const cut = now.minus({ days: 400 }).toFormat('yyyy-MM-dd');
+  for (const d of Object.keys(mem.vis)) if (d < cut) delete mem.vis[d];
+}
+function visitsBetween(from, to) { const r = []; for (const d of Object.keys(mem.vis || {}).sort()) if (d >= from && d <= to) for (const v of mem.vis[d]) r.push(Object.assign({ day: d }, v)); return r; }
+function regSum(from, to) {
+  const V = visitsBetween(from, to);
+  const sum = m => V.filter(v => v.m === m).reduce((a, v) => a + (v.fee || 0), 0);
+  return { seen: V.length, cash: sum('cash'), upi: sum('upi'), money: sum('cash') + sum('upi'), free: V.filter(v => v.m === 'free').length, nobill: V.filter(v => !v.m).length, V };
+}
+function allPatients() {
+  const P = {};
+  for (const d of Object.keys(mem.vis || {}).sort()) for (const v of mem.vis[d]) {
+    const key = patKey(v.ph, v.name);
+    const p = P[key] || (P[key] = { key, name: v.name, ph: v.ph, first: d, last: d, n: 0, paid: 0, fup: null });
+    p.name = v.name || p.name; p.last = d; p.n++; if (v.m === 'cash' || v.m === 'upi') p.paid += v.fee || 0; if (v.fup) p.fup = v.fup; else if (v.m) p.fup = null;
+  }
+  return Object.values(P);
+}
+const fupTag = p => { if (!p.fup) return ['', '']; if (p.fup === todayStr) return ['Follow-up due today', 'warn']; if (p.fup < todayStr) return ['Missed follow-up', 'bad'];
+  return ['Follow-up ' + DateTime.fromISO(p.fup).toFormat('d LLL'), '']; };
+
 // ---------- the app (and the live tracker / TV) talk to this ----------
 if (mode === 'desk') {
   const b = deskReq || {};
@@ -379,6 +411,9 @@ if (mode === 'desk') {
     if (!tk) res = { ok: false, gone: true, clinic };
     else { if (b.cancel && tk.st === 'w') { qWrite(); tk.st = 'x'; }
       const n = aheadOf(q, tk); res = { ok: true, tok: tk.tok, st: tk.st, ahead: tk.st === 'w' ? n : 0, eta: tk.st === 'w' ? etaText(q, n, 'hl') : '', now: (servingOf(q) || {}).tok || null, missed: tk.missed || 0, clinic, doc: Object.assign(docInfo(), { line: docLine(langOf(tk.phone, '')) }), lang: langOf(tk.phone, '') }; }
+  } else if (b.action === 'mc_log') {
+    if (S.hookKey && b.key === S.hookKey && digits(b.phone || '')) { if (!mem.mcalls) mem.mcalls = []; mem.mcalls = mem.mcalls.filter(x => x.at > now.minus({ days: 3 }).toISO()).concat([{ ph: digits(b.phone), at: now.toISO() }]).slice(-200); res = { ok: true }; }
+    else res = { ok: false };
   } else if (b.action === 'tv') {
     res = (b.k && b.k === S.tvKey) ? { ok: true, ...publicQ(qRead()), clinic, doc: docInfo(), cabin } : { ok: false };
   } else if (b.action === 'login') {
@@ -399,6 +434,24 @@ if (mode === 'desk') {
     else if (b.action === 'set_status') { res.told = setDoc(String(b.status || 'in'), b.mins, out); }
     else if (b.action === 'chat_send' && !isDoc || (b.action === 'chat_send' && role === 'owner')) { const ph = digits(b.phone); if (ph && b.text) { out.push(textTo(ph, String(b.text).slice(0, 1000))); chatLog(ph, 'staff', b.text); if (mem.live[ph]) mem.live[ph].last = now.toISO(); } }
     else if (b.action === 'chat_end') { const ph = digits(b.phone); if (mem.live[ph]) { delete mem.live[ph]; const lg = langOf(ph, ''); out.push(textTo(ph, T[lg].liveOff)); chatLog(ph, 'bot', T[lg].liveOff); } }
+    else if (b.action === 'bill') {
+      const day = /^\d{4}-\d{2}-\d{2}$/.test(b.day || '') ? b.day : todayStr;
+      const v = visOf(day).find(x => x.k === b.k);
+      if (!v) res.error = 'This visit was not found.';
+      else {
+        v.m = ['cash', 'upi', 'free'].includes(b.m) ? b.m : 'cash';
+        v.fee = v.m === 'free' ? 0 : Math.max(0, Math.min(500000, Math.round(Number(b.fee) || 0)));
+        v.by = sess.name; v.at = now.toISO();
+        const days = Math.max(0, Math.min(400, Number(b.fup) || 0));
+        v.fup = days ? now.plus({ days }).toFormat('yyyy-MM-dd') : null;
+        mem.fup = (mem.fup || []).filter(f => f.k !== v.k && f.date >= todayStr);
+        if (v.fup && v.ph) mem.fup.push({ k: v.k, ph: v.ph, name: v.name, date: v.fup, sent: false });
+        res.billed = v.tok;
+      }
+    }
+    else if (b.action === 'note' && isDoc) { const pk = String(b.pk || ''); if (!mem.notes) mem.notes = {}; mem.notes[pk] = { t: String(b.text || '').slice(0, 600), at: now.toISO(), by: sess.name }; }
+    else if (b.action === 'mc_done') { mem.mcalls = (mem.mcalls || []).filter(x => x.ph !== digits(b.phone)); }
+    else if (b.action === 'wl_done') { for (const d of Object.keys(mem.wait || {})) mem.wait[d] = (mem.wait[d] || []).filter(w => w.phone !== digits(b.phone)); }
     else if (b.action === 'cb_done') { mem.callbacks = (mem.callbacks || []).filter(x => x.phone !== digits(b.phone)); }
     // the state every screen needs
     const q = qRead();
@@ -408,7 +461,43 @@ if (mode === 'desk') {
     res.queue = { now: cur ? { tok: cur.tok, name: cur.name, src: cur.src, key: cur.key, phone: isDoc ? '' : mask(cur.phone), since: DateTime.fromISO(cur.calledAt).setZone(TZ).toFormat('h:mm a') } : null,
       waiting: waitingOf(q).slice(0, 25).map(x => ({ tok: x.tok, name: x.name, src: x.src, key: x.key, missed: x.missed || 0, ahead: aheadOf(q, x), told2: !!x.told2, phone: isDoc ? '' : mask(x.phone), here: !!x.here })),
       done: q.list.filter(x => x.st === 'd').length, avg: avgMin(q), open: isOpenNow() };
-    res.links = { tv: S.tvKey ? `${APP}?v=tv&k=${S.tvKey}` : '', qr };
+    res.links = { tv: S.tvKey ? `${APP}?v=tv&k=${S.tvKey}` : '', qr, poster: `${APP}?v=qr&n=${S.botNumber || ''}&c=${encodeURIComponent(C)}` };
+    res.fee = S.fee || 0; res.upi = S.upiId ? { id: S.upiId, name: S.upiName || C } : null;
+    const todayV = visOf(todayStr);
+    res.toBill = todayV.filter(v => !v.m).map(v => ({ k: v.k, tok: v.tok, name: v.name, seen: `${hm(v.in)} – ${hm(v.out)}` }));
+    res.today = { seen: todayV.length, waiting: waitingOf(q).length };
+    if (isDoc) {
+      const t0 = regSum(todayStr, todayStr); res.today.money = t0.money; res.today.nobill = t0.nobill;
+      const inQ = ph => q.list.find(x => x.phone === ph && x.st !== 'x');
+      res.fups = (mem.fup || []).filter(f => f.date === todayStr).map(f => { const t = inQ(f.ph); return { name: f.name, state: t ? (t.st === 'd' ? 'Visited' : 'In queue · ' + t.tok) : f.sent ? 'Reminded' : 'Not booked', c: t ? 'ok' : f.sent ? '' : 'warn' }; });
+    }
+    if (b.view === 'register' && isDoc) {
+      const per = ['today', 'week', 'month'].includes(b.period) ? b.period : 'today';
+      const from = per === 'today' ? todayStr : per === 'week' ? now.minus({ days: 6 }).toFormat('yyyy-MM-dd') : now.startOf('month').toFormat('yyyy-MM-dd');
+      const R = regSum(from, todayStr);
+      const dl = d => d === todayStr ? '' : DateTime.fromISO(d).toFormat('d LLL') + ', ';
+      res.register = { period: per, seen: R.seen, money: R.money, cash: R.cash, upi: R.upi, free: R.free, nobill: R.nobill,
+        flags: R.V.filter(v => !v.m || v.m === 'free').reverse().slice(0, 40).map(v => ({ name: (v.tok ? v.tok + ' · ' : '') + v.name, sub: v.m ? `Marked by ${v.by || 'staff'}, ${dl(v.day)}${hm(v.at)}` : `Seen ${dl(v.day)}${hm(v.in)} – ${hm(v.out)}`, tag: v.m ? 'No charge' : 'No bill', bad: !v.m })),
+        calls: (mem.mcalls || []).filter(x => x.at >= DateTime.fromISO(from, { zone: TZ }).toISO()).length };
+    }
+    if (b.view === 'patients') {
+      const s0 = String(b.q || '').trim().toLowerCase(); const sd = digits(s0);
+      let P = allPatients();
+      const total = P.length;
+      if (s0) P = P.filter(p => (p.name || '').toLowerCase().includes(s0) || (sd.length >= 3 && (p.ph || '').includes(sd)));
+      P.sort((a, c) => c.last.localeCompare(a.last));
+      res.patients = { total, list: P.slice(0, 80).map(p => { const t = fupTag(p); return { key: p.key, name: p.name, sub: (p.last === todayStr ? 'Today' : DateTime.fromISO(p.last).toFormat('d LLL')) + ' · ' + (p.n === 1 ? 'first visit' : p.n + ' visits'), tag: t[0], tc: t[1] }; }) };
+    }
+    if (b.view === 'patient' && b.pk) {
+      const p = allPatients().find(x => x.key === b.pk);
+      if (p) {
+        const V = visitsBetween('0000', '9999').filter(v => patKey(v.ph, v.name) === p.key).reverse();
+        const nt = (mem.notes || {})[p.key];
+        res.patient = { key: p.key, name: p.name, phone: isDoc ? (p.ph ? '+' + p.ph : '') : mask(p.ph), call: p.ph ? '+' + p.ph : '', since: DateTime.fromISO(p.first).toFormat('LLL yyyy'), paid: p.paid, n: p.n,
+          fup: p.fup ? DateTime.fromISO(p.fup).toFormat('ccc, d LLL') : '', fupTag: fupTag(p)[1],
+          note: nt ? nt.t : '', visits: V.map(v => ({ date: v.day === todayStr ? 'Today' : DateTime.fromISO(v.day).toFormat('d LLL yyyy'), time: hm(v.in), amt: v.m ? rupees(v.fee) : '—', method: v.m === 'free' ? `No charge · by ${v.by || 'staff'}` : v.m === 'upi' ? 'UPI' : v.m === 'cash' ? 'Cash' : 'Not billed', flag: !v.m || v.m === 'free' })) };
+      }
+    }
     if (b.needAppts) {
       const mineToday = rows.filter(r => r.date === todayStr && ['booked', 'confirmed', 'sent', 'holding'].includes(r.status) && at(r.date, r.time).isValid).sort((a, c) => a.time.localeCompare(c.time));
       const seenBefore = ph => rows.some(r => r.phone === ph && r.date < todayStr && ['booked', 'confirmed', 'sent'].includes(r.status));
@@ -416,10 +505,12 @@ if (mode === 'desk') {
     }
     if (!isDoc || role === 'owner') {
       const lv = Object.keys(mem.live || {}).filter(p => DateTime.fromISO(mem.live[p].last) > now.minus({ hours: 2 }));
+      const bookedAfter = (ph, iso) => rows.some(r => r.phone === ph && active(r) && r.date >= todayStr);
       res.inbox = {
+        calls: (mem.mcalls || []).slice(-40).reverse().map(x => ({ phone: x.ph, shown: mask(x.ph), call: '+' + x.ph, at: DateTime.fromISO(x.at).setZone(TZ).toFormat(DateTime.fromISO(x.at) > now.startOf('day') ? 'h:mm a' : 'd LLL'), booked: bookedAfter(x.ph, x.at) })),
         live: lv.map(p => { const l = (mem.chat || {})[p] || []; const last = l[l.length - 1]; return { phone: p, shown: mask(p), name: mem.live[p].name || 'Patient', last: last ? last.t : '', at: last ? DateTime.fromISO(last.at).setZone(TZ).toFormat('h:mm a') : '' }; }),
-        callbacks: (mem.callbacks || []).slice(-20).map(x => ({ phone: x.phone, shown: mask(x.phone), name: x.name, at: DateTime.fromISO(x.at).setZone(TZ).toFormat('h:mm a') })),
-        wait: Object.keys(mem.wait || {}).filter(d => d >= todayStr).flatMap(d => (mem.wait[d] || []).map(w => ({ shown: mask(w.phone), day: DateTime.fromISO(d).toFormat('ccc d LLL') }))),
+        callbacks: (mem.callbacks || []).slice(-20).map(x => ({ phone: x.phone, shown: mask(x.phone), call: '+' + x.phone, name: x.name, at: DateTime.fromISO(x.at).setZone(TZ).toFormat('h:mm a') })),
+        wait: Object.keys(mem.wait || {}).filter(d => d >= todayStr).flatMap(d => (mem.wait[d] || []).map(w => ({ phone: w.phone, shown: mask(w.phone), call: '+' + w.phone, day: DateTime.fromISO(d).toFormat('ccc d LLL') }))),
       };
       if (b.chat) { const ph = digits(b.chat); res.chat = { phone: ph, shown: mask(ph), name: (mem.live[ph] || {}).name || 'Patient', open: !!mem.live[ph], msgs: ((mem.chat || {})[ph] || []).map(m => ({ who: m.who, t: m.t, at: DateTime.fromISO(m.at).setZone(TZ).toFormat('h:mm a') })) }; }
     }
@@ -430,6 +521,48 @@ if (mode === 'desk') {
 }
 
 // ================= 8 AM doctor summary (no patient message in this run) =================
+if (mode === 'summary' && (now.hour >= 20 || now.hour < 3)) {
+  // ---- 9 PM: the day's register to the doctor ----
+  const day = now.hour < 3 ? now.minus({ days: 1 }) : now; const dk = day.toFormat('yyyy-MM-dd');
+  const R = regSum(dk, dk);
+  const tomorrow = day.plus({ days: 1 }).toFormat('yyyy-MM-dd');
+  const fT = (mem.fup || []).filter(f => f.date === tomorrow).length;
+  const calls = (mem.mcalls || []).filter(x => DateTime.fromISO(x.at).setZone(TZ).toFormat('yyyy-MM-dd') === dk);
+  const callsBooked = calls.filter(x => rows.some(r => r.phone === x.ph && active(r))).length;
+  const look = [R.nobill ? `${R.nobill} seen, no bill` : '', R.free ? `${R.free} marked No charge` : ''].filter(Boolean);
+  const body = `*${C} · ${day.toFormat('ccc d LLL')}*\n\nSeen: *${R.seen} patient${R.seen === 1 ? '' : 's'}*\nRecorded: *${rupees(R.money)}*\nCash ${rupees(R.cash)} · UPI ${rupees(R.upi)}\n\n` +
+    (look.length ? `*Needs a look*\n${look.join('\n')}\n\n` : 'Every visit is billed ✓\n\n') +
+    `Missed calls: ${calls.length}${calls.length ? ` · ${callsBooked} booked` : ''}\nFollow-ups tomorrow: ${fT}`;
+  const to = [...new Set((S.doctorNumbers || []).concat((S.staff || []).filter(x => x.role === 'owner' || x.role === 'doctor').map(x => x.phone)).map(digits))];
+  if (!mem.nightSent) mem.nightSent = '';
+  if (mem.nightSent === dk) return [];
+  for (const ph of to) {
+    if (inWindow(ph)) more.push(ctaTo(ph, body, 'Open register', `${APP}`));
+    else if (S.templates && S.templates.night) more.push(templateTo(ph, S.templates.night, [day.toFormat('ccc d LLL'), String(R.seen), rupees(R.money), look.length ? look.join(', ') : 'Every visit billed'], []));
+  }
+  mem.nightSent = dk;
+  if (!more.length) return [];
+  payload = more.shift();
+  return [{ json: { action: 'reply', payload, more, holiday: null, values: null, range: null, sheetId: S.sheetId, phoneNumberId: S.phoneNumberId, notify: false } }];
+}
+if (mode === 'summary' && now.hour >= 16) {
+  // ---- 6 PM: follow-up reminders for tomorrow ----
+  const tomorrow = now.plus({ days: 1 }).toFormat('yyyy-MM-dd');
+  const due = (mem.fup || []).filter(f => f.date === tomorrow && !f.sent);
+  const whenTxt = DateTime.fromISO(tomorrow).toFormat('ccc, d LLL');
+  for (const f of due) {
+    const lg = langOf(f.ph, '');
+    const hasBooking = rows.some(r => r.phone === f.ph && active(r) && r.date === tomorrow);
+    if (hasBooking) { f.sent = true; continue; }
+    const msgTxt = lg === 'en' ? `Hello ${f.name} 🙏\n${D} had asked you to come back for a follow-up tomorrow, ${whenTxt}.\n\nTap below to pick a time, or just come and send TOKEN at the clinic.`
+      : `Namaste ${f.name} 🙏\n${D} ne aapko kal, ${whenTxt}, follow-up ke liye bulaya hai.\n\nTime book karne ke liye neeche dabaiye, ya seedha clinic aakar TOKEN bhejiye.`;
+    if (inWindow(f.ph)) { more.push(buttonsTo(f.ph, msgTxt, [['NEW', lg === 'en' ? 'Book a time' : 'Time book karein']])); f.sent = true; }
+    else if (S.templates && S.templates.followup) { more.push(templateTo(f.ph, S.templates.followup, [f.name, D, whenTxt], ['NEW'])); f.sent = true; }
+  }
+  if (!more.length) return [];
+  payload = more.shift();
+  return [{ json: { action: 'reply', payload, more, holiday: null, values: null, range: null, sheetId: S.sheetId, phoneNumberId: S.phoneNumberId, notify: false } }];
+}
 if (mode === 'summary') {
   const today = now.toFormat('yyyy-MM-dd');
   const list = rows.filter(r => r.date === today && active(r)).sort((a, b) => a.time.localeCompare(b.time));
