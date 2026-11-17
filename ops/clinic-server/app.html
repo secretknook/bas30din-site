@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="robots" content="noindex">
+<title>Clinic Desk</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;background:#F2F4F7;color:#101828;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer}
+a{color:#175CD3}
+.wrap{max-width:520px;margin:0 auto;min-height:100vh;background:#F2F4F7;display:flex;flex-direction:column;position:relative}
+.white{background:#FFFFFF}
+.top{background:#FFF;padding:calc(env(safe-area-inset-top) + 16px) 16px 12px;border-bottom:1px solid #EAECF0;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.h1{font-size:22px;font-weight:700;letter-spacing:-.2px}
+.sub{font-size:13px;color:#667085}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;border-radius:16px;padding:6px 10px;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
+.card{background:#FFF;border:1px solid #EAECF0;border-radius:14px}
+.sec{padding:14px 16px 6px;font-size:13px;font-weight:600;color:#475467;display:flex;justify-content:space-between}
+.row{display:flex;align-items:center;gap:12px;padding:11px 12px;border-bottom:1px solid #F2F4F7}
+.row:last-child{border-bottom:none}
+.btn{height:48px;border-radius:12px;border:1px solid #D0D5DD;background:#FFF;font-size:15px;font-weight:600;color:#344054;padding:0 14px}
+.btn.pri{background:#175CD3;border-color:#175CD3;color:#FFF}
+.btn.big{height:60px;font-size:17px;font-weight:700;width:100%}
+.btn.sm{height:36px;font-size:13px;border-radius:8px;padding:0 12px}
+.btn:disabled{opacity:.45;cursor:default}
+.content{flex:1;padding-bottom:96px}
+nav.tabs{position:fixed;bottom:0;left:0;right:0;background:#FFF;border-top:1px solid #EAECF0;padding:8px 0 calc(env(safe-area-inset-bottom) + 10px)}
+nav.tabs .in{max-width:520px;margin:0 auto;display:grid}
+nav.tabs button{border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;font-weight:500;color:#667085;position:relative;padding:4px 0}
+nav.tabs button.on{color:#175CD3;font-weight:600}
+.badge{position:absolute;top:-2px;left:55%;min-width:18px;height:18px;border-radius:9px;background:#D92D20;color:#FFF;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;padding:0 4px}
+.toast{margin:10px 12px 0;padding:10px 12px;border-radius:12px;background:#101828;color:#FFF;font-size:13px;line-height:1.45}
+.sheet-bg{position:fixed;inset:0;background:rgba(16,24,40,.45);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+.sheet{background:#FFF;width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:10px 16px calc(env(safe-area-inset-bottom) + 24px);display:flex;flex-direction:column;gap:12px}
+.grab{align-self:center;width:36px;height:4px;border-radius:2px;background:#D0D5DD}
+input.f{height:48px;border:1px solid #D0D5DD;border-radius:10px;padding:0 12px;font-size:16px;font-family:inherit;width:100%}
+.seg{display:grid;background:#F2F4F7;border-radius:10px;padding:3px}
+.seg button{height:34px;border:none;border-radius:8px;font-size:13px;font-weight:600;background:transparent;color:#667085}
+.seg button.on{background:#FFF;color:#101828;box-shadow:0 1px 2px rgba(16,24,40,.1)}
+.empty{padding:28px 16px;text-align:center;color:#667085;font-size:14px}
+.tok{font-variant-numeric:tabular-nums}
+.fab{position:fixed;right:max(16px,calc(50% - 244px));bottom:96px;height:52px;padding:0 18px;border-radius:16px;border:none;background:#101828;color:#FFF;display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;box-shadow:0 6px 16px rgba(16,24,40,.25);z-index:5}
+.bub{max-width:80%;padding:8px 12px;border-radius:14px;font-size:15px;line-height:1.4;white-space:pre-wrap;word-wrap:break-word}
+.err{margin:12px;padding:12px;border-radius:12px;background:#FEF3F2;color:#B42318;font-size:14px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>/*QRLIB*/</script>
+<script>
+(function () {
+  var API = location.origin + '/webhook/desk-api';
+  var qs = new URLSearchParams(location.search);
+  var $app = document.getElementById('app');
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function post(b) { return fetch(API, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(b) }).then(function (r) { return r.json(); }); }
+  function store(k, v) { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
+  function load(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function qrSvg(text, px) {
+    try { var q = qrcode(0, 'M'); q.addData(text); q.make(); var n = q.getModuleCount(), c = px / (n + 8), r = '';
+      for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) if (q.isDark(y, x)) r += '<rect x="' + ((x + 4) * c).toFixed(2) + '" y="' + ((y + 4) * c).toFixed(2) + '" width="' + (c + .3).toFixed(2) + '" height="' + (c + .3).toFixed(2) + '"/>';
+      return '<svg width="' + px + '" height="' + px + '" viewBox="0 0 ' + px + ' ' + px + '" role="img" aria-label="QR code"><rect width="100%" height="100%" fill="#fff"/><g fill="#101828">' + r + '</g></svg>';
+    } catch (e) { return '<div style="font-size:12px">' + esc(text) + '</div>'; }
+  }
+  var DOC = { in: ['In clinic', '#12B76A', '#ECFDF3', '#067647'], late: ['Running late', '#F79009', '#FFFAEB', '#B54708'], away: ['Away', '#F04438', '#FEF3F2', '#B42318'], leave: ['On leave', '#98A2B3', '#F2F4F7', '#344054'] };
+  function docPill(d) { var k = DOC[d && d.status] ? d.status : 'in'; var lab = k === 'late' ? 'Late ' + d.mins + ' min' : k === 'away' ? 'Away' + (d.until ? ' till ' + d.until : '') : DOC[k][0];
+    return '<span class="pill" style="background:' + DOC[k][2] + ';color:' + DOC[k][3] + '"><span class="dot" style="background:' + DOC[k][1] + '"></span>' + esc(lab) + '</span>'; }
+
+  // ---------------- patient live tracker ----------------
+  function tracker(k) {
+    var st = { d: null };
+    function draw() {
+      var d = st.d;
+      if (!d) { $app.innerHTML = '<div class="wrap white"><div class="empty">Loading…</div></div>'; return; }
+      if (!d.ok) { $app.innerHTML = '<div class="wrap white"><div style="padding:60px 24px;text-align:center"><div style="font-size:20px;font-weight:700">Ye token ab active nahi hai</div><div class="sub" style="margin-top:8px">Naya token lene ke liye clinic ka QR scan karein.</div></div></div>'; return; }
+      var en = d.lang === 'en';
+      var a = d.ahead, card;
+      if (d.st === 's') card = [en ? "It's your turn" : 'Aapki baari aa gayi', en ? 'Please come in 🙏' : 'Andar aaiye 🙏', '#12B76A', '#FFFFFF'];
+      else if (d.st === 'd') card = [en ? 'Visit done' : 'Aapka visit ho gaya', en ? 'Thank you for visiting' : 'Aane ke liye dhanyavaad', '#F2F4F7', '#101828'];
+      else if (d.st === 'x') card = [en ? 'Token cancelled' : 'Token cancel ho gaya', '', '#F2F4F7', '#101828'];
+      else if (a <= 1) card = [en ? 'You are next' : 'Aap agle hain', (en ? 'Please come to the waiting room · ' : 'Waiting room mein aa jaiye · ') + d.eta, '#EFF4FF', '#1849A9'];
+      else if (a === 2) card = [en ? 'Please come near the clinic' : 'Clinic ke paas aa jaiye', (en ? '2 ahead · ' : '2 patients aapse pehle · ') + d.eta, '#FFFAEB', '#93370D'];
+      else card = [d.eta, en ? 'Relax, there is still time' : 'Aaram se aaiye, abhi time hai', '#F2F4F7', '#101828'];
+      var dots = ''; for (var i = 3; i >= 0; i--) dots += '<span style="flex:1;height:6px;border-radius:3px;background:' + (d.st === 's' ? '#12B76A' : (i >= Math.min(a, 3) ? '#175CD3' : '#EAECF0')) + '"></span>';
+      var docNote = d.doc && d.doc.status !== 'in' ? '<div style="margin:14px 20px 0;padding:12px 14px;border-radius:12px;background:' + DOC[d.doc.status][2] + ';color:' + DOC[d.doc.status][3] + ';font-size:14px;line-height:1.5">' + esc(d.doc.line) + '</div>' : '';
+      $app.innerHTML = '<div class="wrap white">' +
+        '<div style="padding:calc(env(safe-area-inset-top) + 24px) 20px 0;display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:15px;font-weight:700">' + esc(d.clinic.name) + '</div><div class="sub">' + esc(d.clinic.doctor) + '</div></div><span style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#067647"><span class="dot" style="background:#12B76A"></span>Live</span></div>' +
+        '<div style="margin:24px 20px 0;border-radius:20px;padding:22px 20px;display:flex;flex-direction:column;align-items:center;gap:6px;background:' + card[2] + ';color:' + card[3] + '"><span style="font-size:14px;font-weight:600;opacity:.85">' + (en ? 'Your token' : 'Aapka token') + '</span><span class="tok" style="font-size:64px;font-weight:800;letter-spacing:-1.5px;line-height:1">' + esc(d.tok) + '</span><span style="font-size:18px;font-weight:700;margin-top:8px;text-align:center">' + esc(card[0]) + '</span><span style="font-size:14px;opacity:.85;text-align:center">' + esc(card[1]) + '</span></div>' +
+        (d.st === 'w' ? '<div style="margin:20px 20px 0;display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="card" style="padding:12px 14px"><div class="sub">' + (en ? 'Now serving' : 'Abhi chal raha hai') + '</div><div class="tok" style="font-size:26px;font-weight:800">' + esc(d.now || '—') + '</div></div><div class="card" style="padding:12px 14px"><div class="sub">' + (en ? 'Ahead of you' : 'Aapse pehle') + '</div><div class="tok" style="font-size:26px;font-weight:800">' + a + '</div></div></div><div style="margin:18px 20px 0;display:flex;gap:6px">' + dots + '</div>' : '') +
+        docNote +
+        (d.st === 'w' ? '<div style="margin:18px 20px 0;padding:12px 14px;border-radius:12px;background:#F2F4F7;font-size:14px;line-height:1.5;color:#344054">' + (en ? 'We will message you on WhatsApp when 2 patients are ahead of you.' : 'Jab 2 patients aapse pehle honge, hum WhatsApp par bata denge. Tab tak aap bahar wait kar sakte hain.') + '</div>' : '') +
+        '<div style="flex:1"></div>' +
+        (d.st === 'w' ? '<div style="padding:16px 20px calc(env(safe-area-inset-bottom) + 24px)"><button class="btn" id="cx" style="width:100%;color:#B42318;border-color:#FDA29B">' + (en ? 'Cancel my token' : 'Token cancel karein') + '</button></div>' : '') +
+        '</div>';
+      var cx = document.getElementById('cx');
+      if (cx) cx.onclick = function () { if (confirm(en ? 'Cancel your token?' : 'Token cancel karna hai?')) post({ action: 'track', k: k, cancel: true }).then(function (r) { st.d = r; draw(); }); };
+    }
+    function tick() { post({ action: 'track', k: k }).then(function (r) { st.d = r; draw(); }).catch(function () {}); }
+    draw(); tick(); setInterval(tick, 12000);
+  }
+
+  // ---------------- waiting room TV ----------------
+  function tv(k) {
+    function draw(d) {
+      if (!d || !d.ok) { $app.innerHTML = '<div style="padding:60px;font-size:24px">TV link is not valid.</div>'; return; }
+      var dk = DOC[d.doc.status] ? d.doc.status : 'in';
+      var next = d.next.map(function (t, i) { return '<div class="tok" style="font-size:7vh;font-weight:800;color:' + (i ? '#61646C' : '#FFF') + '">' + esc(t) + '</div>'; }).join('') || '<div style="font-size:4vh;color:#61646C">—</div>';
+      $app.innerHTML = '<div style="height:100vh;background:#0C111D;color:#FFF;display:grid;grid-template-columns:1.6fr 1fr">' +
+        '<div style="padding:6vh 5vw;display:flex;flex-direction:column;justify-content:space-between"><div style="display:flex;justify-content:space-between;align-items:center;gap:20px"><span style="font-size:3.2vh;font-weight:700">' + esc(d.clinic.name) + '</span><span style="display:flex;align-items:center;gap:10px;font-size:2.8vh;font-weight:600;color:' + (dk === 'in' ? '#75E0A7' : '#FEC84B') + '"><span class="dot" style="width:1.6vh;height:1.6vh;background:' + DOC[dk][1] + '"></span>' + esc(d.clinic.doctor) + ' · ' + esc(dk === 'away' && d.doc.until ? 'Back ~' + d.doc.until : DOC[dk][0]) + '</span></div>' +
+        '<div><div style="font-size:3.6vh;font-weight:600;color:#94969C;letter-spacing:1px">NOW SERVING</div><div class="tok" style="font-size:26vh;font-weight:800;letter-spacing:-.5vh;line-height:.95">' + esc(d.now || '—') + '</div><div style="font-size:4.6vh;font-weight:600;color:#CECFD2">' + esc(d.cabin || '') + '</div></div>' +
+        '<div style="font-size:2.6vh;color:#94969C">' + d.waiting + ' waiting · about ' + d.avg + ' min per patient</div></div>' +
+        '<div style="background:#161B26;padding:6vh 3.5vw;display:flex;flex-direction:column;gap:2.6vh"><div style="font-size:3vh;font-weight:600;color:#94969C;letter-spacing:1px">NEXT</div>' + next + '<div style="flex:1"></div>' +
+        '<div style="display:flex;align-items:center;gap:20px;background:#FFF;color:#101828;border-radius:20px;padding:16px">' + qrSvg(d.clinic.qr, Math.round(window.innerHeight * 0.24)) + '<div style="font-size:2.6vh;font-weight:700;line-height:1.3">Token chahiye?<br><span style="font-weight:500;color:#475467">Scan karein, WhatsApp par mil jayega</span></div></div></div></div>';
+    }
+    function tick() { post({ action: 'tv', k: k }).then(draw).catch(function () {}); }
+    tick(); setInterval(tick, 8000);
+  }
+
+  // ---------------- printable QR poster ----------------
+  function poster() {
+    var n = qs.get('n') || '', c = qs.get('c') || 'Clinic';
+    var link = 'https://wa.me/' + n + '?text=TOKEN';
+    $app.innerHTML = '<div style="max-width:620px;margin:0 auto;background:#FFF;min-height:100vh;padding:48px 32px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:18px">' +
+      '<div style="font-size:30px;font-weight:800">' + esc(c) + '</div><div style="font-size:26px;font-weight:700">Token ke liye scan karein</div><div style="font-size:18px;color:#475467">Line mein khade rehne ki zaroorat nahi.<br>WhatsApp par token aur live status milega.</div>' +
+      qrSvg(link, 340) + '<ol style="text-align:left;font-size:17px;line-height:1.8;color:#344054"><li>Camera se QR scan karein</li><li>WhatsApp mein TOKEN bhejein</li><li>Baari aane se pehle message aayega</li></ol>' +
+      '<button class="btn pri" onclick="window.print()" style="margin-top:8px">Print</button></div>';
+  }
+
+  // ---------------- staff app ----------------
+  function staff() {
+    var S = { sid: load('cd_sid'), role: load('cd_role'), data: null, appts: null, apptsAt: 0, tab: null, chat: null, sheet: null, toast: '', seg: 'all', err: '', busy: false };
+    function logout() { store('cd_sid', null); store('cd_role', null); S.sid = null; drawLogin(); }
+    function drawLogin(msg) {
+      var bn = load('cd_bot') || '15551823589';
+      $app.innerHTML = '<div class="wrap white" style="padding:calc(env(safe-area-inset-top) + 72px) 24px 32px">' +
+        '<div style="width:52px;height:52px;border-radius:14px;background:#175CD3;display:flex;align-items:center;justify-content:center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16M9 15h6"/></svg></div>' +
+        '<div style="margin-top:24px;font-size:26px;font-weight:700;letter-spacing:-.3px">Log in to Clinic Desk</div><div style="margin-top:8px;font-size:15px;line-height:1.5;color:#475467">Send <b>LOGIN</b> on WhatsApp from the number your clinic added for you. You will get a one-tap login link.</div>' +
+        (msg ? '<div class="err" style="margin:16px 0 0">' + esc(msg) + '</div>' : '') +
+        '<a class="btn pri" style="margin-top:24px;display:flex;align-items:center;justify-content:center;text-decoration:none" href="https://wa.me/' + esc(bn) + '?text=LOGIN">Get login link on WhatsApp</a>' +
+        '<div style="margin-top:14px;font-size:13px;line-height:1.5;color:#667085">No password. The link works once and expires in 15 minutes.</div>' +
+        '<div style="flex:1"></div><div style="padding:14px;border-radius:12px;background:#F2F4F7;font-size:13px;line-height:1.5;color:#475467">The clinic owner decides what you see: the <b style="color:#101828">Doctor</b> view or the <b style="color:#101828">Reception</b> view.</div></div>';
+    }
+    function tabsFor(role) { return role === 'doctor' ? ['doctor', 'queue', 'more'] : role === 'owner' ? ['queue', 'doctor', 'today', 'inbox', 'more'] : ['queue', 'today', 'inbox', 'more']; }
+    var ICON = { queue: '<path d="M4 7h16M4 12h16M4 17h10"/>', today: '<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/>', doctor: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4.5-6 8-6s7 2 8 6"/>', inbox: '<path d="M4 5h16v11H8l-4 4z"/>', more: '<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>' };
+    var LAB = { queue: 'Queue', today: 'Today', doctor: 'Doctor', inbox: 'Inbox', more: 'More' };
+    function call(body, after) {
+      if (S.busy) return; S.busy = true;
+      body.sid = S.sid; if (!body.needAppts) body.needAppts = Date.now() - S.apptsAt > 30000 || !S.appts;
+      if (S.chat) body.chat = S.chat;
+      return post(body).then(function (r) {
+        S.busy = false;
+        if (r.auth) return logout();
+        if (!r.ok && r.error) { S.err = r.error; }
+        if (r.queue) { S.data = r; S.err = ''; }
+        if (r.appts) { S.appts = r.appts; S.apptsAt = Date.now(); }
+        if (after) after(r);
+        draw();
+      }).catch(function () { S.busy = false; S.err = 'No internet or server busy. Retrying…'; draw(); });
+    }
+    function act(action, extra, msgFn) { var b = Object.assign({ action: action }, extra || {}); call(b, function (r) { if (msgFn) { S.toast = msgFn(r); setTimeout(function () { S.toast = ''; draw(); }, 6000); } }); }
+    function poll() { if (document.hidden) return; call({ action: 'state' }); }
+
+    function vQueue(d) {
+      var q = d.queue, now = q.now, w = q.waiting;
+      var nextOne = w[0];
+      var srcLab = function (x) { return x.missed ? 'Not here when called · moved back' : x.src === 'qr' ? 'Scanned QR' : 'Added at desk'; };
+      var stat = function (x) { return x.here ? ['Here', '#12B76A'] : x.ahead <= 2 && x.told2 ? ['Told to come', '#F79009'] : ['Waiting', '#98A2B3']; };
+      var rows = w.map(function (x) { var s = stat(x); return '<div class="row"><span class="tok" style="width:54px;flex-shrink:0;font-size:16px;font-weight:700">' + esc(x.tok) + '</span><span style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600">' + esc(x.name) + '</div><div class="sub" style="font-size:12.5px">' + esc(srcLab(x)) + '</div></span><span style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:#344054;white-space:nowrap"><span class="dot" style="background:' + s[1] + '"></span>' + s[0] + '</span></div>'; }).join('');
+      return '<div class="top"><div><div class="h1">Queue</div><div class="sub">' + (q.open ? 'Open' : 'Outside clinic hours') + ' · ' + w.length + ' waiting · ~' + q.avg + ' min each</div></div>' + docPill(d.doc) + '</div>' +
+        '<div class="card" style="margin:12px 12px 0;padding:16px;display:flex;flex-direction:column;gap:14px"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div><div style="font-size:12px;font-weight:700;letter-spacing:.6px;color:#667085">NOW SERVING</div><div class="tok" style="font-size:52px;font-weight:800;letter-spacing:-1px;line-height:1">' + esc(now ? now.tok : '—') + '</div><div style="font-size:16px;font-weight:600;margin-top:4px">' + esc(now ? now.name : 'Nobody called yet') + '</div><div class="sub">' + (now ? esc(srcLab(now)) + ' · called ' + esc(now.since) : (w.length ? 'Press Call next to start' : 'Patients get a token by scanning your QR')) + '</div></div>' +
+        (now ? '<button class="btn sm" data-a="not_here">Not here</button>' : '') + '</div>' +
+        '<button class="btn pri big" data-a="call_next"' + (!w.length && !now ? ' disabled' : '') + '>' + (nextOne ? 'Call next <span style="font-weight:500;opacity:.85">· ' + esc(nextOne.tok) + ' ' + esc(nextOne.name.split(' ')[0]) + '</span>' : now ? 'Done · nobody waiting' : 'Call next') + '</button></div>' +
+        (S.toast ? '<div class="toast">' + esc(S.toast) + '</div>' : '') +
+        '<div class="sec"><span>Up next</span><span style="font-weight:500">' + q.done + ' seen today</span></div>' +
+        (rows ? '<div class="card" style="margin:0 12px;overflow:hidden">' + rows + '</div>' : '<div class="empty">No one waiting.</div>') +
+        (S.role !== 'doctor' ? '<button class="fab" data-sheet="token"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>Token</button>' : '');
+    }
+    function vToday() {
+      var a = S.appts;
+      if (!a) return '<div class="top"><div class="h1">Today</div></div><div class="empty">Loading appointments…</div>';
+      var conf = a.filter(function (x) { return x.status === 'confirmed'; }).length;
+      var stat = { confirmed: ['Confirmed', '#12B76A'], booked: ['Booked', '#98A2B3'], sent: ['Reminded', '#2E90FA'], holding: ['Choosing…', '#F79009'] };
+      var rows = a.map(function (x) { var s = stat[x.status] || ['Booked', '#98A2B3']; return '<div class="row"><span class="tok" style="width:70px;flex-shrink:0;font-size:14px;font-weight:600">' + esc(x.time) + '</span><span style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600">' + esc(x.name) + (x.isNew ? '<span style="font-weight:500;color:#175CD3;font-size:12px"> · New</span>' : '') + '</div><div class="sub">' + esc(x.treat) + (x.phone ? ' · ' + esc(x.phone) : '') + '</div></span><span style="display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap"><span class="dot" style="background:' + s[1] + '"></span>' + s[0] + '</span></div>'; }).join('');
+      return '<div class="top"><div><div class="h1">Today</div><div class="sub">' + a.length + ' booked · ' + conf + ' confirmed on WhatsApp</div></div>' + docPill(S.data.doc) + '</div>' + (rows ? '<div class="card" style="margin:12px;overflow:hidden">' + rows + '</div>' : '<div class="empty">No appointments booked for today.</div>');
+    }
+    function vInbox(d) {
+      var ib = d.inbox || { live: [], callbacks: [], wait: [] };
+      if (S.chat && d.chat) return vChat(d.chat);
+      var items = [];
+      ib.live.forEach(function (x) { items.push({ k: 'live', html: '<button class="row" data-chat="' + esc(x.phone) + '" style="width:100%;border:none;background:#FFF;text-align:left"><span style="width:42px;height:42px;border-radius:50%;background:#EFF4FF;color:#175CD3;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0">' + esc((x.name || 'P').slice(0, 2).toUpperCase()) + '</span><span style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;gap:8px"><b style="font-size:15px">' + esc(x.name) + '</b><span class="sub" style="color:#175CD3">' + esc(x.at) + '</span></div><div style="font-size:14px;color:#475467;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(x.last) + '</div><div style="font-size:12px;font-weight:600;color:#175CD3">Live chat</div></span></button>' }); });
+      ib.callbacks.forEach(function (x) { items.push({ k: 'calls', html: '<div class="row"><span style="width:42px;height:42px;border-radius:50%;background:#FEF3F2;color:#B42318;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0">☎</span><span style="flex:1;min-width:0"><b style="font-size:15px">' + esc(x.name || x.shown) + '</b><div class="sub">Wants a call back · ' + esc(x.at) + '</div></span><a class="btn sm" style="display:flex;align-items:center;text-decoration:none" href="tel:+' + esc(x.phone) + '">Call</a><button class="btn sm" data-cb="' + esc(x.phone) + '">Done</button></div>' }); });
+      ib.wait.forEach(function (x) { items.push({ k: 'wait', html: '<div class="row"><span style="width:42px;height:42px;border-radius:50%;background:#F2F4F7;color:#475467;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0">W</span><span style="flex:1"><b style="font-size:15px">' + esc(x.shown) + '</b><div class="sub">Waitlist · wants ' + esc(x.day) + ' · bot messages them if a slot opens</div></span></div>' }); });
+      var shown = items.filter(function (x) { return S.seg === 'all' || x.k === S.seg; });
+      var segs = [['all', 'All'], ['live', 'Chats'], ['calls', 'Calls'], ['wait', 'Waitlist']].map(function (s) { return '<button class="' + (S.seg === s[0] ? 'on' : '') + '" data-seg="' + s[0] + '">' + s[1] + '</button>'; }).join('');
+      return '<div class="top" style="flex-direction:column;align-items:stretch"><div class="h1">Inbox</div><div class="seg" style="grid-template-columns:repeat(4,1fr)">' + segs + '</div></div>' +
+        (shown.length ? '<div class="card" style="margin:12px;overflow:hidden">' + shown.map(function (x) { return x.html; }).join('') + '</div>' : '<div class="empty">Nothing here. The bot handled everything.</div>');
+    }
+    function vChat(c) {
+      var msgs = c.msgs.map(function (m) { var me = m.who !== 'patient'; var bg = m.who === 'staff' ? '#175CD3' : m.who === 'bot' ? '#E4E7EC' : '#FFF'; var fg = m.who === 'staff' ? '#FFF' : '#101828';
+        return '<div style="display:flex;flex-direction:column;align-items:' + (me ? 'flex-end' : 'flex-start') + '"><div class="bub" style="background:' + bg + ';color:' + fg + (m.who === 'patient' ? ';border:1px solid #EAECF0' : '') + '">' + esc(m.t) + '</div><span class="sub" style="font-size:11px;margin:2px 6px 0">' + (m.who === 'bot' ? 'Bot · ' : m.who === 'staff' ? 'Clinic · ' : '') + esc(m.at) + '</span></div>'; }).join('');
+      return '<div class="top"><button class="btn sm" data-back="1" style="border:none;color:#175CD3;padding:0">‹ Inbox</button><div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:600">' + esc(c.name) + '</div><div class="sub">' + (c.open ? 'Live chat · ' : 'Chat ended · ') + esc(c.shown) + '</div></div>' + (c.open ? '<button class="btn sm" data-end="' + esc(c.phone) + '" style="color:#D92D20;border:none">End</button>' : '') + '</div>' +
+        '<div style="padding:12px;display:flex;flex-direction:column;gap:6px">' + (msgs || '<div class="empty">No messages yet.</div>') + '</div>' +
+        (c.open ? '<div style="position:fixed;bottom:84px;left:0;right:0"><div style="max-width:520px;margin:0 auto;padding:8px 12px;background:#FFF;border-top:1px solid #EAECF0;display:flex;gap:8px"><input class="f" id="msg" placeholder="Message" style="border-radius:24px"><button class="btn pri" id="send" style="border-radius:24px">Send</button></div></div>' : '');
+    }
+    function vDoctor(d) {
+      var q = d.queue, now = q.now, dk = DOC[d.doc.status] ? d.doc.status : 'in';
+      var btns = ['in', 'late', 'away', 'leave'].map(function (k) { var on = k === dk; return '<button data-status="' + k + '" style="height:64px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border:' + (on ? '1.5px solid ' + DOC[k][1] : '1px solid #EAECF0') + ';background:' + (on ? DOC[k][2] : '#FFF') + ';color:' + (on ? DOC[k][3] : '#344054') + '"><span class="dot" style="width:10px;height:10px;background:' + DOC[k][1] + '"></span><span style="font-size:12.5px;font-weight:600">' + DOC[k][0] + '</span></button>'; }).join('');
+      var line = dk === 'in' ? 'In clinic' : dk === 'late' ? 'Running ' + d.doc.mins + ' min late' : dk === 'away' ? 'Away' + (d.doc.until ? ', back ~' + d.doc.until : '') : 'On leave';
+      var a = S.appts || [];
+      var rest = a.map(function (x) { return '<div class="row" style="padding:10px 0"><span class="tok" style="width:70px;flex-shrink:0;font-size:14px;font-weight:600">' + esc(x.time) + '</span><span style="flex:1;min-width:0"><div style="font-size:15px;font-weight:600">' + esc(x.name) + (x.isNew ? '<span style="color:#175CD3;font-size:12px;font-weight:500">  New</span>' : '<span class="sub" style="font-size:12px">  visit ' + x.visits + '</span>') + '</div><div class="sub">' + esc(x.treat) + '</div></span></div>'; }).join('');
+      return '<div><div style="padding:calc(env(safe-area-inset-top) + 18px) 16px 0"><div class="sub">' + new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }) + '</div><div style="font-size:24px;font-weight:700;letter-spacing:-.3px">' + esc(d.clinic.doctor) + '</div></div>' +
+        '<div style="margin:16px 16px 0;display:grid;grid-template-columns:repeat(4,1fr);gap:6px">' + btns + '</div><div class="sub" style="margin:8px 16px 0">✓ ' + esc(line) + ' · shown to reception and patients' + (d.doc.setAt ? ' · updated ' + esc(d.doc.setAt) : '') + '</div>' +
+        '<div class="card" style="margin:16px 16px 0;padding:14px;display:flex;flex-direction:column;gap:10px"><div style="display:flex;justify-content:space-between"><span style="font-size:12px;font-weight:700;letter-spacing:.6px;color:#175CD3">WITH YOU NOW' + (now ? ' · TOKEN ' + esc(now.tok) : '') + '</span><span class="sub">' + q.waiting.length + ' waiting</span></div><div style="font-size:20px;font-weight:700">' + esc(now ? now.name : 'Nobody yet') + '</div>' +
+        '<button class="btn pri" data-a="call_next"' + (!q.waiting.length && !now ? ' disabled' : '') + '>Call next</button></div>' +
+        '<div class="sec" style="padding:18px 16px 6px"><span style="font-size:15px;color:#101828;font-weight:700">Appointments today</span><span>' + a.length + '</span></div><div style="padding:0 16px 16px">' + (rest || '<div class="empty">No appointments today.</div>') + '</div></div>';
+    }
+    function vMore(d) {
+      var poster = location.origin + location.pathname + '?v=qr&n=' + encodeURIComponent(d.clinic.botNumber) + '&c=' + encodeURIComponent(d.clinic.name);
+      return '<div class="top"><div><div class="h1">More</div><div class="sub">' + esc(d.me.name) + ' · ' + esc(d.me.role) + '</div></div></div>' +
+        '<div class="card" style="margin:12px;overflow:hidden">' +
+        '<a class="row" style="text-decoration:none;color:#101828" href="' + esc(poster) + '" target="_blank"><span style="flex:1"><b>QR poster for reception</b><div class="sub">Print it and keep it at the desk</div></span>›</a>' +
+        (d.links.tv ? '<a class="row" style="text-decoration:none;color:#101828" href="' + esc(d.links.tv) + '" target="_blank"><span style="flex:1"><b>Waiting-room TV screen</b><div class="sub">Open this link on the TV or any old phone</div></span>›</a>' : '') +
+        '<button class="row" data-logout="1" style="width:100%;border:none;background:#FFF;text-align:left;color:#B42318;font-weight:600;font-size:15px">Log out</button></div>';
+    }
+    function sheet() {
+      if (S.sheet === 'token') return '<div class="sheet-bg" data-close="1"><div class="sheet" onclick="event.stopPropagation()"><span class="grab"></span><b style="font-size:19px">Give a token</b><input class="f" id="tn" placeholder="Patient name"><input class="f" id="tp" inputmode="tel" placeholder="WhatsApp number (optional)"><div class="sub">With a number, the patient gets the token and live status on WhatsApp.</div><button class="btn pri" id="tadd">Give token</button><button class="btn" data-close="1" style="border:none">Cancel</button></div></div>';
+      if (S.sheet === 'late' || S.sheet === 'away') {
+        var opts = [15, 30, 45, 60].map(function (m) { return '<button class="btn" data-mins="' + m + '" style="' + (S.mins === m ? 'border:2px solid #175CD3;background:#EFF4FF;color:#175CD3' : '') + '">' + (m === 60 ? '1 hour' : m + ' min') + '</button>'; }).join('');
+        return '<div class="sheet-bg" data-close="1"><div class="sheet" onclick="event.stopPropagation()"><span class="grab"></span><b style="font-size:19px">' + (S.sheet === 'late' ? 'How late are you running?' : 'Back in about…') + '</b><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">' + opts + '</div><div class="card" style="padding:12px;font-size:14px;line-height:1.7;color:#344054">✓ Reception app updates<br>✓ Bot answers "Doctor aa gaye?"<br>✓ Waiting patients and the next 2 hours of bookings get a WhatsApp</div><button class="btn pri" id="dstat">Update everywhere</button><button class="btn" data-close="1" style="border:none">Cancel</button></div></div>';
+      }
+      return '';
+    }
+    function draw() {
+      if (!S.sid) return drawLogin();
+      var d = S.data;
+      if (!d) { $app.innerHTML = '<div class="wrap"><div class="empty">Loading…</div></div>'; return; }
+      var tabs = tabsFor(d.me.role); if (tabs.indexOf(S.tab) < 0) S.tab = tabs[0];
+      var body = S.tab === 'queue' ? vQueue(d) : S.tab === 'today' ? vToday() : S.tab === 'inbox' ? vInbox(d) : S.tab === 'doctor' ? vDoctor(d) : vMore(d);
+      var inboxN = d.inbox ? d.inbox.live.length + d.inbox.callbacks.length : 0;
+      var nav = '<nav class="tabs"><div class="in" style="grid-template-columns:repeat(' + tabs.length + ',1fr)">' + tabs.map(function (t) { return '<button data-tab="' + t + '" class="' + (S.tab === t ? 'on' : '') + '"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">' + ICON[t] + '</svg>' + LAB[t] + (t === 'inbox' && inboxN ? '<span class="badge">' + inboxN + '</span>' : '') + '</button>'; }).join('') + '</div></nav>';
+      var keepMsg = document.getElementById('msg'); var draft = keepMsg ? keepMsg.value : '';
+      $app.innerHTML = '<div class="wrap' + (S.tab === 'doctor' ? ' white' : '') + '">' + (S.err ? '<div class="err">' + esc(S.err) + '</div>' : '') + '<div class="content">' + body + '</div>' + nav + sheet() + '</div>';
+      var m2 = document.getElementById('msg'); if (m2 && draft) { m2.value = draft; }
+      bind();
+    }
+    function bind() {
+      $app.querySelectorAll('[data-tab]').forEach(function (b) { b.onclick = function () { S.tab = b.dataset.tab; S.chat = null; draw(); if (S.tab === 'today' || S.tab === 'doctor') { S.apptsAt = 0; poll(); } }; });
+      $app.querySelectorAll('[data-a]').forEach(function (b) { b.onclick = function () { var a = b.dataset.a; act(a, {}, function (r) { return r.sent ? 'WhatsApp sent to ' + r.sent + ' patient' + (r.sent > 1 ? 's' : '') + '.' : (a === 'call_next' ? 'Queue moved.' : 'Moved 2 places back.'); }); }; });
+      $app.querySelectorAll('[data-sheet]').forEach(function (b) { b.onclick = function () { S.sheet = b.dataset.sheet; draw(); var i = document.getElementById('tn'); if (i) i.focus(); }; });
+      $app.querySelectorAll('[data-close]').forEach(function (b) { b.onclick = function (e) { if (e.target === b) { S.sheet = null; draw(); } }; });
+      $app.querySelectorAll('[data-seg]').forEach(function (b) { b.onclick = function () { S.seg = b.dataset.seg; draw(); }; });
+      $app.querySelectorAll('[data-chat]').forEach(function (b) { b.onclick = function () { S.chat = b.dataset.chat; poll(); }; });
+      $app.querySelectorAll('[data-back]').forEach(function (b) { b.onclick = function () { S.chat = null; draw(); }; });
+      $app.querySelectorAll('[data-end]').forEach(function (b) { b.onclick = function () { if (confirm('End this live chat?')) act('chat_end', { phone: b.dataset.end }); }; });
+      $app.querySelectorAll('[data-cb]').forEach(function (b) { b.onclick = function () { act('cb_done', { phone: b.dataset.cb }); }; });
+      $app.querySelectorAll('[data-logout]').forEach(function (b) { b.onclick = logout; });
+      $app.querySelectorAll('[data-status]').forEach(function (b) { b.onclick = function () { var k = b.dataset.status; if (k === 'late' || k === 'away') { S.sheet = k; S.mins = 30; draw(); } else if (confirm(k === 'leave' ? 'Mark yourself on leave today? Waiting patients will be told.' : 'Back in clinic? Patients who were told will get an update.')) act('set_status', { status: k, needAppts: true }, function (r) { return r.told ? r.told + ' patients updated on WhatsApp.' : 'Status updated.'; }); }; });
+      $app.querySelectorAll('[data-mins]').forEach(function (b) { b.onclick = function () { S.mins = Number(b.dataset.mins); draw(); }; });
+      var ds = document.getElementById('dstat'); if (ds) ds.onclick = function () { var k = S.sheet; S.sheet = null; act('set_status', { status: k, mins: S.mins, needAppts: true }, function (r) { return r.told ? r.told + ' patients told on WhatsApp.' : 'Status updated. No patients needed a message.'; }); };
+      var ta = document.getElementById('tadd'); if (ta) ta.onclick = function () { var n = document.getElementById('tn').value.trim(), p = document.getElementById('tp').value.trim(); if (!n) return document.getElementById('tn').focus(); S.sheet = null; act('add_token', { name: n, phone: p }, function (r) { return 'Token ' + (r.added || '') + ' given to ' + n + (p ? '. Sent on WhatsApp if their chat is open.' : '.'); }); };
+      var sd = document.getElementById('send'); if (sd) { var go = function () { var i = document.getElementById('msg'); var t = i.value.trim(); if (!t) return; i.value = ''; act('chat_send', { phone: S.chat, text: t }); }; sd.onclick = go; document.getElementById('msg').onkeydown = function (e) { if (e.key === 'Enter') go(); }; }
+    }
+    var code = qs.get('code');
+    if (code) {
+      history.replaceState(null, '', location.pathname);
+      $app.innerHTML = '<div class="wrap white"><div class="empty">Logging you in…</div></div>';
+      post({ action: 'login', code: code }).then(function (r) {
+        if (!r.ok) return drawLogin(r.error || 'Login link not valid.');
+        store('cd_sid', r.sid); store('cd_role', r.role); if (r.clinic && r.clinic.botNumber) store('cd_bot', r.clinic.botNumber);
+        S.sid = r.sid; S.role = r.role; poll();
+      }).catch(function () { drawLogin('Could not reach the server. Try again.'); });
+    } else if (S.sid) { draw(); poll(); } else drawLogin();
+    setInterval(poll, 8000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) poll(); });
+  }
+
+  var v = qs.get('v');
+  if (v === 't') tracker(qs.get('k'));
+  else if (v === 'tv') tv(qs.get('k'));
+  else if (v === 'qr') poster();
+  else staff();
+})();
+</script>
+</body>
+</html>

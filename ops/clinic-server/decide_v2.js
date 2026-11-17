@@ -5,10 +5,12 @@ const S = $('Clinic Settings').first().json;
 const TZ = 'Asia/Kolkata';
 const now = DateTime.now().setZone(TZ);
 const mem = $getWorkflowStaticData('global');
-mem.lang = mem.lang || {}; mem.seen = mem.seen || {}; mem.svc = mem.svc || {}; mem.wait = mem.wait || {}; mem.live = mem.live || {}; mem.liveAdmin = mem.liveAdmin || {};
+for (const k of ['lang', 'seen', 'svc', 'wait', 'live', 'liveAdmin']) if (!mem[k]) mem[k] = {};
+let deskReq = null;
+try { deskReq = $('Desk API (POST)').first().json.body || {}; } catch (e) { deskReq = null; }
 let msg = null;
-try { msg = $('Parse message').first().json; } catch (e) { msg = null; }
-const mode = msg ? 'chat' : 'summary';
+if (!deskReq) { try { msg = $('Parse message').first().json; } catch (e) { msg = null; } }
+const mode = deskReq ? 'desk' : msg ? 'chat' : 'summary';
 
 // ---------- helpers ----------
 function normDate(v) {
@@ -40,7 +42,9 @@ const digits = v => String(v || '').replace(/\D/g, '');
 const same = (a, b) => digits(a).slice(-10) === digits(b).slice(-10);
 
 // ---------- read the sheet ----------
-const rows = $('Read appointments').all().map(i => i.json).filter(r => r && r.row_number && get(r, 'date') !== '').map(r => ({
+let sheetRows = [];
+try { sheetRows = $('Read appointments').all(); } catch (e) { sheetRows = []; }
+const rows = sheetRows.map(i => i.json).filter(r => r && r.row_number && get(r, 'date') !== '').map(r => ({
   row_number: r.row_number,
   name: String(get(r, 'name') || ''),
   phone: digits(get(r, 'phone')),
@@ -236,6 +240,195 @@ const langOf = (phone, rowLang) => mem.lang[digits(phone)] || (['en', 'hl'].incl
 let action = 'reply', payload = null, rec = null, notify = false, holiday = null;
 const more = [];
 
+// ================= Clinic Desk: token queue, doctor status, staff login, app API =================
+const todayStr = now.toFormat('yyyy-MM-dd');
+const APP = S.appUrl || 'https://bot.bas30din.com/webhook/desk';
+const rid = n => { const a = 'abcdefghjkmnpqrstuvwxyz23456789'; let s = ''; for (let i = 0; i < n; i++) s += a[Math.floor(Math.random() * a.length)]; return s; };
+const emptyQ = () => ({ date: todayStr, seq: 0, list: [], durs: [] });
+const qRead = () => (mem.q && mem.q.date === todayStr) ? mem.q : emptyQ();
+const qWrite = () => { if (!mem.q || mem.q.date !== todayStr) mem.q = emptyQ(); return mem.q; };
+const servingOf = q => q.list.find(x => x.st === 's') || null;
+const waitingOf = q => q.list.filter(x => x.st === 'w');
+const aheadOf = (q, tk) => { const w = waitingOf(q); const i = w.findIndex(x => x.key === tk.key); return (i < 0 ? 0 : i) + (servingOf(q) ? 1 : 0); };
+const avgMin = q => { const d = (q.durs || []).slice(-5); return d.length ? Math.max(4, Math.round(d.reduce((a, b) => a + b, 0) / d.length)) : (S.avgConsultMin || 10); };
+const r5 = x => Math.max(5, Math.round(x / 5) * 5);
+const etaText = (q, n, lg) => { if (n <= 0) return ''; const a = avgMin(q); return `${lg === 'en' ? 'about' : 'lagbhag'} ${r5(n * a * 0.8)}–${r5(n * a * 1.2) + 5} min`; };
+const trackUrl = tk => `${APP}?v=t&k=${tk.key}`;
+const ctaTo = (to, body, label, url) => ({ messaging_product: 'whatsapp', to, type: 'interactive',
+  interactive: { type: 'cta_url', body: { text: body }, action: { name: 'cta_url', parameters: { display_text: label.slice(0, 20), url } } } });
+const isOpenNow = () => { const k = now.toFormat('ccc').toLowerCase(); const hm = now.toFormat('HH:mm');
+  return ((S.hours || {})[k] || []).some(r => { const [a, b] = r.split('-').map(x => x.trim()); return hm >= a && hm < b; }) && !holidays.includes(todayStr); };
+const docRead = () => mem.doc || { status: 'in' };
+const docLine = (lg) => {
+  const d = docRead(); const D2 = S.doctorName;
+  const until = d.until ? DateTime.fromISO(d.until).setZone(TZ).toFormat('h:mm a') : '';
+  if (d.status === 'late') return lg === 'en' ? `${D2} is running about ${d.mins} min late today.` : `${D2} aaj lagbhag ${d.mins} min late hain.`;
+  if (d.status === 'away') return lg === 'en' ? `${D2} has stepped out and should be back by about ${until}.` : `${D2} thodi der ke liye clinic se bahar hain, lagbhag ${until} tak wapas aayenge.`;
+  if (d.status === 'leave') return lg === 'en' ? `${D2} is on leave today.` : `${D2} aaj chhutti par hain.`;
+  return lg === 'en' ? `${D2} is in the clinic.` : `${D2} clinic mein hain.`;
+};
+const QT = {
+  hl: {
+    token: (tk, n, eta) => `Aapka token *${tk.tok}* hai ✅\n${n ? `Aapse pehle ${n} ${n > 1 ? 'patients hain' : 'patient hai'} · ${eta}.` : 'Aap agle hain.'}\n\nAap bahar wait kar sakte hain, baari aane se pehle hum yahin bata denge.`,
+    live: 'Live status dekhein',
+    two: n => n <= 1 ? 'Aap agle hain! Waiting room mein aa jaiye 🙏' : `Ab ${n} patients aapse pehle hain. Clinic ke paas aa jaiye 🙏`,
+    turn: c => `Aapki baari aa gayi! ${c} mein aaiye.`,
+    missed: 'Aapko bulaya gaya tha par aap nahi mile. Aapko 2 number baad bulayenge.',
+    here: 'Main aa gaya', hereOk: 'Theek hai 🙏 Aapka number thodi der mein aayega.',
+    closed: 'Clinic abhi band hai, isliye abhi token nahi mil sakta. Clinic ke samay mein dobara TOKEN bhejiye.',
+    leave: d => `Maaf kijiye, ${d} aaj chhutti par hain, isliye aaj token nahi mil sakta.`,
+    back: d => `${d} clinic wapas aa gaye hain ✅ Aapka number jaldi aayega.`,
+    moved: (line, eta) => `Namaste 🙏 ${line}${eta ? ` Aapka number ab ${eta} mein aa sakta hai.` : ''} Intezaar ke liye sorry.`,
+  },
+  en: {
+    token: (tk, n, eta) => `Your token is *${tk.tok}* ✅\n${n ? `${n} ${n > 1 ? 'people are' : 'person is'} ahead of you · ${eta}.` : 'You are next.'}\n\nYou can wait outside; we will message you here before your turn.`,
+    live: 'See live status',
+    two: n => n <= 1 ? 'You are next! Please come to the waiting room 🙏' : `${n} people are ahead of you now. Please come near the clinic 🙏`,
+    turn: c => `It's your turn! Please come to ${c}.`,
+    missed: 'We called your token but could not find you. We will call you again after 2 more patients.',
+    here: "I'm here", hereOk: 'Thank you 🙏 You will be called shortly.',
+    closed: 'The clinic is closed right now, so tokens are not available. Please send TOKEN again during clinic hours.',
+    leave: d => `Sorry, ${d} is on leave today, so tokens are not available today.`,
+    back: d => `${d} is back in the clinic ✅ Your turn will come soon.`,
+    moved: (line, eta) => `Hello 🙏 ${line}${eta ? ` Your turn may now come in ${eta}.` : ''} Sorry for the wait.`,
+  },
+};
+const cabin = S.cabin || 'Cabin 1';
+// messages that go out when the queue moves
+function queueNotify(q, out) {
+  const cur = servingOf(q);
+  if (cur && cur.phone && !cur.toldTurn && inWindow(cur.phone)) { const lg = langOf(cur.phone, ''); out.push(textTo(cur.phone, QT[lg].turn(cabin))); cur.toldTurn = true; }
+  for (const w of waitingOf(q)) {
+    const n = aheadOf(q, w);
+    if (n <= 2 && !w.told2 && w.phone && inWindow(w.phone)) { const lg = langOf(w.phone, ''); out.push(textTo(w.phone, QT[lg].two(n))); w.told2 = true; }
+  }
+}
+function callNext(q, out) {
+  const cur = servingOf(q);
+  if (cur) { cur.st = 'd'; const m = DateTime.fromISO(cur.calledAt).isValid ? now.diff(DateTime.fromISO(cur.calledAt), 'minutes').minutes : 0; if (m > 1 && m < 90) q.durs = (q.durs || []).concat([Math.round(m)]).slice(-10); }
+  const nx = waitingOf(q)[0];
+  if (nx) { nx.st = 's'; nx.calledAt = now.toISO(); }
+  queueNotify(q, out);
+}
+function notHere(q, out) {
+  const cur = servingOf(q); if (!cur) return callNext(q, out);
+  cur.st = 'w'; cur.missed = (cur.missed || 0) + 1; cur.toldTurn = false; cur.told2 = true;
+  const rest = q.list.filter(x => x !== cur);
+  const w = rest.filter(x => x.st === 'w');
+  const after = w[Math.min(1, w.length - 1)];
+  const pos = after ? rest.indexOf(after) + 1 : rest.length;
+  rest.splice(pos, 0, cur); q.list = rest;
+  if (cur.phone && inWindow(cur.phone)) { const lg = langOf(cur.phone, ''); out.push(buttonsTo(cur.phone, QT[lg].missed, [['TQ|HERE', QT[lg].here]])); }
+  const nx = waitingOf(q).find(x => x !== cur) || cur;
+  nx.st = 's'; nx.calledAt = now.toISO();
+  queueNotify(q, out);
+}
+function issueToken(q, phone, name, src) {
+  q.seq = (q.seq || 0) + 1;
+  const tk = { tok: `${S.tokenPrefix || 'A'}-${q.seq}`, n: q.seq, phone: phone || '', name: name || 'Patient', src, st: 'w', at: now.toISO(), key: rid(10), missed: 0 };
+  q.list.push(tk);
+  if (!servingOf(q) && waitingOf(q).length === 1 && S.autoServeFirst) { tk.st = 's'; tk.calledAt = now.toISO(); }
+  return tk;
+}
+const tokenMsg = (q, tk, to) => { const lg = langOf(to, ''); const n = aheadOf(q, tk); const extra = docRead().status !== 'in' ? `\n\n${docLine(lg)}` : '';
+  return ctaTo(to, QT[lg].token(tk, n, etaText(q, n, lg)) + extra, QT[lg].live, trackUrl(tk)); };
+function setDoc(status, mins, out) {
+  const prev = docRead();
+  const d = { status, mins: Number(mins) || 0, setAt: now.toISO(), until: (status === 'away' || status === 'late') && mins ? now.plus({ minutes: Number(mins) }).toISO() : null, told: [] };
+  const q = qRead();
+  if (status === 'late' || status === 'away') {
+    mem.doc = d;
+    const people = waitingOf(q).concat(servingOf(q) ? [] : []).filter(x => x.phone);
+    const soon = rows.filter(r => r.date === todayStr && active(r) && at(r.date, r.time) >= now && at(r.date, r.time) <= now.plus({ hours: 2 }));
+    const targets = {};
+    people.forEach(x => { targets[x.phone] = aheadOf(q, x); });
+    soon.forEach(r => { if (!(r.phone in targets)) targets[r.phone] = null; });
+    for (const ph of Object.keys(targets)) {
+      if (!inWindow(ph)) continue;
+      const lg = langOf(ph, '');
+      const n = targets[ph];
+      const eta = n === null ? '' : etaText(q, n + Math.ceil((Number(mins) || 0) / avgMin(q)), lg);
+      out.push(textTo(ph, QT[lg].moved(docLine(lg), eta))); d.told.push(ph);
+    }
+    mem.doc = d;
+    return d.told.length;
+  }
+  if (status === 'in') {
+    for (const ph of (prev.told || [])) { if (!inWindow(ph)) continue; const lg = langOf(ph, ''); out.push(textTo(ph, QT[lg].back(S.doctorName))); }
+    mem.doc = { status: 'in', setAt: now.toISO() };
+    return (prev.told || []).length;
+  }
+  mem.doc = d; return 0;
+}
+const mask = p => p ? `+${String(p).slice(0, 4)}••• ••${String(p).slice(-3)}` : '';
+const chatLog = (phone, who, txt) => { if (!mem.chat) mem.chat = {}; const l = mem.chat[phone] || []; l.push({ who, t: String(txt).slice(0, 500), at: now.toISO() }); mem.chat[phone] = l.slice(-40); };
+
+// ---------- the app (and the live tracker / TV) talk to this ----------
+if (mode === 'desk') {
+  const b = deskReq || {};
+  const out = [];
+  let res = { ok: true };
+  const sess = b.sid && mem.sess && mem.sess[b.sid];
+  const live = sess && DateTime.fromISO(sess.exp) > now;
+  const qr = `https://wa.me/${S.botNumber || ''}?text=TOKEN`;
+  const publicQ = (q) => { const cur = servingOf(q); const w = waitingOf(q); return { now: cur ? cur.tok : null, next: w.slice(0, 3).map(x => x.tok), waiting: w.length, avg: avgMin(q) }; };
+  const docInfo = () => { const d = docRead(); return { status: d.status || 'in', mins: d.mins || 0, until: d.until ? DateTime.fromISO(d.until).setZone(TZ).toFormat('h:mm a') : null, setAt: d.setAt ? DateTime.fromISO(d.setAt).setZone(TZ).toFormat('h:mm a') : null, told: (d.told || []).length, line: docLine('en') }; };
+  const clinic = { name: C, doctor: D, address: S.address || '', qr, botNumber: S.botNumber || '' };
+  if (b.action === 'track') {
+    const q = qRead(); const tk = q.list.find(x => x.key === b.k);
+    if (!tk) res = { ok: false, gone: true, clinic };
+    else { if (b.cancel && tk.st === 'w') { qWrite(); tk.st = 'x'; }
+      const n = aheadOf(q, tk); res = { ok: true, tok: tk.tok, st: tk.st, ahead: tk.st === 'w' ? n : 0, eta: tk.st === 'w' ? etaText(q, n, 'hl') : '', now: (servingOf(q) || {}).tok || null, missed: tk.missed || 0, clinic, doc: Object.assign(docInfo(), { line: docLine(langOf(tk.phone, '')) }), lang: langOf(tk.phone, '') }; }
+  } else if (b.action === 'tv') {
+    res = (b.k && b.k === S.tvKey) ? { ok: true, ...publicQ(qRead()), clinic, doc: docInfo(), cabin } : { ok: false };
+  } else if (b.action === 'login') {
+    const c = mem.codes && mem.codes[String(b.code || '').toLowerCase()];
+    if (!c || DateTime.fromISO(c.exp) < now) res = { ok: false, error: 'This login link has expired. Send LOGIN on WhatsApp again.' };
+    else { const sid = rid(28); if (!mem.sess) mem.sess = {}; mem.sess[sid] = { phone: c.phone, role: c.role, name: c.name, exp: now.plus({ days: 30 }).toISO() };
+      delete mem.codes[String(b.code).toLowerCase()]; res = { ok: true, sid, role: c.role, name: c.name, clinic }; }
+  } else if (!live) {
+    res = { ok: false, auth: true, error: 'Please log in again.' };
+  } else {
+    const role = sess.role; const isDoc = role === 'doctor' || role === 'owner';
+    const q0 = qRead();
+    if (b.action === 'call_next') { const q = qWrite(); callNext(q, out); }
+    else if (b.action === 'not_here') { const q = qWrite(); notHere(q, out); }
+    else if (b.action === 'add_token') { const q = qWrite(); const ph = digits(b.phone || ''); const full = ph.length === 10 ? '91' + ph : ph;
+      const tk = issueToken(q, full, String(b.name || 'Walk-in').slice(0, 40), 'desk'); if (full && inWindow(full)) out.push(tokenMsg(q, tk, full)); res.added = tk.tok; }
+    else if (b.action === 'remove_token') { const q = qWrite(); const tk = q.list.find(x => x.key === b.key); if (tk) tk.st = 'x'; }
+    else if (b.action === 'set_status') { res.told = setDoc(String(b.status || 'in'), b.mins, out); }
+    else if (b.action === 'chat_send' && !isDoc || (b.action === 'chat_send' && role === 'owner')) { const ph = digits(b.phone); if (ph && b.text) { out.push(textTo(ph, String(b.text).slice(0, 1000))); chatLog(ph, 'staff', b.text); if (mem.live[ph]) mem.live[ph].last = now.toISO(); } }
+    else if (b.action === 'chat_end') { const ph = digits(b.phone); if (mem.live[ph]) { delete mem.live[ph]; const lg = langOf(ph, ''); out.push(textTo(ph, T[lg].liveOff)); chatLog(ph, 'bot', T[lg].liveOff); } }
+    else if (b.action === 'cb_done') { mem.callbacks = (mem.callbacks || []).filter(x => x.phone !== digits(b.phone)); }
+    // the state every screen needs
+    const q = qRead();
+    const cur = servingOf(q);
+    res.me = { name: sess.name, role };
+    res.clinic = clinic; res.doc = docInfo();
+    res.queue = { now: cur ? { tok: cur.tok, name: cur.name, src: cur.src, key: cur.key, phone: isDoc ? '' : mask(cur.phone), since: DateTime.fromISO(cur.calledAt).setZone(TZ).toFormat('h:mm a') } : null,
+      waiting: waitingOf(q).slice(0, 25).map(x => ({ tok: x.tok, name: x.name, src: x.src, key: x.key, missed: x.missed || 0, ahead: aheadOf(q, x), told2: !!x.told2, phone: isDoc ? '' : mask(x.phone), here: !!x.here })),
+      done: q.list.filter(x => x.st === 'd').length, avg: avgMin(q), open: isOpenNow() };
+    res.links = { tv: S.tvKey ? `${APP}?v=tv&k=${S.tvKey}` : '', qr };
+    if (b.needAppts) {
+      const mineToday = rows.filter(r => r.date === todayStr && ['booked', 'confirmed', 'sent', 'holding'].includes(r.status) && at(r.date, r.time).isValid).sort((a, c) => a.time.localeCompare(c.time));
+      const seenBefore = ph => rows.some(r => r.phone === ph && r.date < todayStr && ['booked', 'confirmed', 'sent'].includes(r.status));
+      res.appts = mineToday.map(r => ({ time: at(r.date, r.time).toFormat('h:mm a'), name: r.name || 'Patient', treat: r.service || 'Appointment', status: r.status, isNew: !seenBefore(r.phone), visits: rows.filter(x => x.phone === r.phone && x.date <= todayStr && ['booked', 'confirmed', 'sent'].includes(x.status)).length, phone: isDoc ? '' : mask(r.phone) }));
+    }
+    if (!isDoc || role === 'owner') {
+      const lv = Object.keys(mem.live || {}).filter(p => DateTime.fromISO(mem.live[p].last) > now.minus({ hours: 2 }));
+      res.inbox = {
+        live: lv.map(p => { const l = (mem.chat || {})[p] || []; const last = l[l.length - 1]; return { phone: p, shown: mask(p), name: mem.live[p].name || 'Patient', last: last ? last.t : '', at: last ? DateTime.fromISO(last.at).setZone(TZ).toFormat('h:mm a') : '' }; }),
+        callbacks: (mem.callbacks || []).slice(-20).map(x => ({ phone: x.phone, shown: mask(x.phone), name: x.name, at: DateTime.fromISO(x.at).setZone(TZ).toFormat('h:mm a') })),
+        wait: Object.keys(mem.wait || {}).filter(d => d >= todayStr).flatMap(d => (mem.wait[d] || []).map(w => ({ shown: mask(w.phone), day: DateTime.fromISO(d).toFormat('ccc d LLL') }))),
+      };
+      if (b.chat) { const ph = digits(b.chat); res.chat = { phone: ph, shown: mask(ph), name: (mem.live[ph] || {}).name || 'Patient', open: !!mem.live[ph], msgs: ((mem.chat || {})[ph] || []).map(m => ({ who: m.who, t: m.t, at: DateTime.fromISO(m.at).setZone(TZ).toFormat('h:mm a') })) }; }
+    }
+  }
+  res.sent = out.length;
+  const first = out.shift() || null;
+  return [{ json: { action: first ? 'reply' : 'none', payload: first, more: out, desk: res, holiday: null, values: null, range: null, sheetId: S.sheetId, phoneNumberId: S.phoneNumberId, notify: false } }];
+}
+
 // ================= 8 AM doctor summary (no patient message in this run) =================
 if (mode === 'summary') {
   const today = now.toFormat('yyyy-MM-dd');
@@ -259,7 +452,7 @@ if (mode === 'summary') {
 // ================= a message from WhatsApp =================
 const me = digits(msg.from);
 for (const k of Object.keys(mem.wait)) if (k < now.toFormat('yyyy-MM-dd')) delete mem.wait[k];
-mem.seen[me] = now.toISO();
+if (!mem.seen[me] || DateTime.fromISO(mem.seen[me]) < now.minus({ minutes: 20 })) mem.seen[me] = now.toISO();
 let id = String(msg.replyId || '').trim();
 const raw = String(msg.text || '').trim();
 const t = raw.toLowerCase();
@@ -363,6 +556,7 @@ if (!adminCmd && isAdmin && adminTarget && liveOpen(adminTarget) && !id) {
     more.push(text('Live chat closed.'));
   } else if (raw) {
     mem.live[adminTarget].last = now.toISO();
+    chatLog(adminTarget, 'staff', raw);
     payload = textTo(adminTarget, raw);
   } else payload = text('Only text can be sent on live chat for now.');
 }
@@ -377,13 +571,38 @@ else if (!isAdmin && liveOpen(me) && !id) {
     payload = text(L.livePhoto);
   } else {
     mem.live[me].last = now.toISO();
+    chatLog(me, 'patient', raw);
     admins.forEach(a => { mem.liveAdmin[a] = me; });
     const first = admins[0];
     payload = textTo(first, `${msg.name || 'Patient'} (+${me}): ${raw}`);
     admins.slice(1).forEach(a => more.push(textTo(a, `${msg.name || 'Patient'} (+${me}): ${raw}`)));
   }
 }
+const staffOf = p => (S.staff || []).find(x => same(x.phone, p));
+const docAsk = !id && has(['doctor', 'dr', 'daktar', 'doc']) && has(['aa', 'aaye', 'aayi', 'aaya', 'gaye', 'gayi', 'hai', 'hain', 'kab', 'kahan', 'late', 'available', 'here', 'in']);
 if (liveHandled) {}
+else if (!id && /^login$/i.test(raw) && staffOf(me)) {
+  const st0 = staffOf(me); if (!mem.codes) mem.codes = {};
+  for (const k of Object.keys(mem.codes)) if (DateTime.fromISO(mem.codes[k].exp) < now) delete mem.codes[k];
+  const code = rid(8); mem.codes[code] = { phone: me, role: st0.role || 'reception', name: st0.name || 'Staff', exp: now.plus({ minutes: 15 }).toISO() };
+  payload = ctaTo(msg.from, `Clinic Desk login for ${st0.name || 'you'} (${st0.role || 'reception'}).\nThis link works once and expires in 15 minutes.`, 'Open Clinic Desk', `${APP}?code=${code}`);
+}
+else if ((!id && /^token\b/i.test(raw)) || id === 'TQ|NEW') {
+  const q0 = qRead(); const mineTk = q0.list.find(x => x.phone === me && ['w', 's'].includes(x.st));
+  if (mineTk) payload = mineTk.st === 's' ? text(QT[lang].turn(cabin)) : tokenMsg(q0, mineTk, msg.from);
+  else if (docRead().status === 'leave') payload = text(QT[lang].leave(D));
+  else if (!isOpenNow() && !S.tokensAnytime) payload = text(QT[lang].closed);
+  else { const q = qWrite(); const tk = issueToken(q, me, msg.name, 'qr'); payload = tokenMsg(q, tk, msg.from); }
+}
+else if (id === 'TQ|HERE') {
+  const q0 = qRead(); const tk = q0.list.find(x => x.phone === me && x.st === 'w');
+  if (tk) { qWrite(); tk.here = true; }
+  payload = text(QT[lang].hereOk);
+}
+else if (docAsk) {
+  const q0 = qRead(); const tk = q0.list.find(x => x.phone === me && x.st === 'w');
+  payload = text(docLine(lang) + (tk ? (lang === 'en' ? ` ${aheadOf(q0, tk)} ahead of you (${etaText(q0, aheadOf(q0, tk), 'en')}).` : ` Aapse pehle ${aheadOf(q0, tk)} patient (${etaText(q0, aheadOf(q0, tk), 'hl')}).`) : ''));
+}
 else if (adminCmd) {
   const today = now.toFormat('yyyy-MM-dd');
   if (/^(TODAY|AAJ)/.test(cmd)) {
@@ -413,7 +632,7 @@ else if (adminCmd) {
 }
 // ---------- patients ----------
 else if (id === 'MC_Q') { payload = text(L.mcQ); }
-else if (id === 'MC_CALL') { notify = true; payload = text(L.mcCall); }
+else if (id === 'MC_CALL') { notify = true; payload = text(L.mcCall); if (!mem.callbacks) mem.callbacks = []; mem.callbacks = mem.callbacks.filter(x => x.phone !== me).concat([{ phone: me, name: msg.name || '', at: now.toISO() }]).slice(-50); }
 else if (!['text', 'interactive', 'button'].includes(msg.type)) { payload = buttons(L.textOnly, menuBtns()); }
 else if (!mem.lang[me] && !id && !upcoming.length && !holding) {
   payload = buttons(T.en.pickLang, [['LANG|en', 'English'], ['LANG|hl', 'Hinglish'], ['LIVE', 'Live Chat']]);
@@ -495,6 +714,7 @@ else if (id === 'TALK' || id === 'LIVE' || (!id && has(['talk', 'human', 'help',
   const dnow = now.toFormat('ccc').toLowerCase(); const hm = now.toFormat('HH:mm');
   const open = ((S.hours || {})[dnow] || []).some(r => { const [a, b] = r.split('-').map(x => x.trim()); return hm >= a && hm < b; }) && !holidays.includes(now.toFormat('yyyy-MM-dd'));
   mem.live[me] = { since: now.toISO(), last: now.toISO(), name: msg.name || '' };
+  chatLog(me, 'bot', 'Patient asked for live chat' + (raw && !id ? `: "${raw}"` : ''));
   admins.forEach(a => { mem.liveAdmin[a] = me; });
   payload = text(L.liveOn(open));
   notify = true;
