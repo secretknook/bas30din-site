@@ -290,7 +290,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       return b;
     }
     function call(body, after) {
-      if (S.busy && !body.action) return; S.busy = true;
+      if (S.busy && !body.action) { S.again = true; return; } S.busy = true;
       var v = view(); for (var k in v) if (!(k in body)) body[k] = v[k];
       body.sid = S.sid; body.needAppts = (S.tab === 'today') && (Date.now() - S.apptsAt > 30000 || !S.appts);
       return post(body).then(function (r) {
@@ -301,6 +301,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         if (r.appts) { S.appts = r.appts; S.apptsAt = Date.now(); }
         if (after) after(r);
         draw();
+        if (S.again) { S.again = false; setTimeout(function () { call({}); }, 50); }
       }).catch(function () { S.busy = false; S.err = 'No internet. Retrying…'; draw(); });
     }
     function poll() { if (S.sid && !document.hidden && !S.sheet) call({}); }

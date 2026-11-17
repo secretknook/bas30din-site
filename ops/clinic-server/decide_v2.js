@@ -7,7 +7,12 @@ const now = DateTime.now().setZone(TZ);
 const mem = $getWorkflowStaticData('global');
 for (const k of ['lang', 'seen', 'svc', 'wait', 'live', 'liveAdmin']) if (!mem[k]) mem[k] = {};
 if (mem.cfg) Object.assign(S, mem.cfg);
-if (Array.isArray(mem.team) && mem.team.length) S.staff = mem.team;
+const OWNERS = (S.staff || []).filter(x => x.role === 'owner');
+if (Array.isArray(mem.team) && mem.team.length) {
+  // the clinic owner (set in n8n) can never be removed or changed from the app
+  mem.team = mem.team.filter(x => !OWNERS.some(o => String(o.phone).slice(-10) === String(x.phone).slice(-10))).concat(OWNERS.map(o => Object.assign({}, o)));
+  S.staff = mem.team;
+}
 let deskReq = null;
 try { deskReq = $('Desk API (POST)').first().json.body || {}; } catch (e) { deskReq = null; }
 let msg = null;
@@ -614,6 +619,7 @@ if (mode === 'desk') {
     else if (b.action === 'team_add' && isDoc) {
       let ph = String(b.phone || '').replace(/\D/g, ''); if (ph.length === 10) ph = '91' + ph;
       if (ph.length < 12) res.error = 'Enter a 10-digit mobile number.';
+      else if (OWNERS.some(o => String(o.phone).slice(-10) === ph.slice(-10))) res.error = 'This is the owner number. It always opens the doctor app.';
       else { const T = (Array.isArray(mem.team) && mem.team.length ? mem.team : (S.staff || [])).filter(x => String(x.phone).slice(-10) !== ph.slice(-10));
         T.push({ phone: ph, name: String(b.name || 'Staff').trim().slice(0, 40) || 'Staff', role: ['reception', 'doctor'].includes(b.role) ? b.role : 'reception' }); mem.team = T; S.staff = T; res.added = true; }
     }
