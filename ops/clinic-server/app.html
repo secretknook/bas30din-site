@@ -230,6 +230,7 @@ button.irow:active,a.irow:active{background:#F9FAFB}
 .dshell .itoast{left:calc(50% + 114px)}
 .errbar{margin:12px 0 0;padding:10px 14px;border-radius:10px;background:#FEF3F2;color:#B42318;font-size:14px}
 @media (min-width:1024px){button,a,.sitem{cursor:pointer}}
+.dshell textarea#pnote{width:100%;box-sizing:border-box;border:none;outline:none;resize:vertical;font:inherit;font-size:15px;line-height:1.4;padding:8px 0;min-height:72px;color:#101828}
 </style>
 </head>
 <body>
@@ -644,7 +645,7 @@ button.irow:active,a.irow:active{background:#F9FAFB}
           (s.m === 'upi' && S.d.upi ? (s.qr ? '<div style="display:flex;flex-direction:column;align-items:center;gap:6px">' + qrSvg('upi://pay?pa=' + encodeURIComponent(S.d.upi.id) + '&pn=' + encodeURIComponent(S.d.upi.name) + '&am=' + encodeURIComponent(s.fee) + '&cu=INR', 220) + '<span class="isub">' + esc(S.d.upi.id) + '</span></div>' : '<button class="ib soft" data-upiqr="1">Show clinic UPI QR</button>') : '') + '</div>' +
           sec('Follow-up').replace('class="isec"', 'class="isec" style="padding-left:16px"') + '<div class="ilist" style="margin:0;padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px">' + fu.map(function (f) { return '<button class="ichip' + (s.fup === f[0] ? ' on' : '') + '" data-fup="' + f[0] + '">' + f[1] + '</button>'; }).join('') + '</div>' +
           '<div class="ifoot" style="padding-left:16px">' + (s.fup ? 'WhatsApp reminder goes the evening before.' : 'No reminder.') + '</div>' +
-          '<button class="ib pri" id="savebill" style="margin-top:18px">Save · ' + (s.m === 'free' ? 'No charge' : rupee(s.fee) + ' ' + (s.m === 'upi' ? 'UPI' : 'Cash')) + '</button>';
+          '<button class="ib pri" id="savebill" style="margin-top:18px">Save · ' + (s.m === 'free' ? (b.freeFollow ? 'Free follow-up' : 'No charge') : rupee(s.fee) + ' ' + (s.m === 'upi' ? 'UPI' : 'Cash')) + '</button>';
       } else if (s.t === 'add') {
         inner = '<div class="ishead"><button class="ilink" data-close="1">Cancel</button><span style="font-size:17px;font-weight:600">Walk-in</span><span style="width:56px"></span></div>' +
           '<div class="ilist" style="margin:18px 0 0"><label class="ifield"><span>Name</span><input id="wn" autocomplete="off" value="' + esc(s.name || '') + '"></label><label class="ifield" style="border:none"><span>Phone</span><input id="wp" inputmode="tel" placeholder="Optional" value="' + esc(s.phone || '') + '"></label></div>' +
