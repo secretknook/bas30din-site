@@ -5,7 +5,7 @@ const S = $('Clinic Settings').first().json;
 const TZ = 'Asia/Kolkata';
 const now = DateTime.now().setZone(TZ);
 const mem = $getWorkflowStaticData('global');
-mem.lang = mem.lang || {}; mem.seen = mem.seen || {};
+mem.lang = mem.lang || {}; mem.seen = mem.seen || {}; mem.svc = mem.svc || {};
 let msg = null;
 try { msg = $('Parse message').first().json; } catch (e) { msg = null; }
 const mode = msg ? 'chat' : 'summary';
@@ -50,6 +50,7 @@ const rows = $('Read appointments').all().map(i => i.json).filter(r => r && r.ro
   status: String(get(r, 'status') || '').trim().toLowerCase(),
   bookedAt: String(get(r, 'booked at') || ''),
   lang: String(get(r, 'lang') || '').trim().toLowerCase(),
+  service: String(get(r, 'service') || ''),
 }));
 const holdFresh = r => { const b = DateTime.fromISO(r.bookedAt); return b.isValid && b.plus({ minutes: S.holdMinutes }) > DateTime.now(); };
 const takesSlot = r => !['cancelled', 'rescheduled'].includes(r.status) && (r.status !== 'holding' || holdFresh(r));
@@ -114,8 +115,10 @@ const C = S.clinicName, D = S.doctorName;
 const T = {
   en: {
     pickLang: `Hello, welcome to ${C}.\nPlease choose your language.\n\nNamaste, apni bhasha chuniye.`,
-    welcome: n => `Hello ${n}, welcome to ${C}.\nI can help you book an appointment with ${D}.\n\nPlease choose a date below.`,
+    welcome: n => `Hello ${n}, welcome to ${C}.\nI can help you book an appointment with ${D}.\n\nWhat would you like to book?`,
     pickDate: 'Please choose a date for your appointment.',
+    pickSvc: 'What would you like to book?', svcBtn: 'Choose', svcTitle: 'Treatments',
+    svcChosen: n => `${n}. Please choose a date.`,
     dateBtn: 'Choose date', datesTitle: 'Available dates', slotsFree: n => `${n} slot${n > 1 ? 's' : ''} available`,
     noSlots: `Sorry, there are no free slots in the next ${S.daysAhead} days. Please call us on ${S.clinicPhone}.`,
     dayFull: 'That day is now full. Please choose another date.',
@@ -123,7 +126,7 @@ const T = {
     held: w => `${w} is reserved for you for ${S.holdMinutes} minutes.\n\nWho is the appointment for? Tap *Myself* or type the patient's name.`,
     selfBtn: 'Myself',
     askName: "Please type the patient's full name (for example: Riya Sharma), or tap *Myself*.",
-    confirmed: (r, w) => `Your appointment is confirmed.\n\n*${D}*\n${C}\n\n📅 ${w}\n👤 ${r.name}\n\nPlease arrive 10 minutes early and bring any previous reports or prescriptions. We will send you a reminder before your visit.`,
+    confirmed: (r, w) => `Your appointment is confirmed.\n\n*${D}*\n${C}\n\n📅 ${w}\n👤 ${r.name}${r.service ? `\n💆 ${r.service}` : ''}\n\nPlease arrive 10 minutes early and bring any previous reports or prescriptions. We will send you a reminder before your visit.`,
     changeBtn: 'Change time', cancelBtn: 'Cancel',
     holdCancelled: 'No problem, the slot has been released. Send *Hi* whenever you want to book again.',
     limit: n => `You already have ${n} upcoming appointments, which is the maximum. Please cancel one to book a new time.`,
@@ -149,8 +152,10 @@ const T = {
   },
   hl: {
     pickLang: `Namaste, ${C} mein aapka swagat hai.\nApni bhasha chuniye.\n\nHello, please choose your language.`,
-    welcome: n => `Namaste ${n} ji, ${C} mein aapka swagat hai.\n${D} ke saath appointment book karne ke liye neeche date chuniye.`,
+    welcome: n => `Namaste ${n} ji, ${C} mein aapka swagat hai.\n${D} ke saath appointment book karne ke liye neeche treatment chuniye.`,
     pickDate: 'Appointment ke liye date chuniye.',
+    pickSvc: 'Aap kis cheez ke liye appointment lena chahte hain?', svcBtn: 'Chuniye', svcTitle: 'Treatments',
+    svcChosen: n => `${n}. Ab date chuniye.`,
     dateBtn: 'Date chuniye', datesTitle: 'Khaali dates', slotsFree: n => `${n} slot khaali`,
     noSlots: `Maaf kijiye, agle ${S.daysAhead} din mein koi slot khaali nahi hai. Kripya clinic ko call karein: ${S.clinicPhone}`,
     dayFull: 'Ye din ab full ho gaya hai. Kripya doosri date chuniye.',
@@ -158,7 +163,7 @@ const T = {
     held: w => `${w} aapke liye ${S.holdMinutes} minute ke liye rok diya gaya hai.\n\nAppointment kiske liye hai? *Mere liye* dabaiye ya patient ka naam likhiye.`,
     selfBtn: 'Mere liye',
     askName: 'Kripya patient ka poora naam likhiye (jaise: Riya Sharma), ya *Mere liye* dabaiye.',
-    confirmed: (r, w) => `Aapka appointment confirm ho gaya hai.\n\n*${D}*\n${C}\n\n📅 ${w}\n👤 ${r.name}\n\nKripya 10 minute pehle aayein aur purani reports ya prescription saath layein. Visit se pehle hum aapko reminder bhejenge.`,
+    confirmed: (r, w) => `Aapka appointment confirm ho gaya hai.\n\n*${D}*\n${C}\n\n📅 ${w}\n👤 ${r.name}${r.service ? `\n💆 ${r.service}` : ''}\n\nKripya 10 minute pehle aayein aur purani reports ya prescription saath layein. Visit se pehle hum aapko reminder bhejenge.`,
     changeBtn: 'Time badlein', cancelBtn: 'Cancel karein',
     holdCancelled: 'Koi baat nahi, slot chhod diya gaya hai. Jab chahein *Hi* bhejkar dobara book kar sakte hain.',
     limit: n => `Aapke ${n} appointment pehle se hain, jo maximum hai. Naya time lene ke liye pehle ek cancel karein.`,
@@ -276,6 +281,12 @@ function timeList(d, after) {
   } else out = s.map(x => ({ id: `S|${d}|${x}`, title: timeLabel(d, x, lang) }));
   return list(L.timesFor(dateLabel(d, lang)), L.timeBtn, L.timesTitle, out);
 }
+const svcs = S.services || [];
+const svcName = sid => { const x = svcs.find(v => v.id === sid); return x ? x.name : ''; };
+function svcList(intro) {
+  if (!svcs.length) return dateList(intro);
+  return list(intro, L.svcBtn, L.svcTitle, svcs.slice(0, 10).map(v => ({ id: `TR|${v.id}`, title: v.name.slice(0, 24), description: (lang === 'hl' ? v.hl : v.en || '').slice(0, 72) })));
+}
 const cleanName = s => s.replace(/[^\p{L}\p{M}\s.'-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 40).replace(/\b\p{L}/gu, c => c.toUpperCase());
 const confirmMsg = r => buttons(L.confirmed(r, W(r)), [[`RR|${r.row_number}`, L.changeBtn], [`RX|${r.row_number}`, L.cancelBtn]],
   S.confirmImage ? { type: 'image', image: { link: S.confirmImage } } : null, `${C} · ${S.clinicPhone}`);
@@ -347,13 +358,14 @@ else if (holding && (id === 'SELF' || (!id && raw && !raw.includes('?') && raw.s
   else { setStatus(holding, 'Booked', name); payload = confirmMsg({ ...holding, name }); pin(); }
 }
 else if (holding && has(['cancel'])) { setStatus(holding, 'Cancelled'); payload = text(L.holdCancelled); }
+else if (id.startsWith('TR|')) { mem.svc[me] = id.split('|')[1]; payload = dateList(L.svcChosen(svcName(mem.svc[me]))); }
 else if (id.startsWith('S|')) {
   const [, d, tm] = id.split('|');
   if (!canBookMore) payload = buttons(L.limit(upcoming.length), [['CANCEL', L.cancelBookingBtn], ['TALK', L.talkBtn]]);
   else if (!slotsFor(d).includes(tm)) payload = timeList(d);
   else {
     action = 'append';
-    rec = { name: '', phone: me, email: '', date: d, time: tm, status: 'Holding', bookedAt: DateTime.now().toISO(), lang };
+    rec = { name: '', phone: me, email: '', date: d, time: tm, status: 'Holding', bookedAt: DateTime.now().toISO(), lang, service: svcName(mem.svc[me]) };
     payload = buttons(L.held(whenText(d, tm, lang)), [['SELF', L.selfBtn]]);
   }
 }
@@ -366,7 +378,7 @@ else if (id.startsWith('RC|')) {
 else if (id.startsWith('UK|')) { payload = text(L.kept); }
 else if (id.startsWith('RR|')) {
   const r = byRow(id.split('|')[1]);
-  if (r && active(r)) { setStatus(r, 'Rescheduled'); payload = dateList(L.reschedule); } else payload = dateList(L.pickDate);
+  if (r && active(r)) { const sv = svcs.find(v => v.name === r.service); if (sv) mem.svc[me] = sv.id; setStatus(r, 'Rescheduled'); payload = dateList(L.reschedule); } else payload = svcList(L.pickSvc);
 }
 else if (id.startsWith('RX|')) {
   const r = byRow(id.split('|')[1]);
@@ -374,8 +386,8 @@ else if (id.startsWith('RX|')) {
 }
 else if (id === 'NEW' || id.startsWith('LANG|') || (!id && has(['book', 'booking', 'appointment']) && !has(['cancel']))) {
   if (id.startsWith('LANG|') && upcoming.length) payload = buttons(L.yourAppts(msg.name, upcoming.map(r => `• ${r.name || 'Patient'}: ${W(r)}`).join('\n')), menuBtns());
-  else if (id.startsWith('LANG|')) payload = dateList(L.welcome(msg.name));
-  else payload = canBookMore ? dateList(L.pickDate) : buttons(L.limit(upcoming.length), [['CANCEL', L.cancelBookingBtn]]);
+  else if (id.startsWith('LANG|')) payload = svcList(L.welcome(msg.name));
+  else payload = canBookMore ? svcList(L.pickSvc) : buttons(L.limit(upcoming.length), [['CANCEL', L.cancelBookingBtn]]);
 }
 else if (id === 'CANCEL' || (!id && has(['cancel']))) {
   if (!upcoming.length) payload = buttons(L.noUpcoming, [['NEW', L.bookBtn]]);
@@ -406,7 +418,7 @@ else {
   } else if (upcoming.length) {
     payload = buttons(L.yourAppts(msg.name, upcoming.map(r => `• ${r.name || 'Patient'}: ${W(r)}`).join('\n')), menuBtns());
   } else {
-    payload = dateList(L.welcome(msg.name));
+    payload = svcList(L.welcome(msg.name));
   }
 }
 
@@ -414,7 +426,7 @@ else {
 const tab = `'${S.sheetTab}'`;
 let range = null, values = null;
 if (rec) {
-  if (action === 'append') { values = [[rec.name, rec.phone, rec.email, rec.date, rec.time, rec.status, rec.bookedAt, '', rec.lang]]; range = `${tab}!A:I`; }
+  if (action === 'append') { values = [[rec.name, rec.phone, rec.email, rec.date, rec.time, rec.status, rec.bookedAt, '', rec.lang, rec.service || '']]; range = `${tab}!A:J`; }
   else { values = [[rec.name, rec.phone, rec.email, rec.date, rec.time, rec.status, rec.bookedAt]]; range = `${tab}!A${rec.row_number}:G${rec.row_number}`; }
 }
 return [{ json: { action, payload, more, holiday, values, range: range ? encodeURIComponent(range) : null, sheetId: S.sheetId, phoneNumberId: S.phoneNumberId, notify, from: msg.from, patientName: msg.name, clinicName: C } }];
