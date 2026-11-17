@@ -696,7 +696,9 @@ if (mode === 'desk') {
       const cur2 = servingOf(q); const w2 = waitingOf(q);
       res.boon = {
         now: cur2 ? Object.assign({ tok: cur2.tok, name: cur2.name, prob: cur2.prob || '' }, hist(cur2)) : null,
-        next: w2.slice(0, 3).map(x => Object.assign({ tok: x.tok, name: x.name, prob: x.prob || '' }, hist(x))),
+        next: w2.slice(0, 4).map(x => Object.assign({ tok: x.tok, name: x.name, prob: x.prob || '' }, hist(x))),
+        done: q.list.filter(x => x.st === 'd').slice(-2).map(x => ({ tok: x.tok, name: x.name, pk: patKey(x.phone, x.name) })),
+        more: Math.max(0, w2.length - 4),
         finish: (w2.length || cur2) ? now.plus({ minutes: (w2.length + (cur2 ? 0.5 : 0)) * avgMin(q) }).toFormat('h:mm a') : '',
         lost: P.filter(p => p.fup && p.fup < todayStr && p.fup >= now.minus({ days: 45 }).toFormat('yyyy-MM-dd')).sort((a, c) => c.fup.localeCompare(a.fup)).slice(0, 8)
           .map(p => ({ name: p.name, pk: p.key, due: DateTime.fromISO(p.fup).toFormat('d LLL'), wa: p.ph ? 'https://wa.me/' + p.ph : '' })),

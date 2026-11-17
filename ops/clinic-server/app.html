@@ -231,6 +231,29 @@ button.irow:active,a.irow:active{background:#F9FAFB}
 .errbar{margin:12px 0 0;padding:10px 14px;border-radius:10px;background:#FEF3F2;color:#B42318;font-size:14px}
 @media (min-width:1024px){button,a,.sitem{cursor:pointer}}
 .dshell textarea#pnote{width:100%;box-sizing:border-box;border:none;outline:none;resize:vertical;font:inherit;font-size:15px;line-height:1.4;padding:8px 0;min-height:72px;color:#101828}
+
+/* ---- v10: compact consult card + train-style line ---- */
+.lastnote{font-size:13.5px;line-height:1.45;color:#475467;background:#F9FAFB;border-radius:10px;padding:8px 10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lastnote b{font-weight:700;color:#667085;font-size:12px;letter-spacing:.3px;text-transform:uppercase;margin-right:4px}
+.addnote{border:none;background:none;padding:2px 0 0;text-align:left;color:#175CD3;font-size:14px;font-weight:600;font-family:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl{position:relative;margin:0 16px;padding:0}
+.tl-track{position:absolute;left:21px;width:2px;background:#EAECF0;border-radius:1px}
+.tl-fill{position:absolute;left:21px;width:2px;background:#175CD3;border-radius:1px;transition:height .7s cubic-bezier(.4,0,.2,1)}
+.tl-train{position:absolute;left:12px;width:20px;height:20px;margin-top:-10px;border-radius:50%;background:#175CD3;box-shadow:0 0 0 4px #FFF,0 2px 6px rgba(23,92,211,.35);transition:top .7s cubic-bezier(.4,0,.2,1);z-index:2}
+.tl-train::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid #175CD3;opacity:0;animation:tlpulse 1.8s ease-out infinite}
+@keyframes tlpulse{0%{transform:scale(.6);opacity:.7}100%{transform:scale(1.6);opacity:0}}
+.tl-row{position:relative;display:flex;align-items:center;gap:12px;width:100%;height:58px;border:none;background:none;padding:0 4px 0 0;text-align:left;font-family:inherit;color:#101828;box-sizing:border-box}
+.tl-row:disabled{cursor:default}
+.tl-node{width:12px;height:12px;border-radius:50%;margin-left:16px;flex-shrink:0;box-sizing:border-box;border:2px solid #D0D5DD;background:#FFF;position:relative;z-index:1}
+.tl-d .tl-node{background:#175CD3;border-color:#175CD3}
+.tl-c .tl-node{opacity:0}
+.tl-tok{width:40px;flex-shrink:0;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+.tl-name{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-name em{font-style:normal;font-size:11px;font-weight:700;color:#175CD3;margin-left:6px;letter-spacing:.3px}
+.tl-sub{font-size:13px;color:#667085;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-d .tl-tok,.tl-d .tl-name{color:#98A2B3}.tl-d .tl-sub{color:#98A2B3}
+.tl-c .tl-tok,.tl-c .tl-name{color:#175CD3}.tl-c .tl-sub{color:#175CD3;font-weight:600}
+.tl-more{margin:2px 16px 0 52px;font-size:13px;color:#667085}
 </style>
 </head>
 <body>
@@ -545,22 +568,31 @@ button.irow:active,a.irow:active{background:#F9FAFB}
         h += '<div style="display:flex;justify-content:space-between;align-items:center"><span class="dcap">WITH YOU NOW · TOKEN ' + esc(String(cur.tok).replace('-', '')) + '</span><span style="font-size:12.5px;color:#667085">' + w.length + ' waiting</span></div>' +
           '<button class="dplain" data-pk="' + esc(cur.pk) + '"' + (cur.pk ? '' : ' disabled') + '><span style="font-size:20px;font-weight:700">' + esc(cur.name) + '</span>' + (cur.prob ? '<span style="font-size:15px;color:#344054;line-height:1.45">' + esc(cur.prob) + '</span>' : '') + '</button>' +
           '<div style="display:flex;gap:6px;flex-wrap:wrap">' + '<span class="dchip">' + esc(histLine(cur)) + '</span>' + (cur.fu ? '<span class="dchip" style="background:#EFF4FF;color:#175CD3">Follow-up visit</span>' : '') + '</div>' +
-          (cur.note ? '<div style="background:#F9FAFB;border-radius:10px;padding:10px 12px;font-size:14px;line-height:1.45;color:#344054"><span style="font-size:12px;font-weight:600;color:#667085">YOUR LAST NOTE</span><br>' + esc(cur.note) + '</div>' : '');
+          (cur.note ? '<div class="lastnote"><b>Last note</b> ' + esc(cur.note) + '</div>' : '');
       } else {
         h += '<div style="display:flex;justify-content:space-between;align-items:center"><span class="dcap">WITH YOU NOW</span><span style="font-size:12.5px;color:#667085">' + w.length + ' waiting</span></div><span style="font-size:20px;font-weight:700">Nobody yet</span>';
       }
       if (cur) {
-        if (S.cTok !== cur.tok) { S.cTok = cur.tok; S.cNote = ''; S.cFup = 0; }
+        if (S.cTok !== cur.tok) { S.cTok = cur.tok; S.cNote = ''; S.cFup = 0; S.noteOpen = false; }
         var NC = { skin: ['Same medicines', 'Better than before', 'New cream started', 'Sunscreen daily', 'Avoid picking', 'Peel next visit'], dental: ['Cleaning done', 'Filling done', 'RCT next sitting', 'Painkiller 3 days', 'X-ray next visit'], child: ['Fever settling', 'Syrup 5 days', 'Vaccine due', 'Growth normal'], eye: ['New glasses', 'Drops 1 week', 'Dilated check next'], physio: ['Exercises taught', 'Ice twice daily', '5 more sessions'], general: ['Same medicines', 'BP normal', 'Tests advised', 'Diet advice given'] }[(d.cfg && d.cfg.type) || 'skin'] || [];
-        h += '<div class="clab">Note for today</div><div class="nchips">' + NC.map(function (c) { return '<button class="nchip" data-nchip="' + esc(c) + '">+ ' + esc(c) + '</button>'; }).join('') + '</div>' +
-          '<textarea id="cnote" class="cnote" rows="2" placeholder="Short note (optional)" aria-label="Note for today">' + esc(S.cNote) + '</textarea>' +
-          '<div class="clab">Come back</div><div class="fchips">' + [[0, 'No'], [3, '3 days'], [7, '1 week'], [14, '2 weeks'], [30, '1 month']].map(function (f) { return '<button class="fchip' + (S.cFup === f[0] ? ' on' : '') + '" data-cfup="' + f[0] + '" aria-pressed="' + (S.cFup === f[0]) + '">' + f[1] + '</button>'; }).join('') + '</div>' +
-          '<button class="dbtn" id="cdone">' + (w.length ? 'Done · Call next' : 'Done') + '<span class="kbd">N</span></button></div>';
+        h += '<div class="clab">Come back</div><div class="fchips">' + [[0, 'No'], [3, '3 days'], [7, '1 week'], [14, '2 weeks'], [30, '1 month']].map(function (f) { return '<button class="fchip' + (S.cFup === f[0] ? ' on' : '') + '" data-cfup="' + f[0] + '" aria-pressed="' + (S.cFup === f[0]) + '">' + f[1] + '</button>'; }).join('') + '</div>' +
+          '<button class="dbtn" id="cdone">' + (w.length ? 'Done · Call next' : 'Done') + '<span class="kbd">N</span></button>' +
+          (S.noteOpen ? '<div class="nchips">' + NC.map(function (c) { return '<button class="nchip" data-nchip="' + esc(c) + '">+ ' + esc(c) + '</button>'; }).join('') + '</div><textarea id="cnote" class="cnote" rows="2" placeholder="Short note (optional)" aria-label="Note for today">' + esc(S.cNote) + '</textarea>'
+            : '<button class="addnote" data-noteopen="1">' + (S.cNote ? 'Note: ' + esc(S.cNote) : '+ Add a note') + '</button>') + '</div>';
       } else h += '<button class="dbtn" data-a="call_next"' + (!w.length ? ' disabled' : '') + '>' + (w.length ? 'Call next' : 'No one waiting') + '</button></div>';
       h += '</div><div class="dr">';
-      h += '<div class="dsec"><span>Up next</span><span>' + (w.length ? w.length + ' waiting' + (bo.finish ? ' · done by ~' + esc(bo.finish) : '') : 'Nobody waiting') + '</span></div><div style="padding:0 16px">' +
-        (bo.next || []).map(function (x) {
-          return '<button class="drow" data-pk="' + esc(x.pk) + '"' + (x.pk ? '' : ' disabled') + '><span class="tok" style="width:48px;flex-shrink:0;font-size:15px;font-weight:700">' + esc(String(x.tok).replace('-', '')) + '</span><span class="icol"><span style="font-size:15px;font-weight:600">' + esc(x.name) + (x.visits ? '' : '<span style="font-weight:600;color:#175CD3;font-size:12px">  NEW</span>') + (x.fu ? '<span style="font-weight:600;color:#175CD3;font-size:12px">  FOLLOW-UP</span>' : '') + '</span><span class="dsub">' + esc(x.prob || (x.note ? 'Last: ' + x.note : histLine(x))) + '</span></span>' + (x.pk ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#98A2B3" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>' : '') + '</button>'; }).join('') + '</div>';
+      var TL = []; (bo.done || []).forEach(function (x) { TL.push({ k: 'd', tok: x.tok, name: x.name, sub: 'Done', pk: x.pk }); });
+      var curIdx = -1; if (cur) { curIdx = TL.length; TL.push({ k: 'c', tok: cur.tok, name: cur.name, sub: 'With you now', pk: cur.pk }); }
+      (bo.next || []).forEach(function (x) { TL.push({ k: 'n', tok: x.tok, name: x.name, sub: x.prob || (x.visits ? 'Visit ' + (x.visits + 1) : 'New patient'), pk: x.pk, isNew: !x.visits, fu: x.fu }); });
+      var tlAnim = cur && S.tlPrev && S.tlPrev !== cur.tok && curIdx > 0; S.tlPrev = cur ? cur.tok : null;
+      var RH = 58, dotTo = curIdx >= 0 ? curIdx * RH + RH / 2 : 0;
+      h += '<div class="dsec"><span>Today\'s line</span><span>' + (w.length ? w.length + ' waiting' + (bo.finish ? ' · done by ~' + esc(bo.finish) : '') : 'Nobody waiting') + '</span></div>';
+      if (TL.length) h += '<div class="tl" data-anim="' + (tlAnim ? 1 : 0) + '" data-from="' + (dotTo - RH) + '" data-to="' + dotTo + '"><span class="tl-track" style="top:' + (RH / 2) + 'px;height:' + ((TL.length - 1) * RH) + 'px"></span>' +
+        (curIdx >= 0 ? '<span class="tl-fill" style="top:' + (RH / 2) + 'px;height:' + (dotTo - RH / 2) + 'px"></span><span class="tl-train" style="top:' + dotTo + 'px"></span>' : '') +
+        TL.map(function (x) {
+          return '<button class="tl-row tl-' + x.k + '" data-pk="' + esc(x.pk || '') + '"' + (x.pk ? '' : ' disabled') + '><span class="tl-node"></span><span class="tl-tok">' + esc(String(x.tok).replace('-', '')) + '</span><span class="icol"><span class="tl-name">' + esc(x.name) + (x.isNew ? '<em>NEW</em>' : '') + (x.fu ? '<em>FOLLOW-UP</em>' : '') + '</span><span class="tl-sub">' + esc(x.sub) + '</span></span></button>'; }).join('') +
+        '</div>' + (bo.more ? '<div class="tl-more">+ ' + bo.more + ' more waiting</div>' : '');
+      else h += '<div style="padding:0 16px;color:#667085;font-size:14px">Nobody in the line yet.</div>';
       h += '<div style="margin:14px 16px 0;display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="dtile" data-tab="register"><span class="dsub">Seen today</span><span class="tok" style="font-size:24px;font-weight:700">' + d.today.seen + '</span></button><button class="dtile" data-tab="register"><span class="dsub">Recorded today</span><span class="tok" style="font-size:24px;font-weight:700">' + rupee(d.today.money) + '</span></button></div>' +
         (d.today.nobill ? '<button class="dwarn" data-tab="register">' + d.today.nobill + ' seen today without a bill · check Register</button>' : '');
       var ap = S.appts || [];
@@ -770,6 +802,11 @@ button.irow:active,a.irow:active{background:#F9FAFB}
       on('[data-arrive]', function (el) { var a = (S.appts || []).filter(function (x) { return !x.here; })[Number(el.getAttribute('data-arrive'))]; if (!a) return; el.disabled = true;
         call({ action: 'add_token', name: a.name, phone: a.ph || '', src: 'book', prob: a.treat, bookAt: a.time }, function (r) { S.apptsAt = 0; if (r.added) toast(a.name + ' · token ' + r.added + (r.sent ? ' sent on WhatsApp' : '')); }); });
       on('[data-more]', function (el) { S[el.getAttribute('data-more')] = true; draw(); });
+      on('[data-noteopen]', function () { S.noteOpen = true; draw(); var t = document.getElementById('cnote'); if (t) t.focus(); });
+      var tl = $app.querySelector('.tl[data-anim="1"]');
+      if (tl) { var tr = tl.querySelector('.tl-train'), fl = tl.querySelector('.tl-fill'), fr = Number(tl.getAttribute('data-from')), to = Number(tl.getAttribute('data-to'));
+        tr.style.transition = 'none'; fl.style.transition = 'none'; tr.style.top = fr + 'px'; fl.style.height = (fr - 29) + 'px'; void tr.offsetHeight;
+        tr.style.transition = ''; fl.style.transition = ''; tr.style.top = to + 'px'; fl.style.height = (to - 29) + 'px'; tl.setAttribute('data-anim', '0'); }
       on('[data-nchip]', function (el) { var c = el.getAttribute('data-nchip'); var t = document.getElementById('cnote'); S.cNote = (t ? t.value : S.cNote || '').trim(); S.cNote = S.cNote ? S.cNote.replace(/[.\s]*$/, '') + '. ' + c + '.' : c + '.'; draw(); });
       on('[data-cfup]', function (el) { var t = document.getElementById('cnote'); if (t) S.cNote = t.value; S.cFup = Number(el.getAttribute('data-cfup')); draw(); });
       on('#cdone', function (el) { var t = document.getElementById('cnote'); if (t) S.cNote = t.value; el.disabled = true; var f = S.cFup, n = (S.cNote || '').trim();
