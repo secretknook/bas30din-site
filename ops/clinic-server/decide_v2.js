@@ -10,8 +10,9 @@ if (mem.cfg) Object.assign(S, mem.cfg);
 const OWNERS = (S.staff || []).filter(x => x.role === 'owner');
 if (Array.isArray(mem.team) && mem.team.length) {
   // the clinic owner (set in n8n) can never be removed or changed from the app
-  mem.team = mem.team.filter(x => !OWNERS.some(o => String(o.phone).slice(-10) === String(x.phone).slice(-10))).concat(OWNERS.map(o => Object.assign({}, o)));
-  S.staff = mem.team;
+  const fixed = mem.team.filter(x => !OWNERS.some(o => String(o.phone).slice(-10) === String(x.phone).slice(-10))).concat(OWNERS.map(o => Object.assign({}, o)));
+  if (JSON.stringify(fixed) !== JSON.stringify(mem.team)) mem.team = fixed;
+  S.staff = fixed;
 }
 let deskReq = null;
 try { deskReq = $('Desk API (POST)').first().json.body || {}; } catch (e) { deskReq = null; }
@@ -586,12 +587,13 @@ if (mode === 'desk') {
   } else if (!live) {
     res = { ok: false, auth: true, error: 'Please log in again.' };
   } else {
-    const stNow = staffRec(sess.phone); const role = stNow.role || sess.role; const isDoc = role === 'doctor' || role === 'owner'; sess.name = stNow.name || sess.name;
+    const stNow = staffRec(sess.phone); const role = stNow.role || sess.role; const isDoc = role === 'doctor' || role === 'owner'; if (stNow.name && sess.name !== stNow.name) sess.name = stNow.name;
     const q0 = qRead();
     if (b.action === 'call_next') { const q = qWrite(); callNext(q, out); }
     else if (b.action === 'not_here') { const q = qWrite(); notHere(q, out); }
     else if (b.action === 'add_token') { const q = qWrite(); const ph = digits(b.phone || ''); const full = ph.length === 10 ? '91' + ph : ph;
-      const tk = issueToken(q, full, String(b.name || 'Walk-in').slice(0, 40), 'desk'); if (full && inWindow(full)) out.push(tokenMsg(q, tk, full)); res.added = tk.tok; }
+      const tk = issueToken(q, full, String(b.name || 'Walk-in').slice(0, 40), b.src === 'book' ? 'book' : 'desk'); if (b.prob) tk.prob = String(b.prob).slice(0, 120); if (b.bookAt) tk.bookAt = String(b.bookAt).slice(0, 10);
+      if (full && inWindow(full)) out.push(tokenMsg(q, tk, full)); res.added = tk.tok; }
     else if (b.action === 'remove_token') { const q = qWrite(); const tk = q.list.find(x => x.key === b.key); if (tk) tk.st = 'x'; }
     else if (b.action === 'set_status') { res.told = setDoc(String(b.status || 'in'), b.mins, out); }
     else if (b.action === 'chat_send' && !isDoc || (b.action === 'chat_send' && role === 'owner')) { const ph = digits(b.phone); if (ph && b.text) { out.push(textTo(ph, String(b.text).slice(0, 1000))); chatLog(ph, 'staff', b.text); if (mem.live[ph]) mem.live[ph].last = now.toISO(); } }
@@ -656,7 +658,7 @@ if (mode === 'desk') {
     res.me = { name: sess.name, role };
     res.clinic = clinic; res.doc = docInfo();
     res.queue = { now: cur ? { tok: cur.tok, name: cur.name, src: cur.src, key: cur.key, phone: isDoc ? '' : mask(cur.phone), since: DateTime.fromISO(cur.calledAt).setZone(TZ).toFormat('h:mm a') } : null,
-      waiting: waitingOf(q).slice(0, 25).map(x => ({ tok: x.tok, name: x.name, src: x.src, key: x.key, missed: x.missed || 0, ahead: aheadOf(q, x), told2: !!x.told2, phone: isDoc ? '' : mask(x.phone), here: !!x.here })),
+      waiting: waitingOf(q).slice(0, 25).map(x => ({ tok: x.tok, name: x.name, src: x.src, bookAt: x.bookAt || '', key: x.key, missed: x.missed || 0, ahead: aheadOf(q, x), told2: !!x.told2, phone: isDoc ? '' : mask(x.phone), here: !!x.here })),
       done: q.list.filter(x => x.st === 'd').length, avg: avgMin(q), open: isOpenNow() };
     res.links = { tv: S.tvKey ? `${APP}?v=tv&k=${S.tvKey}` : '', qr, poster: `${APP}?v=qr&n=${S.botNumber || ''}&c=${encodeURIComponent(C)}` };
     res.fee = S.fee || 0; res.upi = S.upiId ? { id: S.upiId, name: S.upiName || C } : null;
@@ -720,7 +722,8 @@ if (mode === 'desk') {
     if (b.needAppts) {
       const mineToday = rows.filter(r => r.date === todayStr && ['booked', 'confirmed', 'sent', 'holding'].includes(r.status) && at(r.date, r.time).isValid).sort((a, c) => a.time.localeCompare(c.time));
       const seenBefore = ph => rows.some(r => r.phone === ph && r.date < todayStr && ['booked', 'confirmed', 'sent'].includes(r.status));
-      res.appts = mineToday.map(r => ({ time: at(r.date, r.time).toFormat('h:mm a'), name: r.name || 'Patient', treat: r.service || 'Appointment', status: r.status, isNew: !seenBefore(r.phone), visits: rows.filter(x => x.phone === r.phone && x.date <= todayStr && ['booked', 'confirmed', 'sent'].includes(x.status)).length, phone: isDoc ? '' : mask(r.phone) }));
+      const inQueue = ph => q.list.some(x => x.phone === ph && x.st !== 'x');
+      res.appts = mineToday.map(r => ({ here: inQueue(r.phone), ph: isDoc ? '' : r.phone, time: at(r.date, r.time).toFormat('h:mm a'), name: r.name || 'Patient', treat: r.service || 'Appointment', status: r.status, isNew: !seenBefore(r.phone), visits: rows.filter(x => x.phone === r.phone && x.date <= todayStr && ['booked', 'confirmed', 'sent'].includes(x.status)).length, phone: isDoc ? '' : mask(r.phone) }));
     }
     if (!isDoc || role === 'owner') {
       const lv = Object.keys(mem.live || {}).filter(p => DateTime.fromISO(mem.live[p].last) > now.minus({ hours: 2 }));

@@ -292,7 +292,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     function call(body, after) {
       if (S.busy && !body.action) { S.again = true; return; } S.busy = true;
       var v = view(); for (var k in v) if (!(k in body)) body[k] = v[k];
-      body.sid = S.sid; body.needAppts = (S.tab === 'today') && (Date.now() - S.apptsAt > 30000 || !S.appts);
+      body.sid = S.sid; body.needAppts = (S.tab === 'today' || S.tab === 'queue') && (Date.now() - S.apptsAt > 30000 || !S.appts);
       return post(body).then(function (r) {
         S.busy = false;
         if (r.auth) return logout();
@@ -323,7 +323,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       return '<button class="ipill" ' + (isDoc() ? 'data-sheet="status"' : 'disabled') + ' style="background:' + STAT[k][1] + ';color:' + STAT[k][2] + '"><span class="dot" style="width:7px;height:7px;background:' + STAT[k][3] + '"></span>' + esc(lab) + '</button>';
     }
     function rupee(n) { return '₹' + Number(n || 0).toLocaleString('en-IN'); }
-    function srcLab(x) { return x.src === 'qr' ? 'Walk-in · QR' : x.src === 'desk' ? 'Walk-in · added here' : x.src === 'book' ? 'Booked' : 'Walk-in'; }
+    function srcLab(x) { return x.src === 'qr' ? 'Walk-in · QR' : x.src === 'desk' ? 'Walk-in · added here' : x.src === 'book' ? 'Booked' + (x.bookAt ? ' ' + x.bookAt : '') : 'Walk-in'; }
 
     // ---------- screens ----------
     function scrQueue() {
@@ -340,6 +340,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         h += sec('To bill', d.toBill.length) + '<div class="ilist">' + d.toBill.map(function (b) {
           return '<button class="irow" data-bill="' + esc(b.k) + '"><span class="tok" style="width:48px;font-size:17px;font-weight:600;flex-shrink:0">' + esc(b.tok) + '</span><span class="icol"><span>' + esc(b.name) + '</span><span class="isub">Seen ' + esc(b.seen) + '</span></span><span style="font-size:15px;color:' + C.blue + '">Bill</span>' + CHEV + '</button>'; }).join('') + '</div>';
       }
+      var due = (S.appts || []).filter(function (a) { return !a.here; });
+      if (due.length) h += sec('Booked today · not arrived', due.length) + '<div class="ilist">' + due.map(function (a, i) {
+        return '<div class="irow"><span class="tok" style="width:72px;font-size:15px;flex-shrink:0">' + esc(a.time) + '</span><span class="icol"><span>' + esc(a.name) + '</span><span class="isub">' + esc(a.treat) + '</span></span><button class="ilink" data-arrive="' + i + '" style="font-weight:600">Arrived</button></div>'; }).join('') + '</div>';
       h += sec('Up next', w.length + ' waiting · ~' + q.avg + ' min each') + '<div class="ilist"><button class="irow" data-sheet="add" style="color:' + C.blue + '"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span style="font-size:17px">Add walk-in</span></button>' +
         w.slice(0, 20).map(function (x) {
           var wh = x.here ? ['In waiting room', '#34C759'] : x.ahead <= 2 && x.told2 ? ['Told: ' + x.ahead + ' ahead', '#FF9500'] : ['Outside', '#C4C4C7'];
@@ -644,6 +647,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       on('[data-trole]', function (el) { var n = document.getElementById('tn'), p = document.getElementById('tp'); S.sheet.name = n ? n.value : ''; S.sheet.phone = p ? p.value : ''; S.sheet.role = el.getAttribute('data-trole'); draw(); });
       on('#tadd', function (el) { var n = document.getElementById('tn').value.trim(), p = document.getElementById('tp').value; if (!n) return document.getElementById('tn').focus(); el.disabled = true; call({ action: 'team_add', name: n, phone: p, role: S.sheet.role || 'reception' }, function (r) { if (r.added) { S.sheet = null; toast(n + ' added · they can log in with their number now'); } }); });
       on('[data-trole2]', function (el) { var r = el.getAttribute('data-trole2'), n = el.getAttribute('data-tnm'); call({ action: 'team_add', name: n, phone: el.getAttribute('data-tph'), role: r }, function (x) { if (x.added) toast(n + ' is now ' + (r === 'doctor' ? 'a doctor · sees the doctor app' : 'reception')); }); });
+      on('[data-arrive]', function (el) { var a = (S.appts || []).filter(function (x) { return !x.here; })[Number(el.getAttribute('data-arrive'))]; if (!a) return; el.disabled = true;
+        call({ action: 'add_token', name: a.name, phone: a.ph || '', src: 'book', prob: a.treat, bookAt: a.time }, function (r) { S.apptsAt = 0; if (r.added) toast(a.name + ' · token ' + r.added + (r.sent ? ' sent on WhatsApp' : '')); }); });
       on('#saveupi', function () { call({ action: 'setup_save', cfg: { upiId: document.getElementById('upi').value } }, function (r) { if (r.saved) toast('UPI ID saved'); }); });
       on('#asrec', function () { S.viewAs = 'reception'; S.tab = 'queue'; draw(); window.scrollTo(0, 0); });
       on('[data-asdoc]', function () { S.viewAs = null; S.tab = 'today'; draw(); window.scrollTo(0, 0); });
