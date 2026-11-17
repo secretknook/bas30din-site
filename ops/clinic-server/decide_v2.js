@@ -409,6 +409,37 @@ const PRESETS = {
   physio: { label: 'Physio', services: ['Back pain', 'Knee pain', 'Neck / shoulder', 'Post-surgery rehab'], fee: 500 },
 };
 
+const BILLDEF = {
+  skin: [['Consultation', 500], ['Follow-up consult', 300], ['Chemical peel', 2500], ['Laser hair removal', 3000], ['PRP (hair)', 4500], ['HydraFacial', 3500], ['Acne scar treatment', 4000]],
+  dental: [['Consultation', 300], ['Cleaning', 1200], ['Filling', 1500], ['Root canal', 5500], ['Extraction', 1000], ['X-ray', 300]],
+  child: [['Consultation', 500], ['Vaccination', 1200], ['Nebulisation', 300]],
+  general: [['Consultation', 300], ['Dressing', 200], ['Injection', 150], ['ECG', 400]],
+  eye: [['Consultation', 400], ['Eye test', 300], ['Glasses fitting', 1500]],
+  physio: [['Session', 500], ['10-session pack', 4500]],
+};
+const billList = () => { const L = (mem.cfg && Array.isArray(mem.cfg.bill) && mem.cfg.bill.length) ? mem.cfg.bill : (BILLDEF[(mem.cfg && mem.cfg.type) || 'skin'] || BILLDEF.skin).map(x => ({ n: x[0], p: x[0] === 'Consultation' && S.fee ? S.fee : x[1] })); return L; };
+const seenBefore = ph => !!ph && Object.keys(mem.vis || {}).some(d => d < todayStr && (mem.vis[d] || []).some(v => v.ph === ph));
+const SRC = { google: 'Google / Instagram', friend: 'Someone told them', board: 'Clinic board / poster', doctor: 'Another doctor', other: 'Other' };
+function stSum(from, to) { const o = {}; for (const d of Object.keys(mem.st || {})) if (d >= from && d <= to) for (const k of Object.keys(mem.st[d])) o[k] = (o[k] || 0) + mem.st[d][k]; return o; }
+const memSafe = () => { const o = {}; for (const k of Object.keys(mem)) if (!['sess', 'codes', 'otp', 'chat', 'seen'].includes(k)) o[k] = mem[k]; return o; };
+function backupSnap() { const j = JSON.stringify(memSafe()); const parts = []; for (let i = 0; i < j.length; i += 45000) parts.push(j.slice(i, i + 45000)); return [now.toISO(), String(parts.length)].concat(parts); }
+// patients who missed their follow-up: day after, 1 week, 1 month
+function recallsDue() {
+  if (!mem.rc) mem.rc = {}; const res0 = [];
+  const last = {}; for (const d of Object.keys(mem.vis || {}).sort()) for (const v of mem.vis[d]) if (v.ph) last[v.ph] = Object.assign({ day: d }, v);
+  for (const ph of Object.keys(last)) { const v = last[ph]; if (!v.fup || v.fup >= todayStr) continue;
+    const gap = Math.floor(now.startOf('day').diff(DateTime.fromISO(v.fup, { zone: TZ }), 'days').days); if (gap < 1 || gap > 45) continue;
+    const st = gap >= 30 ? 3 : gap >= 7 ? 2 : 1; let r = mem.rc[ph]; if (!r || r.fup !== v.fup) r = mem.rc[ph] = { fup: v.fup, n: 0, name: v.name };
+    if (r.n < st && !(mem.q && (mem.q.list || []).some(t => t.phone === ph))) res0.push({ ph, name: v.name, st, r }); }
+  return res0;
+}
+function reviewAsks() {
+  if (!mem.rv) mem.rv = {}; const L = []; const seen = new Set();
+  for (const v of (mem.vis || {})[todayStr] || []) { if (!v.ph || seen.has(v.ph) || !v.m) continue; seen.add(v.ph); const r = mem.rv[v.ph]; if (r && r.at > now.minus({ days: 60 }).toISO()) continue; if (DateTime.fromISO(v.out) > now.minus({ minutes: 45 })) continue; L.push(v); }
+  return L;
+}
+const reviewBtns = lg => [['RV|5', lg === 'en' ? 'Very good 😊' : 'Bahut accha 😊'], ['RV|3', lg === 'en' ? 'It was okay' : 'Theek tha'], ['RV|1', lg === 'en' ? 'Not good' : 'Accha nahi']];
+
 // ---------- demo data: a clinic that has been running for 2 months ----------
 function seedDemo() {
   let sd = 11; const rnd = () => { sd = (sd * 9301 + 49297) % 233280; return sd / 233280; };
@@ -490,6 +521,15 @@ function seedDemo() {
   evAt('910000063312', 60 * 28, 'call', 'Called · nobody picked up'); evAt('910000063312', 60 * 28, 'bot', 'Bot sent a WhatsApp reply'); evAt('910000063312', 60 * 27, 'booked', 'Booked Wed 18 Nov, 11:00 AM');
   mem.callbacks = [{ phone: '910000077412', name: '', at: now.minus({ minutes: 182 }).toISO(), reason: 'Laser hair removal ka price kya hai, aur kitne session lagenge?', pinged: now.toISO() }, { phone: '910000055120', name: 'Ramesh Gupta', at: now.minus({ minutes: 69 }).toISO(), reason: 'Report dikhani hai, kal subah aa sakta hoon?', noans: 1, pinged: now.toISO() }];
   mem.st = {}; for (let i = 6; i >= 0; i--) { const d = now.minus({ days: i }); if (d.weekday === 7) continue; mem.st[d.toFormat('yyyy-MM-dd')] = { chats: 8 + Math.floor(rnd() * 8), booked: 2 + Math.floor(rnd() * 4), qr: 10 + Math.floor(rnd() * 9), mcalls: 3 + Math.floor(rnd() * 4), reminders: 2 + Math.floor(rnd() * 4) }; }
+  // money by service, cash check, reminders that worked, reviews, sources
+  for (const d0 of Object.keys(mem.vis)) for (const v of mem.vis[d0]) { if (!v.fee) continue; if (v.fee === 2500) v.items = [{ n: 'Chemical peel', p: 2500 }]; else if (v.fee === 3000) v.items = [{ n: 'Laser hair removal', p: 3000 }]; else if (rnd() < 0.07) { v.fee = 4500; v.items = [{ n: 'PRP (hair)', p: 4500 }]; } else if (rnd() < 0.06) { v.fee = 3500; v.items = [{ n: 'HydraFacial', p: 3500 }]; } else v.items = [{ n: 'Consultation', p: v.fee }]; }
+  { const tv = (mem.vis[todayStr] || []).filter(v => v.m); if (tv[2]) { tv[2].fee = 3000; tv[2].items = [{ n: 'Consultation', p: 500 }, { n: 'Chemical peel', p: 2500 }]; } if (tv[5]) { tv[5].fee = 4500; tv[5].items = [{ n: 'PRP (hair)', p: 4500 }]; } }
+  { const R0 = regSum(todayStr, todayStr); mem.close = { [todayStr]: { cash: R0.cash - 500, upi: R0.upi, by: recName, at: now.minus({ minutes: 5 }).toISO() } }; }
+  const m0 = now.startOf('month'); for (let d = m0; d <= now; d = d.plus({ days: 1 })) { if (d.weekday === 7) continue; const k = d.toFormat('yyyy-MM-dd'); const o = mem.st[k] || (mem.st[k] = {});
+    o.recalls = 2 + Math.floor(rnd() * 3); o.recallBack = rnd() < 0.55 ? 1 : 0; o.recallMoney = o.recallBack ? 500 + (rnd() < 0.3 ? 2500 : 0) : 0; o.rvAsk = 4 + Math.floor(rnd() * 4); o.rvGood = 2 + Math.floor(rnd() * 3); o.rvMid = rnd() < 0.3 ? 1 : 0; o.rvLow = rnd() < 0.1 ? 1 : 0;
+    for (const sk of ['google', 'google', 'friend', 'friend', 'friend', 'board', 'doctor']) if (rnd() < 0.35) o['src_' + sk] = (o['src_' + sk] || 0) + 1; }
+  mem.fb = [{ ph: pool[3].ph, name: pool[3].name, r: 1, t: 'Bahut der wait karna pada, 1.5 ghanta. Token ka time sahi batana chahiye.', at: now.minus({ days: 2 }).toISO() }, { ph: pool[8].ph, name: pool[8].name, r: 3, t: 'Doctor acche hain par reception pe koi phone nahi uthata.', at: now.minus({ days: 5 }).toISO() }];
+  mem.rc = {}; mem.src = {};
 }
 
 // ---------- register: every visit, every bill, patients, follow-ups ----------
@@ -509,6 +549,7 @@ function addVisit(tk) {
   if (!mem.vis) mem.vis = {};
   const l = mem.vis[todayStr] || (mem.vis[todayStr] = []);
   if (l.some(v => v.k === tk.key)) return;
+  { const rc = (mem.rc || {})[tk.phone]; if (rc && rc.n > 0 && !rc.back) { rc.back = todayStr; bump('recallBack'); } }
   l.push({ k: tk.key, tok: tk.tok, name: tk.name || 'Patient', ph: tk.phone || '', in: tk.calledAt || now.toISO(), out: now.toISO(), fee: null, m: null, fupSug: tk.fupDays || 0, prob: tk.prob || '' });
   const cut = now.minus({ days: 400 }).toFormat('yyyy-MM-dd');
   for (const d of Object.keys(mem.vis)) if (d < cut) delete mem.vis[d];
@@ -628,6 +669,7 @@ if (mode === 'desk') {
     else if (b.action === 'not_here') { const q = qWrite(); notHere(q, out); }
     else if (b.action === 'add_token') { const q = qWrite(); const ph = digits(b.phone || ''); const full = ph.length === 10 ? '91' + ph : ph;
       const tk = issueToken(q, full, String(b.name || 'Walk-in').slice(0, 40), b.src === 'book' ? 'book' : 'desk'); if (b.prob) tk.prob = String(b.prob).slice(0, 120); if (b.bookAt) tk.bookAt = String(b.bookAt).slice(0, 10);
+      if (b.srcOf && SRC[b.srcOf]) { if (!mem.src) mem.src = {}; mem.src[full || ('n' + String(b.name || '').toLowerCase())] = { s: b.srcOf, at: now.toISO() }; bump('src_' + b.srcOf); }
       if (full && inWindow(full)) out.push(tokenMsg(q, tk, full)); res.added = tk.tok; }
     else if (b.action === 'remove_token') { const q = qWrite(); const tk = q.list.find(x => x.key === b.key); if (tk) tk.st = 'x'; }
     else if (b.action === 'set_status') { res.told = setDoc(String(b.status || 'in'), b.mins, out); }
@@ -669,7 +711,7 @@ if (mode === 'desk') {
       else { mem.team = T.filter(y => y !== x); S.staff = mem.team; for (const k of Object.keys(mem.sess || {})) if (mem.sess[k].phone.slice(-10) === ph.slice(-10)) delete mem.sess[k]; res.removed = true; }
     }
     else if (b.action === 'demo_seed' && role === 'owner') { seedDemo(); res.seeded = true; }
-    else if (b.action === 'demo_clear' && role === 'owner') { for (const k of ['vis', 'q', 'notes', 'fup', 'mcalls', 'callbacks', 'st', 'otp', 'ev', 'pname']) delete mem[k]; mem.wait = {}; mem.nightSent = ''; mem.doc = { status: 'in', setAt: now.toISO() }; res.cleared = true; }
+    else if (b.action === 'demo_clear' && role === 'owner') { for (const k of ['vis', 'q', 'notes', 'fup', 'mcalls', 'callbacks', 'st', 'otp', 'ev', 'pname', 'rc', 'rv', 'fb', 'src', 'close', 'regBk']) delete mem[k]; mem.wait = {}; mem.nightSent = ''; mem.doc = { status: 'in', setAt: now.toISO() }; res.cleared = true; }
     else if (b.action === 'bill') {
       const day = /^\d{4}-\d{2}-\d{2}$/.test(b.day || '') ? b.day : todayStr;
       const v = visOf(day).find(x => x.k === b.k);
@@ -677,6 +719,8 @@ if (mode === 'desk') {
       else {
         v.m = ['cash', 'upi', 'free'].includes(b.m) ? b.m : 'cash';
         v.fee = v.m === 'free' ? 0 : Math.max(0, Math.min(500000, Math.round(Number(b.fee) || 0)));
+        if (Array.isArray(b.items)) { const BL = billList(); v.items = b.items.map(n => BL.find(x => x.n === n)).filter(Boolean).map(x => ({ n: x.n, p: x.p })).slice(0, 8); }
+        { const rc = (mem.rc || {})[v.ph]; if (rc && rc.back === day && !rc.paid && v.fee) { rc.paid = v.fee; bump('recallMoney', v.fee); } }
         v.by = sess.name; v.at = now.toISO();
         const days = Math.max(0, Math.min(400, Number(b.fup) || 0));
         v.fup = days ? now.plus({ days }).toFormat('yyyy-MM-dd') : null;
@@ -688,6 +732,11 @@ if (mode === 'desk') {
     else if (b.action === 'note' && isDoc) { const pk = String(b.pk || ''); if (!mem.notes) mem.notes = {}; mem.notes[pk] = { t: String(b.text || '').slice(0, 600), at: now.toISO(), by: sess.name }; }
     else if (b.action === 'mc_done') { mem.mcalls = (mem.mcalls || []).filter(x => x.ph !== digits(b.phone)); }
     else if (b.action === 'wl_done') { for (const d of Object.keys(mem.wait || {})) mem.wait[d] = (mem.wait[d] || []).filter(w => w.phone !== digits(b.phone)); }
+    else if (b.action === 'close_day') { if (!mem.close) mem.close = {}; mem.close[todayStr] = { cash: Math.max(0, Math.round(Number(b.cash) || 0)), upi: Math.max(0, Math.round(Number(b.upi) || 0)), by: sess.name, at: now.toISO() }; res.closed = true; }
+    else if (b.action === 'set_bill' && isDoc) { const L = (Array.isArray(b.bill) ? b.bill : []).map(x => ({ n: String(x.n || '').trim().slice(0, 40), p: Math.max(0, Math.min(500000, Math.round(Number(x.p) || 0))) })).filter(x => x.n).slice(0, 20); if (!mem.cfg) mem.cfg = {}; mem.cfg.bill = L; }
+    else if (b.action === 'set_review' && isDoc) { const u = String(b.url || '').trim(); if (u && !/^https:\/\/(g\.page|maps\.app\.goo\.gl|goo\.gl|www\.google\.|search\.google\.|g\.co)/.test(u)) res.error = 'Paste the review link from your Google Business Profile.'; else { if (!mem.cfg) mem.cfg = {}; mem.cfg.googleReview = u; } }
+    else if (b.action === 'backup_now' && role === 'owner') { res.backup = true; mem.bkAt = now.toISO(); }
+    else if (b.action === 'download' && role === 'owner') { res.dump = JSON.stringify(memSafe()); }
     else if (b.action === 'cb_try') { const ph = digits(b.phone); const cb = (mem.callbacks || []).find(x => x.phone === ph); if (cb) { cb.tries = (cb.tries || 0) + 1; cb.tryAt = now.toISO(); cb.by = sess.name; ev(ph, 'try', 'Called by ' + sess.name); } }
     else if (b.action === 'cb_noans') { const ph = digits(b.phone); const cb = (mem.callbacks || []).find(x => x.phone === ph); if (cb) { cb.noans = (cb.noans || 0) + 1; cb.tryAt = null; ev(ph, 'noans', 'No answer · ' + sess.name + ' will try again'); } }
     else if (b.action === 'cb_done') { const ph = digits(b.phone); if ((mem.callbacks || []).some(x => x.phone === ph)) ev(ph, 'done', 'Talked · called back by ' + sess.name); mem.callbacks = (mem.callbacks || []).filter(x => x.phone !== ph); }
@@ -700,7 +749,7 @@ if (mode === 'desk') {
       waiting: waitingOf(q).slice(0, 25).map(x => ({ tok: x.tok, name: x.name, src: x.src, bookAt: x.bookAt || '', key: x.key, missed: x.missed || 0, ahead: aheadOf(q, x), told2: !!x.told2, phone: isDoc ? '' : mask(x.phone), here: !!x.here })),
       done: q.list.filter(x => x.st === 'd').length, avg: avgMin(q), open: isOpenNow() };
     res.links = { tv: S.tvKey ? `${APP}?v=tv&k=${S.tvKey}` : '', qr, poster: `${APP}?v=qr&n=${S.botNumber || ''}&c=${encodeURIComponent(C)}` };
-    res.fee = S.fee || 0; res.upi = S.upiId ? { id: S.upiId, name: S.upiName || C } : null;
+    res.fee = S.fee || 0; res.upi = S.upiId ? { id: S.upiId, name: S.upiName || C } : null; res.bill = billList(); res.dayClosed = !!(mem.close || {})[todayStr]; res.review = (mem.cfg || {}).googleReview || ''; res.bkAt = mem.bkAt ? DateTime.fromISO(mem.bkAt).setZone(TZ).toFormat('d LLL, h:mm a') : '';
     const todayV = visOf(todayStr);
     const freeDays = S.followFreeDays === undefined ? 7 : Number(S.followFreeDays) || 0;
     const lastPaid = (v) => { const key = patKey(v.ph, v.name); const days = Object.keys(mem.vis || {}).filter(d => d < todayStr && d >= now.minus({ days: freeDays }).toFormat('yyyy-MM-dd')).sort().reverse();
@@ -758,6 +807,9 @@ if (mode === 'desk') {
         const lastDay = DateTime.fromISO(last.at).setZone(TZ).toFormat('yyyy-MM-dd'); return { ph: x.ph, day: lastDay === todayStr ? 'today' : 'before', tried: !!(cb && cb.tryAt), name: nameOf(x.ph), shown: '+' + x.ph.slice(0, 2) + ' ' + x.ph.slice(2, 7) + ' ' + x.ph.slice(7), call: '+' + x.ph, at: DateTime.fromISO(x.l[0].at).setZone(TZ).toFormat('h:mm a'), last: last.at, st, reason: cb ? cb.reason || '' : '', items: x.l.map(e => ({ t: DateTime.fromISO(e.at).setZone(TZ).toFormat('h:mm a'), k: e.k, txt: e.t })) };
       }).sort((a, c) => c.last.localeCompare(a.last)).slice(0, 40);
       res.act = { attention: feed.filter(x => x.st.tone === 'bad'), feed };
+      { const m0 = now.startOf('month').toFormat('yyyy-MM-dd'); const T = stSum(m0, todayStr); const srcs = Object.keys(SRC).map(k => ({ k, label: SRC[k], n: T['src_' + k] || 0 })).filter(x => x.n).sort((a, c) => c.n - a.n);
+        res.grow = { month: now.toFormat('LLLL'), recalls: T.recalls || 0, back: T.recallBack || 0, money: T.recallMoney || 0, good: T.rvGood || 0, mid: T.rvMid || 0, low: T.rvLow || 0, asked: T.rvAsk || 0, link: !!(mem.cfg || {}).googleReview, src: srcs,
+          fb: (mem.fb || []).slice(-6).reverse().map(f => ({ name: f.name || ('+' + f.ph), r: f.r, t: f.t, at: DateTime.fromISO(f.at).setZone(TZ).toFormat('d LLL'), call: '+' + f.ph })) }; }
     }
     { const rg = ((S.hours || {})[now.toFormat('ccc').toLowerCase()] || []); const hm = now.toFormat('HH:mm'); const cur = rg.find(r => hm < r.split('-')[1].trim()) || rg[rg.length - 1]; const f = t => DateTime.fromFormat(t.trim(), 'HH:mm').toFormat('h:mm a').replace(':00', '');
       res.opd = cur ? { label: (+cur.split('-')[0].slice(0, 2) < 14 ? 'Morning OPD' : 'Evening OPD'), time: cur.split('-').map(f).join(' – ') } : { label: 'No OPD today', time: '' }; }
@@ -771,6 +823,9 @@ if (mode === 'desk') {
       res.register = { period: per, seen: R.seen, money: R.money, cash: R.cash, upi: R.upi, free: R.free, nobill: R.nobill,
         flags: R.V.filter(v => !v.m || v.m === 'free').reverse().slice(0, 40).map(v => ({ name: (v.tok ? v.tok + ' · ' : '') + v.name, sub: v.m ? `Marked by ${v.by || 'staff'}, ${dl(v.day)}${hm(v.at)}` : `Seen ${dl(v.day)}${hm(v.in)} – ${hm(v.out)}`, tag: v.m ? 'No charge' : 'No bill', bad: !v.m })),
         calls: (mem.mcalls || []).filter(x => x.at >= DateTime.fromISO(from, { zone: TZ }).toISO()).length };
+      { const E = {}; for (const v of R.V) { if (!v.fee || v.m === 'free') continue; if (v.items && v.items.length) { const tot = v.items.reduce((a, x) => a + x.p, 0) || 1; for (const it of v.items) { const e = E[it.n] || (E[it.n] = { n: it.n, money: 0, count: 0 }); e.money += Math.round(v.fee * it.p / tot); e.count++; } } else { const e = E['Consultation'] || (E['Consultation'] = { n: 'Consultation', money: 0, count: 0 }); e.money += v.fee; e.count++; } }
+        res.register.earn = Object.values(E).sort((a, c) => c.money - a.money); }
+      if (per === 'today') { const cl = (mem.close || {})[todayStr]; res.register.close = cl ? { cash: cl.cash, upi: cl.upi, by: cl.by, at: hm(cl.at), cashDiff: cl.cash - R.cash, upiDiff: cl.upi - R.upi } : null; }
     }
     if (b.view === 'patients') {
       const s0 = String(b.q || '').trim().toLowerCase(); const sd = digits(s0);
@@ -810,7 +865,8 @@ if (mode === 'desk') {
   }
   res.sent = out.length;
   const first = out.shift() || null;
-  return [{ json: { action: first ? 'reply' : 'none', payload: first, more: out, desk: res, holiday: null, values: null, range: null, sheetId: S.sheetId, phoneNumberId: S.phoneNumberId, notify: false } }];
+  const bk = res.backup ? { rows: [], snap: backupSnap() } : null; if (res.backup) res.backup = true;
+  return [{ json: { action: first ? 'reply' : 'none', payload: first, more: out, desk: res, backup: bk, holiday: null, values: null, range: null, sheetId: S.sheetId, phoneNumberId: S.phoneNumberId, notify: false } }];
 }
 
 // ================= 8 AM doctor summary (no patient message in this run) =================
@@ -822,21 +878,30 @@ if (mode === 'summary' && (now.hour >= 20 || now.hour < 3)) {
   const fT = (mem.fup || []).filter(f => f.date === tomorrow).length;
   const calls = (mem.mcalls || []).filter(x => DateTime.fromISO(x.at).setZone(TZ).toFormat('yyyy-MM-dd') === dk);
   const callsBooked = calls.filter(x => rows.some(r => r.phone === x.ph && active(r))).length;
-  const look = [R.nobill ? `${R.nobill} seen, no bill` : '', R.free ? `${R.free} marked No charge` : ''].filter(Boolean);
-  const body = `*${C} · ${day.toFormat('ccc d LLL')}*\n\nSeen: *${R.seen} patient${R.seen === 1 ? '' : 's'}*\nRecorded: *${rupees(R.money)}*\nCash ${rupees(R.cash)} · UPI ${rupees(R.upi)}\n\n` +
+  const cl = (mem.close || {})[dk];
+  const look = [R.nobill ? `${R.nobill} seen, no bill` : '', R.free ? `${R.free} marked No charge` : '', !cl ? 'Day not closed by reception' : (cl.cash - R.cash) < 0 ? `Cash ${rupees(R.cash - cl.cash)} short` : (cl.cash - R.cash) > 0 ? `Cash ${rupees(cl.cash - R.cash)} extra` : ''].filter(Boolean);
+  const E = {}; for (const v of R.V) { if (!v.fee || v.m === 'free') continue; const its = v.items && v.items.length ? v.items : [{ n: 'Consultation', p: v.fee }]; const tot = its.reduce((a, x) => a + x.p, 0) || 1; for (const it of its) E[it.n] = (E[it.n] || 0) + Math.round(v.fee * it.p / tot); }
+  const earn = Object.keys(E).sort((a, c) => E[c] - E[a]).slice(0, 4).map(k => `${k} ${rupees(E[k])}`).join('\n');
+  const T = stSum(dk, dk); const pend = (mem.callbacks || []).length;
+  const growTxt = [T.recallBack ? `${T.recallBack} came back after our reminder${T.recallMoney ? ' · ' + rupees(T.recallMoney) : ''}` : '', T.rvGood || T.rvLow || T.rvMid ? `Reviews: ${T.rvGood || 0} happy, ${(T.rvMid || 0) + (T.rvLow || 0)} not happy` : '', pend ? `${pend} still waiting for a call back` : ''].filter(Boolean);
+  const backup = { rows: mem.regBk === dk ? [] : R.V.map(v => [dk, v.tok || '', v.name || '', v.ph ? '+' + v.ph : '', v.prob || '', (v.items || []).map(x => x.n).join(', '), v.fee == null ? '' : v.fee, v.m || 'not billed', v.by || '', v.fup || '', ((mem.notes || {})[patKey(v.ph, v.name)] || {}).t || '']), snap: null };
+  mem.regBk = dk; mem.bkAt = now.toISO(); backup.snap = backupSnap();
+  const body = `*${C} · ${day.toFormat('ccc d LLL')}*\n\nEarned: *${rupees(R.money)}* from ${R.seen} patient${R.seen === 1 ? '' : 's'}\nCash ${rupees(R.cash)} · UPI ${rupees(R.upi)}\n${earn ? '\n' + earn + '\n' : ''}\n` + (growTxt.length ? growTxt.join('\n') + '\n\n' : '') +
     (look.length ? `*Needs a look*\n${look.join('\n')}\n\n` : 'Every visit is billed ✓\n\n') +
     `Missed calls: ${calls.length}${calls.length ? ` · ${callsBooked} booked` : ''}\nFollow-ups tomorrow: ${fT}`;
   const to = [...new Set((S.doctorNumbers || []).concat((S.staff || []).filter(x => x.role === 'owner' || x.role === 'doctor').map(x => x.phone)).map(digits))];
   if (!mem.nightSent) mem.nightSent = '';
-  if (mem.nightSent === dk) return [];
+  const bkOut = [{ json: { action: 'none', payload: null, more: [], backup, sheetId: S.sheetId, phoneNumberId: S.phoneNumberId, notify: false } }];
+  for (const v of reviewAsks()) { if (!inWindow(v.ph)) continue; const lg = langOf(v.ph, ''); mem.rv[v.ph] = { at: now.toISO(), r: 0 }; bump('rvAsk'); more.push(buttonsTo(v.ph, lg === 'en' ? `Hello ${v.name} 🙏 How was your visit to ${C} today?` : `Namaste ${v.name} 🙏 Aaj ${C} mein aapka experience kaisa raha?`, reviewBtns(lg))); }
+  if (mem.nightSent === dk) { if (!more.length) return bkOut; payload = more.shift(); return [{ json: { action: 'reply', payload, more, backup, holiday: null, values: null, range: null, sheetId: S.sheetId, phoneNumberId: S.phoneNumberId, notify: false } }]; }
   for (const ph of to) {
     if (inWindow(ph)) more.push(ctaTo(ph, body, 'Open register', `${APP}`));
     else if (S.templates && S.templates.night) more.push(templateTo(ph, S.templates.night, [`${C}, ${day.toFormat('ccc d LLL')}`, String(R.seen), rupees(R.money), look.length ? look.join(', ') : 'nothing, every visit is billed'], []));
   }
   mem.nightSent = dk;
-  if (!more.length) return [];
+  if (!more.length) return bkOut;
   payload = more.shift();
-  return [{ json: { action: 'reply', payload, more, holiday: null, values: null, range: null, sheetId: S.sheetId, phoneNumberId: S.phoneNumberId, notify: false } }];
+  return [{ json: { action: 'reply', payload, more, backup, holiday: null, values: null, range: null, sheetId: S.sheetId, phoneNumberId: S.phoneNumberId, notify: false } }];
 }
 if (mode === 'summary' && now.hour >= 16) {
   // ---- 6 PM: follow-up reminders for tomorrow ----
@@ -852,6 +917,15 @@ if (mode === 'summary' && now.hour >= 16) {
     if (inWindow(f.ph)) { more.push(buttonsTo(f.ph, msgTxt, [['NEW', lg === 'en' ? 'Book a time' : 'Time book karein']])); f.sent = true; bump('reminders'); }
     else if (S.templates && S.templates.followup) { more.push(templateTo(f.ph, S.templates.followup, [f.name, D, whenTxt], ['NEW'])); f.sent = true; }
   }
+  for (const x of recallsDue()) { const lg = langOf(x.ph, '');
+    const t = lg === 'en' ? [`Hello ${x.name} 🙏\n${D} had asked you to come back for a follow-up. It's not too late. Tap below to pick a time.`, `Hello ${x.name} 🙏\nIt has been a week since your follow-up date with ${D}. Stopping treatment early can bring the problem back. Tap below to book.`, `Hello ${x.name} 🙏\nIt's been a month. If you still have the problem, ${D} can see you this week. Tap below to book.`][x.st - 1]
+      : [`Namaste ${x.name} 🙏\n${D} ne aapko follow-up ke liye bulaya tha. Abhi bhi aa sakte hain. Time book karne ke liye neeche dabaiye.`, `Namaste ${x.name} 🙏\nFollow-up ki date ko ek hafta ho gaya hai. Treatment beech mein chhodne se problem wapas aa sakti hai. Neeche dabakar time book kar lijiye.`, `Namaste ${x.name} 🙏\nEk mahina ho gaya hai. Agar problem abhi bhi hai, toh ${D} aapko is hafte dekh sakte hain. Neeche dabakar book kijiye.`][x.st - 1];
+    if (inWindow(x.ph)) more.push(buttonsTo(x.ph, t, [['NEW', lg === 'en' ? 'Book a time' : 'Time book karein']]));
+    else if (S.templates && S.templates.followup) more.push(templateTo(x.ph, S.templates.followup, [x.name, D, lg === 'en' ? 'this week' : 'is hafte'], ['NEW']));
+    else continue;
+    x.r.n = x.st; x.r.at = now.toISO(); bump('recalls'); ev(x.ph, 'recall', 'Reminded about missed follow-up' + (x.st > 1 ? ' (' + (x.st === 2 ? '1 week' : '1 month') + ' late)' : '')); }
+  for (const v of reviewAsks()) { if (!inWindow(v.ph)) continue; const lg = langOf(v.ph, ''); mem.rv[v.ph] = { at: now.toISO(), r: 0 }; bump('rvAsk');
+    more.push(buttonsTo(v.ph, lg === 'en' ? `Hello ${v.name} 🙏 How was your visit to ${C} today?` : `Namaste ${v.name} 🙏 Aaj ${C} mein aapka experience kaisa raha?`, reviewBtns(lg))); }
   if (!more.length) return [];
   payload = more.shift();
   return [{ json: { action: 'reply', payload, more, holiday: null, values: null, range: null, sheetId: S.sheetId, phoneNumberId: S.phoneNumberId, notify: false } }];
@@ -1035,7 +1109,23 @@ else if ((!id && /^token\b/i.test(raw)) || id === 'TQ|NEW') {
 else if (id.startsWith('PB|') || (!id && raw.split(/\s+/).length >= 3 && !has(['hi', 'hello', 'cancel', 'book', 'menu', 'token', 'doctor', 'dr', 'help', 'talk', 'chat']) && (() => { const q0 = qRead(); const tk = q0.list.find(x => x.phone === me && x.st === 'w'); return tk && !tk.prob; })())) {
   const q = qWrite(); const tk = q.list.find(x => x.phone === me && ['w', 's'].includes(x.st));
   if (tk) { tk.prob = id.startsWith('PB|') ? id.slice(3) : '"' + raw.slice(0, 120) + '"'; }
-  payload = text(lang === 'en' ? 'Thanks 🙏 The doctor will see this.' : 'Shukriya 🙏 Doctor ko bata diya gaya hai.');
+  payload = (!seenBefore(me) && !(mem.src || {})[me]) ? buttons((lang === 'en' ? 'Thanks 🙏 The doctor will see this.\n\nOne quick question: how did you find our clinic?' : 'Shukriya 🙏 Doctor ko bata diya gaya hai.\n\nEk chhota sawaal: aapko humare clinic ke baare mein kaise pata chala?'), [['SRC|google', 'Google / Instagram'], ['SRC|friend', lang === 'en' ? 'Someone told me' : 'Kisi ne bataya'], ['SRC|board', lang === 'en' ? 'Board / other' : 'Board / kuch aur']])
+    : text(lang === 'en' ? 'Thanks 🙏 The doctor will see this.' : 'Shukriya 🙏 Doctor ko bata diya gaya hai.');
+}
+else if (String(id || '').startsWith('RV|')) {
+  if (!mem.rv) mem.rv = {}; const r = Number(id.slice(3)) || 3; mem.rv[me] = { at: now.toISO(), r, wait: r < 5 ? now.toISO() : null }; const link = (mem.cfg || {}).googleReview || S.googleReview || '';
+  bump(r >= 5 ? 'rvGood' : r >= 3 ? 'rvMid' : 'rvLow'); ev(me, 'review', r >= 5 ? 'Rated the visit: very good' : r >= 3 ? 'Rated the visit: okay' : 'Rated the visit: not good');
+  if (r >= 5) payload = text((lang === 'en' ? 'Thank you so much 🙏' : 'Bahut shukriya 🙏') + (link ? (lang === 'en' ? '\n\nIf you have one minute, a Google review helps other patients find us:\n' : '\n\nAgar 1 minute ho, toh Google par review de dijiye. Isse doosre patients ko madad milti hai:\n') + link : ''));
+  else payload = text(lang === 'en' ? 'Sorry about that 🙏 What could we do better? Write one line. Only the doctor reads it.' : 'Maaf kijiye 🙏 Kya behtar ho sakta tha? Ek line likh dijiye. Ise sirf doctor padhenge.');
+}
+else if (!id && msg.type === 'text' && raw.length >= 3 && mem.rv && mem.rv[me] && mem.rv[me].wait && mem.rv[me].wait > now.minus({ minutes: 60 }).toISO()) {
+  const r = mem.rv[me]; r.wait = null; if (!mem.fb) mem.fb = []; mem.fb = mem.fb.concat([{ ph: me, name: (mem.pname || {})[me] || msg.name || '', r: r.r, t: raw.slice(0, 300), at: now.toISO() }]).slice(-50); ev(me, 'review', 'Feedback: "' + raw.slice(0, 140) + '"');
+  const link = (mem.cfg || {}).googleReview || S.googleReview || '';
+  payload = text((lang === 'en' ? 'Thank you. The doctor will read this personally.' : 'Shukriya. Doctor ise khud padhenge.') + (link ? (lang === 'en' ? '\n\nYou can also leave a public review on Google if you like:\n' : '\n\nAap chahein toh Google par bhi review likh sakte hain:\n') + link : ''));
+}
+else if (String(id || '').startsWith('SRC|')) {
+  const k = id.slice(4); if (SRC[k]) { if (!mem.src) mem.src = {}; if (!mem.src[me]) { mem.src[me] = { s: k, at: now.toISO() }; bump('src_' + k); ev(me, 'src', 'Found us through: ' + SRC[k]); } }
+  payload = text(lang === 'en' ? 'Thank you 🙏' : 'Shukriya 🙏');
 }
 else if ((String(id || '').startsWith('CBR|') || (!id && ['audio', 'voice'].includes(msg.type))) && (mem.callbacks || []).some(x => x.phone === me && !x.reason)) {
   const cb = mem.callbacks.find(x => x.phone === me && !x.reason); const isV = !id; cb.reason = isV ? 'Sent a voice note (ask on the call)' : id.slice(4); ev(me, 'why', isV ? 'Sent a voice note about it' : 'Reason: ' + id.slice(4));
