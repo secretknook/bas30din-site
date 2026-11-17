@@ -483,7 +483,7 @@ function addVisit(tk) {
   if (!mem.vis) mem.vis = {};
   const l = mem.vis[todayStr] || (mem.vis[todayStr] = []);
   if (l.some(v => v.k === tk.key)) return;
-  l.push({ k: tk.key, tok: tk.tok, name: tk.name || 'Patient', ph: tk.phone || '', in: tk.calledAt || now.toISO(), out: now.toISO(), fee: null, m: null });
+  l.push({ k: tk.key, tok: tk.tok, name: tk.name || 'Patient', ph: tk.phone || '', in: tk.calledAt || now.toISO(), out: now.toISO(), fee: null, m: null, fupSug: tk.fupDays || 0, prob: tk.prob || '' });
   const cut = now.minus({ days: 400 }).toFormat('yyyy-MM-dd');
   for (const d of Object.keys(mem.vis)) if (d < cut) delete mem.vis[d];
 }
@@ -589,7 +589,12 @@ if (mode === 'desk') {
   } else {
     const stNow = staffRec(sess.phone); const role = stNow.role || sess.role; const isDoc = role === 'doctor' || role === 'owner'; if (stNow.name && sess.name !== stNow.name) sess.name = stNow.name;
     const q0 = qRead();
-    if (b.action === 'call_next') { const q = qWrite(); callNext(q, out); }
+    if (b.action === 'call_next') { const q = qWrite(); const cur = servingOf(q);
+      if (cur && isDoc && b.forTok === cur.tok) {
+        if (b.note && String(b.note).trim()) { if (!mem.notes) mem.notes = {}; mem.notes[patKey(cur.phone, cur.name)] = { t: String(b.note).trim().slice(0, 600), at: now.toISO(), by: sess.name }; }
+        if (b.fup !== undefined) cur.fupDays = Math.max(0, Math.min(400, Number(b.fup) || 0));
+      }
+      callNext(q, out); }
     else if (b.action === 'not_here') { const q = qWrite(); notHere(q, out); }
     else if (b.action === 'add_token') { const q = qWrite(); const ph = digits(b.phone || ''); const full = ph.length === 10 ? '91' + ph : ph;
       const tk = issueToken(q, full, String(b.name || 'Walk-in').slice(0, 40), b.src === 'book' ? 'book' : 'desk'); if (b.prob) tk.prob = String(b.prob).slice(0, 120); if (b.bookAt) tk.bookAt = String(b.bookAt).slice(0, 10);
@@ -663,7 +668,12 @@ if (mode === 'desk') {
     res.links = { tv: S.tvKey ? `${APP}?v=tv&k=${S.tvKey}` : '', qr, poster: `${APP}?v=qr&n=${S.botNumber || ''}&c=${encodeURIComponent(C)}` };
     res.fee = S.fee || 0; res.upi = S.upiId ? { id: S.upiId, name: S.upiName || C } : null;
     const todayV = visOf(todayStr);
-    res.toBill = todayV.filter(v => !v.m).map(v => ({ k: v.k, tok: v.tok, name: v.name, seen: `${hm(v.in)} – ${hm(v.out)}` }));
+    const freeDays = S.followFreeDays === undefined ? 7 : Number(S.followFreeDays) || 0;
+    const lastPaid = (v) => { const key = patKey(v.ph, v.name); const days = Object.keys(mem.vis || {}).filter(d => d < todayStr && d >= now.minus({ days: freeDays }).toFormat('yyyy-MM-dd')).sort().reverse();
+      for (const d of days) { const x = (mem.vis[d] || []).find(y => patKey(y.ph, y.name) === key && (y.m === 'cash' || y.m === 'upi')); if (x) return d; } return null; };
+    res.toBill = todayV.filter(v => !v.m).map(v => { const lp = freeDays ? lastPaid(v) : null;
+      return { k: v.k, tok: v.tok, name: v.name, seen: `${hm(v.in)} – ${hm(v.out)}`, fupSug: v.fupSug || 0, freeFollow: !!lp, lastPaid: lp ? DateTime.fromISO(lp).toFormat('d LLL') : '', prob: v.prob || '' }; });
+    res.freeDays = freeDays;
     res.today = { seen: todayV.length, waiting: waitingOf(q).length };
     if (isDoc) {
       const t0 = regSum(todayStr, todayStr); res.today.money = t0.money; res.today.nobill = t0.nobill;
@@ -709,7 +719,7 @@ if (mode === 'desk') {
       P.sort((a, c) => c.last.localeCompare(a.last));
       res.patients = { total, list: P.slice(0, 80).map(p => { const t = fupTag(p); return { key: p.key, name: p.name, sub: (p.last === todayStr ? 'Today' : DateTime.fromISO(p.last).toFormat('d LLL')) + ' · ' + (p.n === 1 ? 'first visit' : p.n + ' visits'), tag: t[0], tc: t[1] }; }) };
     }
-    if (b.view === 'patient' && b.pk) {
+    if ((b.view === 'patient' || b.view === 'patients') && b.pk) {
       const p = allPatients().find(x => x.key === b.pk);
       if (p) {
         const V = visitsBetween('0000', '9999').filter(v => patKey(v.ph, v.name) === p.key).reverse();

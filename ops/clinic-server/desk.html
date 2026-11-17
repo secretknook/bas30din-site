@@ -185,6 +185,51 @@ button.irow:active,a.irow:active{background:#F9FAFB}
   .qa-now{grid-area:now}.qa-bill{grid-area:bill}.qa-booked{grid-area:booked}.qa-next{grid-area:next}
   .itabs .in{max-width:520px}
 }
+
+/* ---- v9: consult panel, smart bill, laptop shell ---- */
+.clab{font-size:12px;font-weight:700;letter-spacing:.4px;color:#667085;text-transform:uppercase;margin-top:4px}
+.nchips,.fchips{display:flex;flex-wrap:wrap;gap:6px}
+.nchip{height:32px;padding:0 10px;border-radius:16px;border:1px solid #EAECF0;background:#F9FAFB;color:#344054;font-size:13px;font-weight:500;font-family:inherit}
+.nchip:active{background:#EFF4FF}
+.cnote{width:100%;box-sizing:border-box;border:1px solid #D0D5DD;border-radius:10px;padding:10px 12px;font:inherit;font-size:15px;line-height:1.4;resize:vertical;min-height:56px;color:#101828}
+.cnote:focus,.dinput:focus{outline:2px solid #B2CCFF;border-color:#175CD3}
+.fchip{height:36px;padding:0 14px;border-radius:10px;border:1px solid #D0D5DD;background:#FFF;color:#344054;font-size:14px;font-weight:600;font-family:inherit}
+.fchip.on{background:#EFF4FF;border:2px solid #175CD3;color:#175CD3}
+.kbd{display:none}
+.hint{margin-top:12px;padding:10px 12px;border-radius:10px;background:#EFF4FF;color:#1849A9;font-size:14px;line-height:1.45}
+.qa-side{display:flex;flex-direction:column}
+@media (min-width:900px) and (max-width:1023px){.qgrid{grid-template-areas:"now side" "next side"}.qa-side{grid-area:side}}
+/* laptop / desktop */
+.dshell{min-height:100vh;background:#F9FAFB;color:#101828;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.side{position:fixed;top:0;bottom:0;left:0;width:228px;background:#FFF;border-right:1px solid #EAECF0;padding:22px 12px 16px;display:flex;flex-direction:column;box-sizing:border-box}
+.sclinic{font-size:15px;font-weight:700;padding:0 10px;line-height:1.3}
+.srole{font-size:13px;color:#667085;padding:2px 10px 18px}
+.snav{display:flex;flex-direction:column;gap:2px}
+.sitem{display:flex;align-items:center;gap:10px;height:40px;padding:0 10px;border:none;background:none;border-radius:8px;font-size:14px;font-weight:500;color:#344054;text-align:left;font-family:inherit;position:relative;width:100%}
+.sitem:hover{background:#F9FAFB}
+.sitem.on{background:#EFF4FF;color:#175CD3;font-weight:600}
+.sbadge{margin-left:auto;min-width:20px;height:20px;border-radius:10px;background:#F2F4F7;color:#344054;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;padding:0 6px}
+.skey{font-size:12px;color:#98A2B3;padding:8px 10px}
+.dmain{margin-left:228px;padding:6px 20px 48px;box-sizing:border-box;min-height:100vh}
+.dmain .ihd,.dmain .dpage>div:first-child{padding-top:22px !important}
+.dmain.t-register>*,.dmain.t-inbox>*,.dmain.t-clinic>*{max-width:820px}
+.dmain .dpage,.dmain .content{background:transparent}
+.dmain .icard,.dmain .ilist,.dmain .dcard,.dmain .dtile{background:#FFF}
+.dmain .qgrid{display:grid;grid-template-columns:minmax(320px,1.05fr) minmax(320px,1fr) minmax(300px,.95fr);grid-template-areas:"now next side";column-gap:4px;align-items:start}
+.dmain .qa-now{grid-area:now}.dmain .qa-next{grid-area:next}.dmain .qa-side{grid-area:side}
+.dmain .qa-next .isec:first-child,.dmain .qa-side .isec:first-child{padding-top:12px}
+.dmain .dgrid{display:grid;grid-template-columns:minmax(420px,1.1fr) minmax(340px,1fr);gap:8px;align-items:start;max-width:1180px}
+.dmain .dr .dsec:first-child{padding-top:16px}
+.dmain .kbd{display:inline-flex;margin-left:10px;font-size:11px;font-weight:700;border:1px solid rgba(255,255,255,.55);border-radius:5px;padding:1px 6px;vertical-align:2px}
+.dmain [data-a="call_next"]::after{content:"N";margin-left:10px;font-size:11px;font-weight:700;border:1px solid rgba(255,255,255,.55);border-radius:5px;padding:1px 6px}
+.md{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:8px;align-items:start}
+.mdr{background:#FFF;border:1px solid #EAECF0;border-radius:14px;margin-top:10px;min-height:420px;padding-bottom:8px}
+.mdr .ilist{margin:0 12px}.mdempty{padding:80px 24px;text-align:center;color:#98A2B3;font-size:15px}
+.dshell .isheetbg{align-items:center}
+.dshell .isheet{max-width:480px;border-radius:16px;max-height:88vh}
+.dshell .itoast{left:calc(50% + 114px)}
+.errbar{margin:12px 0 0;padding:10px 14px;border-radius:10px;background:#FEF3F2;color:#B42318;font-size:14px}
+@media (min-width:1024px){button,a,.sitem{cursor:pointer}}
 </style>
 </head>
 <body>
@@ -339,7 +384,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     function view() {
       var b = {};
       if (S.tab === 'register') { b.view = 'register'; b.period = S.per; }
-      if (S.tab === 'patients') { if (S.pk) { b.view = 'patient'; b.pk = S.pk; } else { b.view = 'patients'; b.q = S.q; } }
+      if (S.tab === 'patients') { if (S.pk && !S.desk) { b.view = 'patient'; b.pk = S.pk; } else { b.view = 'patients'; b.q = S.q; if (S.pk) b.pk = S.pk; } }
       return b;
     }
     function call(body, after) {
@@ -390,7 +435,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
           : '<span style="font-size:22px;font-weight:600;margin-top:6px">Nobody yet</span><span style="font-size:13px;color:' + C.sec + ';margin-top:2px">' + (w.length ? 'Press Call next to start' : 'Patients get a token by scanning your QR') + '</span>') +
         '</div>' + (cur ? '<button class="igray" data-a="not_here">Not here</button>' : '') + '</div>' +
         '<button class="ib pri" data-a="call_next"' + (!w.length && !cur ? ' disabled' : '') + '>' + esc(main) + '</button></div></div>';
-      h += '<div class="qa-bill">';
+      h += '<div class="qa-side"><div class="qa-bill">';
       if (d.toBill && d.toBill.length) {
         h += sec('To bill', d.toBill.length) + '<div class="ilist">' + d.toBill.map(function (b) {
           return '<button class="irow" data-bill="' + esc(b.k) + '"><span class="tok" style="width:48px;font-size:17px;font-weight:600;flex-shrink:0">' + esc(String(b.tok).replace('-', '')) + '</span><span class="icol"><span>' + esc(b.name) + '</span><span class="isub">Seen ' + esc(b.seen) + '</span></span><span style="font-size:15px;color:' + C.blue + '">Bill</span>' + CHEV + '</button>'; }).join('') + '</div>';
@@ -399,7 +444,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       var due = (S.appts || []).filter(function (a) { return !a.here; });
       if (due.length) h += sec('Booked today · not arrived', due.length) + '<div class="ilist">' + due.map(function (a, i) {
         return '<div class="irow"><span class="tok" style="width:72px;font-size:15px;flex-shrink:0">' + esc(a.time) + '</span><span class="icol"><span>' + esc(a.name) + '</span><span class="isub">' + esc(a.treat) + '</span></span><button class="ilink" data-arrive="' + i + '" style="font-weight:600">Arrived</button></div>'; }).join('') + '</div>';
-      h += '</div><div class="qa-next">';
+      h += '</div></div><div class="qa-next">';
       h += sec('Up next', w.length + ' waiting · ~' + q.avg + ' min each') + '<div class="ilist"><button class="irow" data-sheet="add" style="color:' + C.blue + '"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span style="font-size:17px">Add walk-in</span></button>' +
         w.slice(0, 20).map(function (x) {
           var wh = x.here ? ['In waiting room', '#12B76A'] : x.ahead <= 2 && x.told2 ? ['Told: ' + x.ahead + ' ahead', '#F79009'] : ['Outside', '#98A2B3'];
@@ -437,7 +482,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         '<span class="icol"><span class="isub">Recorded</span><span class="tok" style="font-size:34px;font-weight:600">' + rupee(r.money) + '</span></span>' +
         '<span style="grid-column:1 / 3;font-size:15px;color:' + C.sec + ';border-top:1px solid #EAECF0;padding-top:12px">Cash ' + rupee(r.cash) + '  ·  UPI ' + rupee(r.upi) + '  ·  No charge ' + r.free + '</span></div>';
       h += sec('Needs a look', r.flags.length || '') + (r.flags.length ? '<div class="ilist">' + r.flags.map(function (f) {
-        return '<div class="irow"><span class="dot" style="width:8px;height:8px;background:' + (f.bad ? '#F04438' : '#F79009') + '"></span><span class="icol"><span>' + esc(f.name) + '</span><span class="isub">' + esc(f.sub) + '</span></span><span style="font-size:15px;color:' + (f.bad ? C.bad : C.warn) + ';white-space:nowrap">' + esc(f.tag) + '</span></div>'; }).join('') + '</div>'
+        return '<div class="irow"><span class="dot" style="width:8px;height:8px;background:' + (f.bad ? '#F79009' : '#98A2B3') + '"></span><span class="icol"><span>' + esc(f.name) + '</span><span class="isub">' + esc(f.sub) + '</span></span><span style="font-size:15px;color:' + (f.bad ? C.warn : C.sec) + ';white-space:nowrap">' + esc(f.tag) + '</span></div>'; }).join('') + '</div>'
         : '<div class="ilist"><div class="irow"><span style="color:' + C.ok + '">Every visit is billed</span></div></div>');
       h += sec('Patients who reached out') + '<div class="ilist"><div class="irow"><span class="icol"><span>Missed calls</span></span><span style="color:' + C.sec + '">' + r.calls + '</span></div></div>';
       h += '<div class="ifoot">Reception can bill, but only the doctor sees these totals. The same summary comes on WhatsApp at 9 PM.</div>';
@@ -456,6 +501,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       return h + '<div class="ifoot">' + foot + '</div>';
     }
     function scrPatients() {
+      if (S.desk) { var P0 = S.d.patients;
+        return hdr('', 'Patients') + '<div class="md"><div class="mdl"><div style="margin:10px 16px 0"><label class="isearch"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg><input id="psearch" placeholder="Search name or phone" aria-label="Search patients" value="' + esc(S.q) + '" autocomplete="off"></label></div><div id="plist">' + plist(P0) + '</div></div>' +
+          '<div class="mdr">' + (S.pk ? scrPatient(true) : '<div class="mdempty">Pick a patient to see their visits, payments and notes.</div>') + '</div></div>'; }
       if (S.pk) return scrPatient();
       var P = S.d.patients;
       return hdr('', 'Patients') + '<div style="margin:10px 16px 0"><label class="isearch"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg><input id="psearch" placeholder="Name or phone" aria-label="Search patients" value="' + esc(S.q) + '" autocomplete="off"></label></div>' +
@@ -467,9 +515,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         return '<button class="irow" data-pk="' + esc(p.key) + '"><span class="icol"><span>' + esc(p.name) + '</span><span class="isub">' + esc(p.sub) + '</span></span><span style="font-size:13px;white-space:nowrap;color:' + (p.tc === 'warn' ? C.warn : p.tc === 'bad' ? C.bad : C.sec) + '">' + esc(p.tag) + '</span>' + CHEV + '</button>'; }).join('') + '</div>'
         : '<div class="ifoot">' + (S.q ? 'No match.' : 'Patients appear here after their first visit is done.') + '</div>');
     }
-    function scrPatient() {
+    function scrPatient(noBack) {
       var p = S.d.patient;
-      var back = '<div style="padding:calc(env(safe-area-inset-top) + 10px) 8px 0"><button class="iback" data-back="1"><svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2L2 10l8 8"/></svg>Patients</button></div>';
+      var back = noBack ? '' : '<div style="padding:calc(env(safe-area-inset-top) + 10px) 8px 0"><button class="iback" data-back="1"><svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2L2 10l8 8"/></svg>Patients</button></div>';
       if (!p || p.key !== S.pk) return back + '<div class="ifoot" style="padding-top:24px;text-align:center">Loading…</div>';
       var wa = p.call ? 'https://wa.me/' + p.call.replace(/\D/g, '') : '';
       var h = back + '<div style="padding:6px 20px 0;display:flex;flex-direction:column;gap:2px"><span style="font-size:28px;font-weight:700">' + esc(p.name) + '</span><span style="font-size:15px;color:' + C.sec + '">' + esc(p.phone || 'No phone') + ' · since ' + esc(p.since) + '</span></div>' +
@@ -493,7 +541,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       var d = S.d, dc = d.doc, k = DS[dc.status] ? dc.status : 'in', bo = d.boon || { next: [], lost: [] }, q = d.queue;
       var dt = new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
       var lab = k === 'late' ? 'Running ' + dc.mins + ' min late' : k === 'away' ? 'Away' + (dc.until ? ', back ~' + dc.until : '') : DS[k][0];
-      var h = '<div class="dpage"><div style="padding:calc(env(safe-area-inset-top) + 20px) 16px 0"><div style="font-size:13px;color:#667085">' + esc(dt) + '</div><h1 style="margin:2px 0 0;font-size:24px;font-weight:700;letter-spacing:-.3px">' + esc(greet() + ', ' + docName()) + '</h1></div>' +
+      var h = '<div class="dpage"><div style="padding:calc(env(safe-area-inset-top) + 20px) 16px 0"><div style="font-size:13px;color:#667085">' + esc(dt) + '</div><h1 style="margin:2px 0 0;font-size:24px;font-weight:700;letter-spacing:-.3px">' + esc(greet() + ', ' + docName()) + '</h1></div><div class="dgrid"><div class="dl">' +
         '<div style="margin:16px 16px 0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px">' + ['in', 'late', 'away', 'leave'].map(function (s) {
           var on = s === k; return '<button class="dstat" data-dst="' + s + '" aria-pressed="' + on + '" style="border:' + (on ? '1.5px solid ' + DS[s][1] : '1px solid #EAECF0') + ';background:' + (on ? DS[s][2] : '#FFF') + ';color:' + (on ? DS[s][3] : '#344054') + '"><span class="dot" style="width:10px;height:10px;background:' + DS[s][1] + '"></span><span>' + DS[s][0] + '</span></button>'; }).join('') + '</div>' +
         '<div style="margin:8px 16px 0;font-size:12.5px;color:#667085;display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#12B76A" stroke-width="2.4" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>' + esc(lab) + ' · shown to reception and patients' + (dc.setAt ? ' · updated ' + esc(dc.setAt) : '') + '</div>';
@@ -507,7 +555,15 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       } else {
         h += '<div style="display:flex;justify-content:space-between;align-items:center"><span class="dcap">WITH YOU NOW</span><span style="font-size:12.5px;color:#667085">' + w.length + ' waiting</span></div><span style="font-size:20px;font-weight:700">Nobody yet</span>';
       }
-      h += '<button class="dbtn" data-a="call_next"' + (!w.length && !cur ? ' disabled' : '') + '>' + (w.length ? 'Call next' : cur ? 'Done with ' + esc(cur.tok) : 'No one waiting') + '</button></div>';
+      if (cur) {
+        if (S.cTok !== cur.tok) { S.cTok = cur.tok; S.cNote = ''; S.cFup = 0; }
+        var NC = { skin: ['Same medicines', 'Better than before', 'New cream started', 'Sunscreen daily', 'Avoid picking', 'Peel next visit'], dental: ['Cleaning done', 'Filling done', 'RCT next sitting', 'Painkiller 3 days', 'X-ray next visit'], child: ['Fever settling', 'Syrup 5 days', 'Vaccine due', 'Growth normal'], eye: ['New glasses', 'Drops 1 week', 'Dilated check next'], physio: ['Exercises taught', 'Ice twice daily', '5 more sessions'], general: ['Same medicines', 'BP normal', 'Tests advised', 'Diet advice given'] }[(d.cfg && d.cfg.type) || 'skin'] || [];
+        h += '<div class="clab">Note for today</div><div class="nchips">' + NC.map(function (c) { return '<button class="nchip" data-nchip="' + esc(c) + '">+ ' + esc(c) + '</button>'; }).join('') + '</div>' +
+          '<textarea id="cnote" class="cnote" rows="2" placeholder="Short note (optional)" aria-label="Note for today">' + esc(S.cNote) + '</textarea>' +
+          '<div class="clab">Come back</div><div class="fchips">' + [[0, 'No'], [3, '3 days'], [7, '1 week'], [14, '2 weeks'], [30, '1 month']].map(function (f) { return '<button class="fchip' + (S.cFup === f[0] ? ' on' : '') + '" data-cfup="' + f[0] + '" aria-pressed="' + (S.cFup === f[0]) + '">' + f[1] + '</button>'; }).join('') + '</div>' +
+          '<button class="dbtn" id="cdone">' + (w.length ? 'Done · Call next' : 'Done') + '<span class="kbd">N</span></button></div>';
+      } else h += '<button class="dbtn" data-a="call_next"' + (!w.length ? ' disabled' : '') + '>' + (w.length ? 'Call next' : 'No one waiting') + '</button></div>';
+      h += '</div><div class="dr">';
       h += '<div class="dsec"><span>Up next</span><span>' + (w.length ? w.length + ' waiting' + (bo.finish ? ' · done by ~' + esc(bo.finish) : '') : 'Nobody waiting') + '</span></div><div style="padding:0 16px">' +
         (bo.next || []).map(function (x) {
           return '<button class="drow" data-pk="' + esc(x.pk) + '"' + (x.pk ? '' : ' disabled') + '><span class="tok" style="width:48px;flex-shrink:0;font-size:15px;font-weight:700">' + esc(String(x.tok).replace('-', '')) + '</span><span class="icol"><span style="font-size:15px;font-weight:600">' + esc(x.name) + (x.visits ? '' : '<span style="font-weight:600;color:#175CD3;font-size:12px">  NEW</span>') + (x.fu ? '<span style="font-weight:600;color:#175CD3;font-size:12px">  FOLLOW-UP</span>' : '') + '</span><span class="dsub">' + esc(x.prob || (x.note ? 'Last: ' + x.note : histLine(x))) + '</span></span>' + (x.pk ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#98A2B3" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>' : '') + '</button>'; }).join('') + '</div>';
@@ -518,7 +574,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       if (d.fups && d.fups.length) h += '<div class="dsec"><span>Follow-ups due today</span><span>' + d.fups.length + '</span></div><div style="padding:0 16px">' + d.fups.slice(0, S.allF ? 99 : 3).map(function (f) { return '<div class="drow"><span class="icol"><span style="font-size:15px;font-weight:600">' + esc(f.name) + '</span></span><span style="font-size:13px;color:' + (f.c === 'ok' ? '#067647' : f.c === 'warn' ? '#B54708' : '#667085') + '">' + esc(f.state) + '</span></div>'; }).join('') + (d.fups.length > 3 && !S.allF ? '<button class="drow" data-more="allF" style="color:#175CD3;font-weight:600;font-size:14px">See all ' + d.fups.length + '</button>' : '') + '</div>';
       if (bo.lost && bo.lost.length) h += '<div class="dsec"><span>Didn\'t come back</span><span>' + bo.lost.length + '</span></div><div style="padding:0 16px">' + bo.lost.slice(0, S.allL ? 99 : 3).map(function (p) {
         return '<div class="drow"><button class="dplain" data-pk="' + esc(p.pk) + '" style="flex-grow:1"><span style="font-size:15px;font-weight:600">' + esc(p.name) + '</span><span class="dsub">Follow-up was due ' + esc(p.due) + '</span></button>' + (p.wa ? '<a class="dmini" href="' + esc(p.wa) + '" target="_blank" rel="noopener">Message</a>' : '') + '</div>'; }).join('') + (bo.lost.length > 3 && !S.allL ? '<button class="drow" data-more="allL" style="color:#175CD3;font-weight:600;font-size:14px">See all ' + bo.lost.length + '</button>' : '') + '</div><div style="padding:6px 16px 0;font-size:12.5px;color:#667085">Patients you asked to come back who have not come yet.</div>';
-      return h + '<div style="height:28px"></div></div>';
+      return h + '</div></div><div style="height:28px"></div></div>';
     }
     var TYPES_DEF = [['skin', 'Skin & hair'], ['dental', 'Dental'], ['child', 'Child'], ['general', 'General'], ['eye', 'Eye'], ['physio', 'Physio']];
     var DAYS = [['mon', 'M'], ['tue', 'T'], ['wed', 'W'], ['thu', 'T'], ['fri', 'F'], ['sat', 'S'], ['sun', 'S']];
@@ -587,10 +643,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         var b = s.b;
         var fu = [[0, 'None'], [3, '3 days'], [7, '1 week'], [14, '2 weeks'], [30, '1 month']];
         inner = '<div class="ishead"><button class="ilink" data-close="1">Cancel</button><span style="font-size:17px;font-weight:600">Bill</span><span style="width:56px"></span></div>' +
-          '<div style="padding:18px 4px 0;display:flex;flex-direction:column;gap:2px"><span style="font-size:28px;font-weight:700">' + esc(b.name) + '</span><span style="font-size:15px;color:' + C.sec + '">' + esc(b.tok) + ' · seen ' + esc(b.seen) + '</span></div>' +
+          '<div style="padding:18px 4px 0;display:flex;flex-direction:column;gap:2px"><span style="font-size:26px;font-weight:700">' + esc(b.name) + '</span><span style="font-size:14px;color:' + C.sec + '">' + esc(String(b.tok).replace('-', '')) + ' · seen ' + esc(b.seen) + '</span></div>' +
+          (b.freeFollow || b.fupSug ? '<div class="hint">' + (b.freeFollow ? 'Paid on ' + esc(b.lastPaid) + '. A follow-up within ' + (S.d.freeDays || 7) + ' days is free.' : '') + (b.freeFollow && b.fupSug ? '<br>' : '') + (b.fupSug ? 'Doctor said: come back in ' + (b.fupSug === 7 ? '1 week' : b.fupSug === 14 ? '2 weeks' : b.fupSug === 30 ? '1 month' : b.fupSug + ' days') + '.' : '') + '</div>' : '') +
           sec('Fee').replace('class="isec"', 'class="isec" style="padding-left:16px"') + '<div class="ilist" style="margin:0;padding:14px 16px;display:flex;flex-direction:column;gap:14px">' +
           '<label style="display:flex;align-items:baseline;gap:4px;font-size:40px;font-weight:600"><span style="color:' + C.sec + '">₹</span><input id="fee" class="tok" inputmode="numeric" value="' + esc(s.m === 'free' ? '0' : s.fee) + '" aria-label="Fee in rupees" style="border:none;outline:none;font:inherit;width:100%;padding:0;background:transparent"' + (s.m === 'free' ? ' disabled' : '') + '></label>' +
-          seg([['cash', 'Cash'], ['upi', 'UPI'], ['free', 'No charge']], s.m, 'data-m') +
+          seg([['cash', 'Cash'], ['upi', 'UPI'], ['free', b.freeFollow ? 'Free follow-up' : 'No charge']], s.m, 'data-m') +
           (s.m === 'upi' && S.d.upi ? (s.qr ? '<div style="display:flex;flex-direction:column;align-items:center;gap:6px">' + qrSvg('upi://pay?pa=' + encodeURIComponent(S.d.upi.id) + '&pn=' + encodeURIComponent(S.d.upi.name) + '&am=' + encodeURIComponent(s.fee) + '&cu=INR', 220) + '<span class="isub">' + esc(S.d.upi.id) + '</span></div>' : '<button class="ib soft" data-upiqr="1">Show clinic UPI QR</button>') : '') + '</div>' +
           sec('Follow-up').replace('class="isec"', 'class="isec" style="padding-left:16px"') + '<div class="ilist" style="margin:0;padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px">' + fu.map(function (f) { return '<button class="ichip' + (s.fup === f[0] ? ' on' : '') + '" data-fup="' + f[0] + '">' + f[1] + '</button>'; }).join('') + '</div>' +
           '<div class="ifoot" style="padding-left:16px">' + (s.fup ? 'WhatsApp reminder goes the evening before.' : 'No reminder.') + '</div>' +
@@ -646,9 +703,17 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       if (docApp && !S.d.setupDone && !S.setup && !S.setupSeen) { S.setupSeen = true; var c0 = S.d.cfg || {}; S.cfgDraft = { type: c0.type || 'skin', clinicName: c0.clinicName || '', doctorName: c0.doctorName || '', fee: c0.fee || 0, open: c0.open || '10:00', close: c0.close || '20:00', days: (c0.days || ['mon', 'tue', 'wed', 'thu', 'fri', 'sat']).slice(), upiId: c0.upiId || '' }; S.setup = 1; }
       if (S.setup && docApp) { S.lastHtml = null; $app.innerHTML = '<div class="wrap i" style="background:#FFF">' + scrSetup() + (S.toast ? '<div class="itoast" role="status">' + esc(S.toast) + '</div>' : '') + sheetHtml() + '</div>'; bind(); return; }
       var scr = { queue: scrQueue, today: docApp ? scrDocToday : scrToday, register: scrRegister, inbox: scrInbox, patients: scrPatients, clinic: scrClinic }[S.tab]();
+      var ib0 = S.d.inbox; var badge = ib0 ? ib0.calls.filter(function (x) { return !x.booked; }).length + ib0.callbacks.length : 0;
       var y = window.scrollY; var anim = S.sheet && S.sheet !== S.lastSheet; S.lastSheet = S.sheet;
-      var ib = S.d.inbox; var badge = ib ? ib.calls.filter(function (x) { return !x.booked; }).length + ib.callbacks.length : 0;
-      var regBadge = S.d.today && S.d.today.nobill ? S.d.today.nobill : 0;
+      var regBadge = 0;
+      if (S.desk) {
+        var sideItems = tabs.map(function (t) { var bd = t === 'inbox' && badge ? badge : 0; return '<button data-tab="' + t + '" class="sitem' + (t === S.tab ? ' on' : '') + '"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[t] + '</svg><span>' + LAB[t] + '</span>' + (bd ? '<span class="sbadge">' + bd + '</span>' : '') + '</button>'; }).join('');
+        var dsh = '<div class="dshell"><aside class="side"><div class="sclinic">' + esc(S.d.clinic.name) + '</div><div class="srole">' + esc(S.d.me.name) + ' · ' + esc(docApp ? (S.d.me.role === 'owner' ? 'Owner' : 'Doctor') : 'Reception') + '</div><nav class="snav">' + sideItems + '</nav><div style="flex:1"></div>' +
+          (isDoc() && S.viewAs === 'reception' ? '<button class="sitem" data-asdoc="1"><span>Back to doctor app</span></button>' : '') + '<div class="skey">Press <b>N</b> for Call next</div><button class="sitem" id="logout"><span>Log out</span></button></aside>' +
+          '<main class="dmain t-' + S.tab + '">' + (S.err ? '<div class="errbar">' + esc(S.err) + '</div>' : '') + scr + '</main>' + (S.toast ? '<div class="itoast" role="status">' + esc(S.toast) + '</div>' : '') + sheetHtml() + '</div>';
+        dsh = dsh.replace('class="isheet"', 'class="isheet' + (anim ? ' up' : '') + '"');
+        if (dsh === S.lastHtml) return; S.lastHtml = dsh; $app.innerHTML = dsh; window.scrollTo(0, y); bind(); return;
+      }
       var html = '<div class="wrap i' + (docApp ? '' : ' recep') + (docApp && (S.tab === 'today' || S.tab === 'clinic') ? ' dwhite' : '') + '">' + (isDoc() && S.viewAs === 'reception' ? '<div class="asbar">Reception view<button data-asdoc="1">Back to doctor app</button></div>' : '') + (S.err ? '<div style="position:sticky;top:0;z-index:4;background:#FEF3F2;color:' + C.bad + ';font-size:13px;text-align:center;padding:calc(env(safe-area-inset-top) + 6px) 8px 6px">' + esc(S.err) + '</div>' : '') +
         '<div class="content">' + scr + '</div>' +
         (S.toast ? '<div class="itoast" role="status">' + esc(S.toast) + '</div>' : '') +
@@ -668,7 +733,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       on('[data-sheet]', function (el) { var t = el.getAttribute('data-sheet'); S.sheet = { t: t }; draw(); var f = document.getElementById('wn'); if (f) f.focus(); });
       on('[data-close]', function (el, e) { if (e.target !== el) return; S.sheet = null; draw(); });
       on('.isheet', function () {});
-      on('[data-bill]', function (el) { var k = el.getAttribute('data-bill'); var b = (S.d.toBill || []).filter(function (x) { return x.k === k; })[0]; if (!b) return; S.sheet = { t: 'bill', b: b, fee: S.d.fee || 0, m: 'cash', fup: 0 }; draw(); });
+      on('[data-bill]', function (el) { var k = el.getAttribute('data-bill'); var b = (S.d.toBill || []).filter(function (x) { return x.k === k; })[0]; if (!b) return; S.sheet = { t: 'bill', b: b, fee: S.d.fee || 0, m: b.freeFollow ? 'free' : 'cash', fup: b.fupSug || 0 }; draw(); });
       on('[data-m]', function (el) { readFee(); S.sheet.m = el.getAttribute('data-m'); S.sheet.qr = false; draw(); });
       on('[data-fup]', function (el) { readFee(); S.sheet.fup = Number(el.getAttribute('data-fup')); draw(); });
       on('[data-upiqr]', function () { readFee(); S.sheet.qr = true; draw(); });
@@ -684,7 +749,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       on('[data-per]', function (el) { S.per = el.getAttribute('data-per'); S.d.register = null; draw(); call({}); });
       on('[data-seg]', function (el) { S.seg = el.getAttribute('data-seg'); draw(); });
       on('[data-done]', function (el) { call({ action: el.getAttribute('data-done'), phone: el.getAttribute('data-ph') }, function () { toast('Done'); }); });
-      on('[data-pk]', function (el) { if (!el.getAttribute('data-pk')) return; S.tab = 'patients'; S.pk = el.getAttribute('data-pk'); S.d.patient = null; draw(); window.scrollTo(0, 0); call({}); });
+      on('[data-pk]', function (el) { if (!el.getAttribute('data-pk')) return; S.tab = 'patients'; S.pk = el.getAttribute('data-pk'); S.d.patient = null; draw(); if (!S.desk) window.scrollTo(0, 0); call({}); });
       on('[data-back]', function () { S.pk = null; draw(); call({}); });
       on('[data-tokfor]', function () { var p = S.d.patient; S.sheet = { t: 'add', name: p.name, phone: p.call ? p.call.replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '') : '' }; draw(); });
       on('#savenote', function () { var t = document.getElementById('pnote').value; call({ action: 'note', pk: S.pk, text: t }, function () { toast('Note saved'); }); });
@@ -711,6 +776,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       on('[data-arrive]', function (el) { var a = (S.appts || []).filter(function (x) { return !x.here; })[Number(el.getAttribute('data-arrive'))]; if (!a) return; el.disabled = true;
         call({ action: 'add_token', name: a.name, phone: a.ph || '', src: 'book', prob: a.treat, bookAt: a.time }, function (r) { S.apptsAt = 0; if (r.added) toast(a.name + ' · token ' + r.added + (r.sent ? ' sent on WhatsApp' : '')); }); });
       on('[data-more]', function (el) { S[el.getAttribute('data-more')] = true; draw(); });
+      on('[data-nchip]', function (el) { var c = el.getAttribute('data-nchip'); var t = document.getElementById('cnote'); S.cNote = (t ? t.value : S.cNote || '').trim(); S.cNote = S.cNote ? S.cNote.replace(/[.\s]*$/, '') + '. ' + c + '.' : c + '.'; draw(); });
+      on('[data-cfup]', function (el) { var t = document.getElementById('cnote'); if (t) S.cNote = t.value; S.cFup = Number(el.getAttribute('data-cfup')); draw(); });
+      on('#cdone', function (el) { var t = document.getElementById('cnote'); if (t) S.cNote = t.value; el.disabled = true; var f = S.cFup, n = (S.cNote || '').trim();
+        call({ action: 'call_next', forTok: S.cTok, note: n, fup: f }, function (r) { toast((n || f ? 'Saved' + (f ? ' · come back ' + (f === 7 ? '1 week' : f === 14 ? '2 weeks' : f === 30 ? '1 month' : f + ' days') : '') : 'Done') + (r.sent ? ' · next patient told' : '')); }); });
+      var cn = document.getElementById('cnote'); if (cn) cn.addEventListener('input', function () { S.cNote = cn.value; });
       on('#saveupi', function () { call({ action: 'setup_save', cfg: { upiId: document.getElementById('upi').value } }, function (r) { if (r.saved) toast('UPI ID saved'); }); });
       on('#asrec', function () { S.viewAs = 'reception'; S.tab = 'queue'; draw(); window.scrollTo(0, 0); });
       on('[data-asdoc]', function () { S.viewAs = null; S.tab = 'today'; draw(); window.scrollTo(0, 0); });
@@ -724,6 +794,13 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     }
     function readFee() { var f = document.getElementById('fee'); if (f && S.sheet) S.sheet.fee = Number(f.value) || 0; }
 
+    S.desk = window.matchMedia('(min-width: 1024px)').matches;
+    window.addEventListener('resize', function () { var d = window.matchMedia('(min-width: 1024px)').matches; if (d !== S.desk) { S.desk = d; S.lastHtml = null; draw(); } });
+    document.addEventListener('keydown', function (e) {
+      if ((e.key !== 'n' && e.key !== 'N') || e.ctrlKey || e.metaKey || e.altKey || S.sheet || !S.d) return;
+      var t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      var b = document.getElementById('cdone') || document.querySelector('[data-a="call_next"]'); if (b && !b.disabled) { e.preventDefault(); b.click(); }
+    });
     var code = qs.get('code');
     if (code) {
       history.replaceState(null, '', location.pathname);
