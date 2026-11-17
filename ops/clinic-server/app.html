@@ -738,7 +738,7 @@ button.irow:active,a.irow:active{background:#F9FAFB}
       if (G) {
         h += '<div class="v11-lh" style="padding-top:22px"><span>Brought back by reminders</span><span>' + esc(G.month) + '</span></div><div class="v11-card act-nums" style="grid-template-columns:repeat(3,1fr)">' +
           [[G.recalls, 'reminded'], [G.back, 'came back'], [rupee(G.money), 'earned from them']].map(function (n) { return '<div><b>' + n[0] + '</b><span>' + n[1] + '</span></div>'; }).join('') + '</div>' +
-          '<div class="v11-meta" style="margin:6px 2px 0">Patients who skip their follow-up get a WhatsApp the next day, after 1 week and after 1 month.</div>';
+          '<div class="v11-meta" style="margin:8px 20px 0;font-size:14px">Patients who skip their follow-up get a WhatsApp the next day, after 1 week and after 1 month.</div>';
         h += '<div class="v11-lh" style="padding-top:22px"><span>Reviews</span><span>' + esc(G.month) + '</span></div><div class="v11-card">' +
           '<div class="act-nums" style="grid-template-columns:repeat(3,1fr)">' + [[G.good, 'happy'], [G.mid, 'okay'], [G.low, 'not happy']].map(function (n) { return '<div><b>' + n[0] + '</b><span>' + n[1] + '</span></div>'; }).join('') + '</div>' +
           (G.link ? '' : '<button class="v11-soft" data-tab="clinic" style="margin-top:12px;background:#FFFAEB;color:#B54708">Add your Google review link so happy patients can post a review</button>') +
