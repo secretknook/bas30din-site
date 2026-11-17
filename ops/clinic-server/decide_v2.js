@@ -547,7 +547,8 @@ function notifyPatient(r, bodyByLang, tplParams, btns) {
 const liveOpen = p => { const l = mem.live[p]; return l && DateTime.fromISO(l.last) > now.minus({ hours: 2 }); };
 const adminTarget = isAdmin ? mem.liveAdmin[me] : null;
 let liveHandled = false;
-if (!adminCmd && isAdmin && adminTarget && liveOpen(adminTarget) && !id) {
+const sysWord = /^(login|token)$/i.test((raw || '').trim());
+if (!adminCmd && !sysWord && isAdmin && adminTarget && liveOpen(adminTarget) && !id) {
   liveHandled = true;
   const pl = langOf(adminTarget, '');
   if (cmd === 'END') {
@@ -560,7 +561,7 @@ if (!adminCmd && isAdmin && adminTarget && liveOpen(adminTarget) && !id) {
     payload = textTo(adminTarget, raw);
   } else payload = text('Only text can be sent on live chat for now.');
 }
-else if (!isAdmin && liveOpen(me) && !id) {
+else if (!isAdmin && !sysWord && liveOpen(me) && !id) {
   liveHandled = true;
   const admins = (S.adminNumbers || []).map(digits);
   if (cmd === 'END') {
