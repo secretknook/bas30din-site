@@ -133,6 +133,58 @@ button.irow:active,a.irow:active{background:#E5E5EA}
 .phonein span{color:#6C6C70}
 .phonein input{border:none;outline:none;background:transparent;font:inherit;font-size:20px;flex:1;min-width:0;letter-spacing:.5px;color:#000}
 .otpin{margin-top:26px;height:64px;border:none;border-radius:12px;background:#F2F2F7;text-align:center;font-size:32px;letter-spacing:12px;font-family:inherit;outline:none;width:100%;box-sizing:border-box;font-variant-numeric:tabular-nums}
+
+/* ---- v8: one design language (the v5 look) for every screen ---- */
+.wrap.i{background:#FFF;color:#101828}
+.ihd{padding:calc(env(safe-area-inset-top) + 20px) 16px 4px 16px}
+.ilt{font-size:24px;letter-spacing:-.3px}
+.icirc{background:#F2F4F7;color:#344054}
+.icard{background:#FFF;border:1px solid #EAECF0;border-radius:14px}
+.isec{padding:20px 16px 8px;font-size:15px;font-weight:700;color:#101828;align-items:baseline}
+.isec span:last-child{font-size:13px;font-weight:400;color:#667085}
+.ilist{margin:0 16px;border:1px solid #EAECF0;border-radius:14px}
+.irow{font-size:15px;padding:11px 14px;border-bottom:1px solid #F2F4F7;color:#101828}
+.irow .icol>span:first-child{font-weight:600}
+button.irow:active,a.irow:active{background:#F9FAFB}
+.isub{color:#667085}
+.ifoot{padding:8px 16px 0;color:#667085;font-size:12.5px}
+.ib{height:52px;border-radius:12px;font-size:16px;color:#175CD3;border:1px solid #D0D5DD}
+.ib.pri{background:#175CD3;border:none;font-weight:700}
+.ib.soft{background:#EFF4FF;border:none}
+.igray{height:36px;border:1px solid #D0D5DD;background:#FFF;border-radius:10px;font-size:13px;font-weight:600;color:#344054}
+.ichip{border-radius:10px;font-size:14px;font-weight:600;color:#344054;border:1px solid #D0D5DD;height:40px}
+.ichip.on{background:#EFF4FF;border:2px solid #175CD3;color:#175CD3}
+.iseg{background:#F2F4F7;border-radius:10px;padding:3px}
+.iseg button{height:34px;border-radius:8px;font-size:13px;font-weight:600;color:#667085}
+.iseg button.on{color:#101828;box-shadow:0 1px 2px rgba(16,24,40,.12)}
+.iround{background:#EFF4FF;color:#175CD3}
+.ilink{color:#175CD3;font-size:15px}
+.iback{color:#175CD3;font-size:15px}
+.iact{background:#FFF;border:1px solid #EAECF0;color:#175CD3;font-weight:600}
+.isearch{background:#FFF;border:1px solid #D0D5DD;height:44px;color:#667085}
+.ifield{border-bottom:1px solid #F2F4F7;font-size:15px}
+.ipill{height:30px}
+.itabs{background:#FFF;-webkit-backdrop-filter:none;backdrop-filter:none;border-top:1px solid #EAECF0}
+.itabs button{font-size:12px;color:#667085}
+.itabs button.on{color:#175CD3;font-weight:600}
+.itabs .badge{background:#D92D20}
+.isheetbg{background:rgba(16,24,40,.45)}
+.isheet{background:#FFF;border-radius:20px 20px 0 0}
+.isheet .ilist{background:#FFF}
+.isheet.up{animation:sheetup .24s cubic-bezier(.2,.8,.2,1)}
+@keyframes sheetup{from{transform:translateY(100%)}to{transform:none}}
+.itoast{top:calc(env(safe-area-inset-top) + 12px);bottom:auto;background:#101828;font-size:14px;border-radius:12px;padding:10px 14px;box-shadow:0 8px 24px rgba(16,24,40,.18);animation:toastin .2s ease-out}
+@keyframes toastin{from{opacity:0;transform:translate(-50%,-8px)}to{opacity:1;transform:translate(-50%,0)}}
+.tp{font-size:.48em;font-weight:700;color:#98A2B3;margin-right:3px;vertical-align:.6em;letter-spacing:0}
+.qgrid{display:flex;flex-direction:column}
+/* reception on a laptop: a real desk, not a phone strip */
+@media (min-width:900px){
+  .wrap.i.recep{max-width:1120px}
+  .wrap.i.recep .content{padding:0 16px 110px}
+  .qgrid{display:grid;grid-template-columns:1.15fr 1fr;grid-template-areas:"now bill" "next booked";column-gap:8px;align-items:start}
+  .qa-now{grid-area:now}.qa-bill{grid-area:bill}.qa-booked{grid-area:booked}.qa-next{grid-area:next}
+  .itabs .in{max-width:520px}
+}
 </style>
 </head>
 <body>
@@ -221,23 +273,24 @@ button.irow:active,a.irow:active{background:#E5E5EA}
   function staff() {
     var S = { sid: load('cd_sid'), role: load('cd_role'), d: null, appts: null, apptsAt: 0, tab: null, sheet: null, toast: '', toastT: 0,
       seg: 'calls', per: 'today', q: '', pk: null, busy: false, err: '' };
-    var C = { blue: '#0A63D6', sec: '#6C6C70', ok: '#1E7A34', warn: '#C93400', bad: '#D70015' };
+    var C = { blue: '#175CD3', sec: '#667085', ok: '#067647', warn: '#B54708', bad: '#B42318' };
     function logout() { store('cd_sid', null); store('cd_role', null); S.sid = null; S.d = null; drawLogin(); }
     function uaShort() { var u = navigator.userAgent; var os = /Android/.test(u) ? 'Android' : /iPhone|iPad/.test(u) ? 'iPhone' : /Windows/.test(u) ? 'Windows' : /Mac/.test(u) ? 'Mac' : 'Phone';
       var br = /Edg\//.test(u) ? 'Edge' : /Chrome\//.test(u) ? 'Chrome' : /Safari\//.test(u) ? 'Safari' : /Firefox/.test(u) ? 'Firefox' : 'Browser'; return br + ' · ' + os; }
     function drawLogin(msg, mode) {
+      S.lastHtml = null;
       var bn = load('cd_bot') || '15551823589'; mode = mode || 'login';
       var top = '<div class="wrap i" style="padding:calc(env(safe-area-inset-top) + 72px) 24px calc(env(safe-area-inset-bottom) + 28px);background:#FFF">';
-      var err = msg ? '<div style="margin-top:16px;padding:12px 14px;border-radius:12px;background:#FFF2F2;color:' + C.bad + ';font-size:15px">' + esc(msg) + '</div>' : '';
+      var err = msg ? '<div style="margin-top:16px;padding:12px 14px;border-radius:12px;background:#FEF3F2;color:' + C.bad + ';font-size:15px">' + esc(msg) + '</div>' : '';
       if (mode === 'code') {
         $app.innerHTML = top + '<button class="iback" data-lmode="login" style="padding:0;margin-bottom:18px"><svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2L2 10l8 8"/></svg>Change number</button>' +
-          '<div style="font-size:30px;font-weight:700;line-height:1.15">Enter the code</div>' + (S.viaWa ? '<div style="margin-top:10px;font-size:17px;line-height:1.45;color:#3C3C43">Tap below. WhatsApp opens with <b>CODE</b> typed in. Press send and the code comes back in a second.</div><a class="ib" href="https://wa.me/' + esc(bn) + '?text=CODE" target="_blank" rel="noopener" style="text-decoration:none;margin-top:18px;background:#E7F8EE;color:#0B7A3B;font-weight:600">Get code on WhatsApp</a>'
-            : '<div style="margin-top:10px;font-size:17px;line-height:1.45;color:#3C3C43">We sent a 6-digit code on WhatsApp to ' + esc(S.sentTo || 'your number') + '.</div>') + err +
+          '<div style="font-size:30px;font-weight:700;line-height:1.15">Enter the code</div>' + (S.viaWa ? '<div style="margin-top:10px;font-size:17px;line-height:1.45;color:#475467">Tap below. WhatsApp opens with <b>CODE</b> typed in. Press send and the code comes back in a second.</div><a class="ib" href="https://wa.me/' + esc(bn) + '?text=CODE" target="_blank" rel="noopener" style="text-decoration:none;margin-top:18px;background:#E7F8EE;color:#0B7A3B;font-weight:600">Get code on WhatsApp</a>'
+            : '<div style="margin-top:10px;font-size:17px;line-height:1.45;color:#475467">We sent a 6-digit code on WhatsApp to ' + esc(S.sentTo || 'your number') + '.</div>') + err +
           '<input id="otp" class="otpin" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••" aria-label="6-digit code">' +
           '<button class="ib pri" id="verify" style="margin-top:16px">Log in</button>' + (S.viaWa ? '' : '<button class="ilink" id="resend" style="margin-top:14px;align-self:center">Send the code again</button>') +
           '<div style="flex:1"></div>' + (S.viaWa ? '' : '<div style="text-align:center;font-size:13px;color:' + C.sec + '">No code after a minute? <a href="https://wa.me/' + esc(bn) + '?text=CODE" target="_blank" rel="noopener">Get it on WhatsApp</a> instead.</div>') + '</div>';
       } else {
-        $app.innerHTML = top + '<div style="font-size:34px;font-weight:700;line-height:1.1">Clinic Desk</div><div style="margin-top:8px;font-size:17px;color:#3C3C43">Log in with your mobile number</div>' + err +
+        $app.innerHTML = top + '<div style="font-size:34px;font-weight:700;line-height:1.1">Clinic Desk</div><div style="margin-top:8px;font-size:17px;color:#475467">Log in with your mobile number</div>' + err +
           '<label class="phonein"><span>+91</span><input id="lp" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="10" placeholder="10-digit mobile" value="' + esc(load('cd_ph') || '') + '" aria-label="Mobile number"></label>' +
           '<button class="ib pri" id="sendcode" style="margin-top:16px">Get code on WhatsApp</button>' +
           '<div style="flex:1"></div><div style="text-align:center;font-size:13px;line-height:1.5;color:' + C.sec + '">The doctor and the receptionist each use their own number.<br>No password needed.</div></div>';
@@ -272,9 +325,9 @@ button.irow:active,a.irow:active{background:#E5E5EA}
     };
     var LAB = { queue: 'Queue', today: 'Today', register: 'Register', inbox: 'Inbox', patients: 'Patients', clinic: 'Clinic' };
     var PHONE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>';
-    var CHEV = '<svg width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="#C4C4C7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0"><path d="M1 1l6 6-6 6"/></svg>';
+    var CHEV = '<svg width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="#98A2B3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0"><path d="M1 1l6 6-6 6"/></svg>';
     var GEAR = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg>';
-    var STAT = { in: ['In', '#E3F5E7', C.ok, '#34C759'], late: ['Late', '#FFF1E0', C.warn, '#FF9500'], away: ['Away', '#FFF1E0', C.warn, '#FF9500'], leave: ['Leave', '#FFE9EA', C.bad, '#FF3B30'] };
+    var STAT = { in: ['In', '#ECFDF3', C.ok, '#12B76A'], late: ['Late', '#FFFAEB', C.warn, '#F79009'], away: ['Away', '#FFFAEB', C.warn, '#F79009'], leave: ['Leave', '#FEF3F2', C.bad, '#F04438'] };
 
     function view() {
       var b = {};
@@ -315,32 +368,36 @@ button.irow:active,a.irow:active{background:#E5E5EA}
       var k = STAT[d.status] ? d.status : 'in'; var lab = 'Dr. ' + (S.d.clinic.doctor || '').replace(/^Dr\.?\s*/, '').split(' ')[0] + ' · ' + (k === 'late' ? 'Late ' + d.mins + 'm' : k === 'away' && d.until ? 'Back ' + d.until : STAT[k][0]);
       return '<button class="ipill" ' + (isDoc() ? 'data-sheet="status"' : 'disabled') + ' style="background:' + STAT[k][1] + ';color:' + STAT[k][2] + '"><span class="dot" style="width:7px;height:7px;background:' + STAT[k][3] + '"></span>' + esc(lab) + '</button>';
     }
+    function bigTok(t) { var m = String(t || '').match(/^([A-Z]+)-?(\d+)$/); return m ? '<span class="tp">' + m[1] + '</span>' + m[2] : esc(t); }
     function rupee(n) { return '₹' + Number(n || 0).toLocaleString('en-IN'); }
     function srcLab(x) { return x.src === 'qr' ? 'Walk-in · QR' : x.src === 'desk' ? 'Walk-in · added here' : x.src === 'book' ? 'Booked' + (x.bookAt ? ' ' + x.bookAt : '') : 'Walk-in'; }
 
     // ---------- screens ----------
     function scrQueue() {
       var d = S.d, q = d.queue, w = q.waiting, cur = q.now;
-      var main = w.length ? 'Call next · ' + w[0].tok : cur ? 'Done with ' + cur.tok : 'No one waiting';
-      var h = hdr(d.clinic.name, 'Queue', pill(d.doc)) +
+      var main = w.length ? 'Call next · ' + String(w[0].tok).replace('-', '') : cur ? 'Done with ' + String(cur.tok).replace('-', '') : 'No one waiting';
+      var h = hdr(d.clinic.name, 'Queue', pill(d.doc)) + '<div class="qgrid"><div class="qa-now">' +
         '<div class="icard" style="margin:12px 16px 0;padding:18px;display:flex;flex-direction:column;gap:16px"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">' +
         '<div style="display:flex;flex-direction:column;min-width:0"><span style="font-size:13px;color:' + C.sec + '">With doctor</span>' +
-        (cur ? '<span class="tok" style="font-size:60px;font-weight:600;letter-spacing:-1.5px;line-height:1.05">' + esc(cur.tok) + '</span><span style="font-size:17px;font-weight:600">' + esc(cur.name) + '</span><span style="font-size:13px;color:' + C.sec + ';margin-top:2px">' + esc(srcLab(cur)) + ' · called ' + esc(cur.since) + '</span>'
+        (cur ? '<span class="tok" style="font-size:60px;font-weight:700;letter-spacing:-1px;line-height:1.05">' + bigTok(cur.tok) + '</span><span style="font-size:17px;font-weight:600">' + esc(cur.name) + '</span><span style="font-size:13px;color:' + C.sec + ';margin-top:2px">' + esc(srcLab(cur)) + ' · called ' + esc(cur.since) + '</span>'
           : '<span style="font-size:22px;font-weight:600;margin-top:6px">Nobody yet</span><span style="font-size:13px;color:' + C.sec + ';margin-top:2px">' + (w.length ? 'Press Call next to start' : 'Patients get a token by scanning your QR') + '</span>') +
         '</div>' + (cur ? '<button class="igray" data-a="not_here">Not here</button>' : '') + '</div>' +
-        '<button class="ib pri" data-a="call_next"' + (!w.length && !cur ? ' disabled' : '') + '>' + esc(main) + '</button></div>';
+        '<button class="ib pri" data-a="call_next"' + (!w.length && !cur ? ' disabled' : '') + '>' + esc(main) + '</button></div></div>';
+      h += '<div class="qa-bill">';
       if (d.toBill && d.toBill.length) {
         h += sec('To bill', d.toBill.length) + '<div class="ilist">' + d.toBill.map(function (b) {
-          return '<button class="irow" data-bill="' + esc(b.k) + '"><span class="tok" style="width:48px;font-size:17px;font-weight:600;flex-shrink:0">' + esc(b.tok) + '</span><span class="icol"><span>' + esc(b.name) + '</span><span class="isub">Seen ' + esc(b.seen) + '</span></span><span style="font-size:15px;color:' + C.blue + '">Bill</span>' + CHEV + '</button>'; }).join('') + '</div>';
+          return '<button class="irow" data-bill="' + esc(b.k) + '"><span class="tok" style="width:48px;font-size:17px;font-weight:600;flex-shrink:0">' + esc(String(b.tok).replace('-', '')) + '</span><span class="icol"><span>' + esc(b.name) + '</span><span class="isub">Seen ' + esc(b.seen) + '</span></span><span style="font-size:15px;color:' + C.blue + '">Bill</span>' + CHEV + '</button>'; }).join('') + '</div>';
       }
+      h += '</div><div class="qa-booked">';
       var due = (S.appts || []).filter(function (a) { return !a.here; });
       if (due.length) h += sec('Booked today · not arrived', due.length) + '<div class="ilist">' + due.map(function (a, i) {
         return '<div class="irow"><span class="tok" style="width:72px;font-size:15px;flex-shrink:0">' + esc(a.time) + '</span><span class="icol"><span>' + esc(a.name) + '</span><span class="isub">' + esc(a.treat) + '</span></span><button class="ilink" data-arrive="' + i + '" style="font-weight:600">Arrived</button></div>'; }).join('') + '</div>';
+      h += '</div><div class="qa-next">';
       h += sec('Up next', w.length + ' waiting · ~' + q.avg + ' min each') + '<div class="ilist"><button class="irow" data-sheet="add" style="color:' + C.blue + '"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span style="font-size:17px">Add walk-in</span></button>' +
         w.slice(0, 20).map(function (x) {
-          var wh = x.here ? ['In waiting room', '#34C759'] : x.ahead <= 2 && x.told2 ? ['Told: ' + x.ahead + ' ahead', '#FF9500'] : ['Outside', '#C4C4C7'];
-          return '<button class="irow" data-rm="' + esc(x.key) + '" data-rmname="' + esc(x.tok + ' ' + x.name) + '"><span class="tok" style="width:48px;font-size:17px;font-weight:600;flex-shrink:0">' + esc(x.tok) + '</span><span class="icol"><span>' + esc(x.name) + '</span><span class="isub">' + (x.missed ? 'Not here when called · moved back' : esc(srcLab(x))) + '</span></span><span style="display:flex;align-items:center;gap:6px;font-size:13px;color:' + C.sec + ';white-space:nowrap"><span class="dot" style="width:7px;height:7px;background:' + wh[1] + '"></span>' + wh[0] + '</span></button>';
-        }).join('') + '</div><div class="ifoot">' + q.done + ' seen today</div>';
+          var wh = x.here ? ['In waiting room', '#12B76A'] : x.ahead <= 2 && x.told2 ? ['Told: ' + x.ahead + ' ahead', '#F79009'] : ['Outside', '#98A2B3'];
+          return '<button class="irow" data-rm="' + esc(x.key) + '" data-rmname="' + esc(x.tok + ' ' + x.name) + '"><span class="tok" style="width:48px;font-size:17px;font-weight:600;flex-shrink:0">' + esc(String(x.tok).replace('-', '')) + '</span><span class="icol"><span>' + esc(x.name) + '</span><span class="isub">' + (x.missed ? 'Not here when called · moved back' : esc(srcLab(x))) + '</span></span><span style="display:flex;align-items:center;gap:6px;font-size:13px;color:' + C.sec + ';white-space:nowrap"><span class="dot" style="width:7px;height:7px;background:' + wh[1] + '"></span>' + wh[0] + '</span></button>';
+        }).join('') + '</div><div class="ifoot">' + q.done + ' seen today</div></div></div>';
       return h;
     }
     function scrToday() {
@@ -371,9 +428,9 @@ button.irow:active,a.irow:active{background:#E5E5EA}
       h += '<div class="icard" style="margin:14px 16px 0;padding:18px;display:grid;grid-template-columns:1fr 1fr;row-gap:12px">' +
         '<span class="icol"><span class="isub">Patients seen</span><span class="tok" style="font-size:34px;font-weight:600">' + r.seen + '</span></span>' +
         '<span class="icol"><span class="isub">Recorded</span><span class="tok" style="font-size:34px;font-weight:600">' + rupee(r.money) + '</span></span>' +
-        '<span style="grid-column:1 / 3;font-size:15px;color:' + C.sec + ';border-top:1px solid #E5E5EA;padding-top:12px">Cash ' + rupee(r.cash) + '  ·  UPI ' + rupee(r.upi) + '  ·  No charge ' + r.free + '</span></div>';
+        '<span style="grid-column:1 / 3;font-size:15px;color:' + C.sec + ';border-top:1px solid #EAECF0;padding-top:12px">Cash ' + rupee(r.cash) + '  ·  UPI ' + rupee(r.upi) + '  ·  No charge ' + r.free + '</span></div>';
       h += sec('Needs a look', r.flags.length || '') + (r.flags.length ? '<div class="ilist">' + r.flags.map(function (f) {
-        return '<div class="irow"><span class="dot" style="width:8px;height:8px;background:' + (f.bad ? '#FF3B30' : '#FF9500') + '"></span><span class="icol"><span>' + esc(f.name) + '</span><span class="isub">' + esc(f.sub) + '</span></span><span style="font-size:15px;color:' + (f.bad ? C.bad : C.warn) + ';white-space:nowrap">' + esc(f.tag) + '</span></div>'; }).join('') + '</div>'
+        return '<div class="irow"><span class="dot" style="width:8px;height:8px;background:' + (f.bad ? '#F04438' : '#F79009') + '"></span><span class="icol"><span>' + esc(f.name) + '</span><span class="isub">' + esc(f.sub) + '</span></span><span style="font-size:15px;color:' + (f.bad ? C.bad : C.warn) + ';white-space:nowrap">' + esc(f.tag) + '</span></div>'; }).join('') + '</div>'
         : '<div class="ilist"><div class="irow"><span style="color:' + C.ok + '">Every visit is billed</span></div></div>');
       h += sec('Patients who reached out') + '<div class="ilist"><div class="irow"><span class="icol"><span>Missed calls</span></span><span style="color:' + C.sec + '">' + r.calls + '</span></div></div>';
       h += '<div class="ifoot">Reception can bill, but only the doctor sees these totals. The same summary comes on WhatsApp at 9 PM.</div>';
@@ -410,7 +467,7 @@ button.irow:active,a.irow:active{background:#E5E5EA}
       var wa = p.call ? 'https://wa.me/' + p.call.replace(/\D/g, '') : '';
       var h = back + '<div style="padding:6px 20px 0;display:flex;flex-direction:column;gap:2px"><span style="font-size:28px;font-weight:700">' + esc(p.name) + '</span><span style="font-size:15px;color:' + C.sec + '">' + esc(p.phone || 'No phone') + ' · since ' + esc(p.since) + '</span></div>' +
         '<div style="margin:16px 16px 0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">' +
-        (p.call ? '<a class="iact" href="tel:' + esc(p.call) + '">' + PHONE + 'Call</a><a class="iact" href="' + esc(wa) + '" target="_blank" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>Message</a>' : '<span class="iact" style="color:#C4C4C7">' + PHONE + 'Call</span><span class="iact" style="color:#C4C4C7">Message</span>') +
+        (p.call ? '<a class="iact" href="tel:' + esc(p.call) + '">' + PHONE + 'Call</a><a class="iact" href="' + esc(wa) + '" target="_blank" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>Message</a>' : '<span class="iact" style="color:#98A2B3">' + PHONE + 'Call</span><span class="iact" style="color:#98A2B3">Message</span>') +
         '<button class="iact" data-tokfor="1"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Token</button></div>';
       if (p.fup) h += sec('Follow-up') + '<div class="ilist"><div class="irow"><span class="icol"><span>' + esc(p.fup) + '</span><span class="isub">WhatsApp reminder goes the evening before</span></span></div></div>';
       h += sec('Visits · ' + rupee(p.paid) + ' paid') + '<div class="ilist">' + p.visits.map(function (v) {
@@ -436,7 +493,7 @@ button.irow:active,a.irow:active{background:#E5E5EA}
       var cur = bo.now, w = q.waiting;
       h += '<div class="dcard" style="margin:16px 16px 0">';
       if (cur) {
-        h += '<div style="display:flex;justify-content:space-between;align-items:center"><span class="dcap">WITH YOU NOW · TOKEN ' + esc(cur.tok) + '</span><span style="font-size:12.5px;color:#667085">' + w.length + ' waiting</span></div>' +
+        h += '<div style="display:flex;justify-content:space-between;align-items:center"><span class="dcap">WITH YOU NOW · TOKEN ' + esc(String(cur.tok).replace('-', '')) + '</span><span style="font-size:12.5px;color:#667085">' + w.length + ' waiting</span></div>' +
           '<button class="dplain" data-pk="' + esc(cur.pk) + '"' + (cur.pk ? '' : ' disabled') + '><span style="font-size:20px;font-weight:700">' + esc(cur.name) + '</span>' + (cur.prob ? '<span style="font-size:15px;color:#344054;line-height:1.45">' + esc(cur.prob) + '</span>' : '') + '</button>' +
           '<div style="display:flex;gap:6px;flex-wrap:wrap">' + '<span class="dchip">' + esc(histLine(cur)) + '</span>' + (cur.fu ? '<span class="dchip" style="background:#EFF4FF;color:#175CD3">Follow-up visit</span>' : '') + '</div>' +
           (cur.note ? '<div style="background:#F9FAFB;border-radius:10px;padding:10px 12px;font-size:14px;line-height:1.45;color:#344054"><span style="font-size:12px;font-weight:600;color:#667085">YOUR LAST NOTE</span><br>' + esc(cur.note) + '</div>' : '');
@@ -446,14 +503,14 @@ button.irow:active,a.irow:active{background:#E5E5EA}
       h += '<button class="dbtn" data-a="call_next"' + (!w.length && !cur ? ' disabled' : '') + '>' + (w.length ? 'Call next' : cur ? 'Done with ' + esc(cur.tok) : 'No one waiting') + '</button></div>';
       h += '<div class="dsec"><span>Up next</span><span>' + (w.length ? w.length + ' waiting' + (bo.finish ? ' · done by ~' + esc(bo.finish) : '') : 'Nobody waiting') + '</span></div><div style="padding:0 16px">' +
         (bo.next || []).map(function (x) {
-          return '<button class="drow" data-pk="' + esc(x.pk) + '"' + (x.pk ? '' : ' disabled') + '><span class="tok" style="width:48px;flex-shrink:0;font-size:15px;font-weight:700">' + esc(x.tok) + '</span><span class="icol"><span style="font-size:15px;font-weight:600">' + esc(x.name) + (x.visits ? '' : '<span style="font-weight:600;color:#175CD3;font-size:12px">  NEW</span>') + (x.fu ? '<span style="font-weight:600;color:#175CD3;font-size:12px">  FOLLOW-UP</span>' : '') + '</span><span class="dsub">' + esc(x.prob || (x.note ? 'Last: ' + x.note : histLine(x))) + '</span></span>' + (x.pk ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#98A2B3" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>' : '') + '</button>'; }).join('') + '</div>';
+          return '<button class="drow" data-pk="' + esc(x.pk) + '"' + (x.pk ? '' : ' disabled') + '><span class="tok" style="width:48px;flex-shrink:0;font-size:15px;font-weight:700">' + esc(String(x.tok).replace('-', '')) + '</span><span class="icol"><span style="font-size:15px;font-weight:600">' + esc(x.name) + (x.visits ? '' : '<span style="font-weight:600;color:#175CD3;font-size:12px">  NEW</span>') + (x.fu ? '<span style="font-weight:600;color:#175CD3;font-size:12px">  FOLLOW-UP</span>' : '') + '</span><span class="dsub">' + esc(x.prob || (x.note ? 'Last: ' + x.note : histLine(x))) + '</span></span>' + (x.pk ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#98A2B3" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>' : '') + '</button>'; }).join('') + '</div>';
       h += '<div style="margin:14px 16px 0;display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="dtile" data-tab="register"><span class="dsub">Seen today</span><span class="tok" style="font-size:24px;font-weight:700">' + d.today.seen + '</span></button><button class="dtile" data-tab="register"><span class="dsub">Recorded today</span><span class="tok" style="font-size:24px;font-weight:700">' + rupee(d.today.money) + '</span></button></div>' +
         (d.today.nobill ? '<button class="dwarn" data-tab="register">' + d.today.nobill + ' seen today without a bill · check Register</button>' : '');
       var ap = S.appts || [];
       if (ap.length) h += '<div class="dsec"><span>Booked appointments</span><span>' + ap.length + '</span></div><div style="padding:0 16px">' + ap.map(function (a) { return '<div class="drow"><span class="tok" style="width:72px;flex-shrink:0;font-size:14px;font-weight:600">' + esc(a.time) + '</span><span class="icol"><span style="font-size:15px;font-weight:600">' + esc(a.name) + (a.isNew ? '<span style="font-weight:600;color:#175CD3;font-size:12px">  NEW</span>' : '') + '</span><span class="dsub">' + esc(a.treat) + '</span></span></div>'; }).join('') + '</div>';
-      if (d.fups && d.fups.length) h += '<div class="dsec"><span>Follow-ups due today</span><span>' + d.fups.length + '</span></div><div style="padding:0 16px">' + d.fups.slice(0, 5).map(function (f) { return '<div class="drow"><span class="icol"><span style="font-size:15px;font-weight:600">' + esc(f.name) + '</span></span><span style="font-size:13px;color:' + (f.c === 'ok' ? '#067647' : f.c === 'warn' ? '#B54708' : '#667085') + '">' + esc(f.state) + '</span></div>'; }).join('') + '</div>';
-      if (bo.lost && bo.lost.length) h += '<div class="dsec"><span>Didn\'t come back</span><span>' + bo.lost.length + '</span></div><div style="padding:0 16px">' + bo.lost.slice(0, 5).map(function (p) {
-        return '<div class="drow"><button class="dplain" data-pk="' + esc(p.pk) + '" style="flex-grow:1"><span style="font-size:15px;font-weight:600">' + esc(p.name) + '</span><span class="dsub">Follow-up was due ' + esc(p.due) + '</span></button>' + (p.wa ? '<a class="dmini" href="' + esc(p.wa) + '" target="_blank" rel="noopener">Message</a>' : '') + '</div>'; }).join('') + '</div><div style="padding:6px 16px 0;font-size:12.5px;color:#667085">Patients you asked to come back who have not come yet.</div>';
+      if (d.fups && d.fups.length) h += '<div class="dsec"><span>Follow-ups due today</span><span>' + d.fups.length + '</span></div><div style="padding:0 16px">' + d.fups.slice(0, S.allF ? 99 : 3).map(function (f) { return '<div class="drow"><span class="icol"><span style="font-size:15px;font-weight:600">' + esc(f.name) + '</span></span><span style="font-size:13px;color:' + (f.c === 'ok' ? '#067647' : f.c === 'warn' ? '#B54708' : '#667085') + '">' + esc(f.state) + '</span></div>'; }).join('') + (d.fups.length > 3 && !S.allF ? '<button class="drow" data-more="allF" style="color:#175CD3;font-weight:600;font-size:14px">See all ' + d.fups.length + '</button>' : '') + '</div>';
+      if (bo.lost && bo.lost.length) h += '<div class="dsec"><span>Didn\'t come back</span><span>' + bo.lost.length + '</span></div><div style="padding:0 16px">' + bo.lost.slice(0, S.allL ? 99 : 3).map(function (p) {
+        return '<div class="drow"><button class="dplain" data-pk="' + esc(p.pk) + '" style="flex-grow:1"><span style="font-size:15px;font-weight:600">' + esc(p.name) + '</span><span class="dsub">Follow-up was due ' + esc(p.due) + '</span></button>' + (p.wa ? '<a class="dmini" href="' + esc(p.wa) + '" target="_blank" rel="noopener">Message</a>' : '') + '</div>'; }).join('') + (bo.lost.length > 3 && !S.allL ? '<button class="drow" data-more="allL" style="color:#175CD3;font-weight:600;font-size:14px">See all ' + bo.lost.length + '</button>' : '') + '</div><div style="padding:6px 16px 0;font-size:12.5px;color:#667085">Patients you asked to come back who have not come yet.</div>';
       return h + '<div style="height:28px"></div></div>';
     }
     var TYPES_DEF = [['skin', 'Skin & hair'], ['dental', 'Dental'], ['child', 'Child'], ['general', 'General'], ['eye', 'Eye'], ['physio', 'Physio']];
@@ -571,25 +628,27 @@ button.irow:active,a.irow:active{background:#E5E5EA}
     // ---------- draw ----------
     function draw() {
       if (!S.sid) return drawLogin();
-      if (!S.d) { $app.innerHTML = '<div class="wrap i"><div class="ifoot" style="padding-top:120px;text-align:center">Loading…</div></div>'; return; }
+      if (!S.d) { S.lastHtml = null; $app.innerHTML = '<div class="wrap i"><div class="ifoot" style="padding-top:120px;text-align:center">Loading…</div></div>'; return; }
       var tabs = tabsFor(S.d.me.role); if (tabs.indexOf(S.tab) < 0) S.tab = tabs[0];
       var ae = document.activeElement;
       if (ae && ae.id === 'psearch' && S.tab === 'patients' && !S.pk) { var pl = document.getElementById('plist'); if (pl) { pl.innerHTML = plist(S.d.patients); return; } }
       if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA') && $app.contains(ae)) return;
       var docApp = isDoc() && S.viewAs !== 'reception';
       if (docApp && !S.d.setupDone && !S.setup && !S.setupSeen) { S.setupSeen = true; var c0 = S.d.cfg || {}; S.cfgDraft = { type: c0.type || 'skin', clinicName: c0.clinicName || '', doctorName: c0.doctorName || '', fee: c0.fee || 0, open: c0.open || '10:00', close: c0.close || '20:00', days: (c0.days || ['mon', 'tue', 'wed', 'thu', 'fri', 'sat']).slice(), upiId: c0.upiId || '' }; S.setup = 1; }
-      if (S.setup && docApp) { $app.innerHTML = '<div class="wrap i" style="background:#FFF">' + scrSetup() + (S.toast ? '<div class="itoast" role="status">' + esc(S.toast) + '</div>' : '') + sheetHtml() + '</div>'; bind(); return; }
+      if (S.setup && docApp) { S.lastHtml = null; $app.innerHTML = '<div class="wrap i" style="background:#FFF">' + scrSetup() + (S.toast ? '<div class="itoast" role="status">' + esc(S.toast) + '</div>' : '') + sheetHtml() + '</div>'; bind(); return; }
       var scr = { queue: scrQueue, today: docApp ? scrDocToday : scrToday, register: scrRegister, inbox: scrInbox, patients: scrPatients, clinic: scrClinic }[S.tab]();
-      var y = window.scrollY;
+      var y = window.scrollY; var anim = S.sheet && S.sheet !== S.lastSheet; S.lastSheet = S.sheet;
       var ib = S.d.inbox; var badge = ib ? ib.calls.filter(function (x) { return !x.booked; }).length + ib.callbacks.length : 0;
       var regBadge = S.d.today && S.d.today.nobill ? S.d.today.nobill : 0;
-      $app.innerHTML = '<div class="wrap i' + (docApp && (S.tab === 'today' || S.tab === 'clinic') ? ' dwhite' : '') + '">' + (isDoc() && S.viewAs === 'reception' ? '<div class="asbar">Reception view<button data-asdoc="1">Back to doctor app</button></div>' : '') + (S.err ? '<div style="position:sticky;top:0;z-index:4;background:#FFF2F2;color:' + C.bad + ';font-size:13px;text-align:center;padding:calc(env(safe-area-inset-top) + 6px) 8px 6px">' + esc(S.err) + '</div>' : '') +
+      var html = '<div class="wrap i' + (docApp ? '' : ' recep') + (docApp && (S.tab === 'today' || S.tab === 'clinic') ? ' dwhite' : '') + '">' + (isDoc() && S.viewAs === 'reception' ? '<div class="asbar">Reception view<button data-asdoc="1">Back to doctor app</button></div>' : '') + (S.err ? '<div style="position:sticky;top:0;z-index:4;background:#FEF3F2;color:' + C.bad + ';font-size:13px;text-align:center;padding:calc(env(safe-area-inset-top) + 6px) 8px 6px">' + esc(S.err) + '</div>' : '') +
         '<div class="content">' + scr + '</div>' +
         (S.toast ? '<div class="itoast" role="status">' + esc(S.toast) + '</div>' : '') +
         '<nav class="itabs' + (docApp ? ' dtabs' : '') + '"><div class="in" style="grid-template-columns:repeat(' + tabs.length + ',minmax(0,1fr))">' + tabs.map(function (t) {
           var bd = t === 'inbox' && badge ? badge : t === 'register' && regBadge ? regBadge : 0;
           return '<button data-tab="' + t + '" class="' + (t === S.tab ? 'on' : '') + '"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[t] + '</svg>' + LAB[t] + (bd ? '<span class="badge">' + bd + '</span>' : '') + '</button>'; }).join('') + '</div></nav>' +
         sheetHtml() + '</div>';
+      html = html.replace('class="isheet"', 'class="isheet' + (anim ? ' up' : '') + '"');
+      if (html === S.lastHtml) return; S.lastHtml = html; $app.innerHTML = html;
       window.scrollTo(0, y);
       bind();
     }
@@ -642,6 +701,7 @@ button.irow:active,a.irow:active{background:#E5E5EA}
       on('[data-trole2]', function (el) { var r = el.getAttribute('data-trole2'), n = el.getAttribute('data-tnm'); call({ action: 'team_add', name: n, phone: el.getAttribute('data-tph'), role: r }, function (x) { if (x.added) toast(n + ' is now ' + (r === 'doctor' ? 'a doctor · sees the doctor app' : 'reception')); }); });
       on('[data-arrive]', function (el) { var a = (S.appts || []).filter(function (x) { return !x.here; })[Number(el.getAttribute('data-arrive'))]; if (!a) return; el.disabled = true;
         call({ action: 'add_token', name: a.name, phone: a.ph || '', src: 'book', prob: a.treat, bookAt: a.time }, function (r) { S.apptsAt = 0; if (r.added) toast(a.name + ' · token ' + r.added + (r.sent ? ' sent on WhatsApp' : '')); }); });
+      on('[data-more]', function (el) { S[el.getAttribute('data-more')] = true; draw(); });
       on('#saveupi', function () { call({ action: 'setup_save', cfg: { upiId: document.getElementById('upi').value } }, function (r) { if (r.saved) toast('UPI ID saved'); }); });
       on('#asrec', function () { S.viewAs = 'reception'; S.tab = 'queue'; draw(); window.scrollTo(0, 0); });
       on('[data-asdoc]', function () { S.viewAs = null; S.tab = 'today'; draw(); window.scrollTo(0, 0); });
