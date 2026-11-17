@@ -26,6 +26,7 @@ window.SITE = {
   inbox: {
     on: true,
     sheetUrl: "https://script.google.com/macros/s/AKfycbw77dxWW3PrruoQHzEjXHkOLygZrZkIN-Z2kV_mNTJoeGyquqtDL2L3xapf3cxHuGUIcA/exec",
+    welcomeHook: "https://bot.bas30din.com/webhook/bas30din-welcome",
     brevoUrl: "https://66da3047.sibforms.com/serve/MUIFAAQ7owXXWGUKUMojvD2015EnyAiYMA1buivm5iEVXyFDbUbNXaTND1vAfVFfiMiJ0c8xYemcJy3icaLhV2SYxB49h7HKGd9fZwUKXg-AE5AkK4q-Ot0TlgcswM5P7Dwg-_efXqXpAg_1uq-RZluEehbmjs_fl8Z3AGIzyi6mj_ils676NQ6bRt_97ZnyDyGefe0no0GmAQ8v0Q==",   // old Brevo form, kept as backup (not shown)
     title: "Get it in your inbox",
     text: "New lessons, notes and files when I publish them. Free.",
