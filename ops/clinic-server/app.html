@@ -322,6 +322,26 @@ button.irow:active,a.irow:active{background:#F9FAFB}
 .v11-sub{font-size:13px;color:#667085}
 .v11-after .v11-soft{margin-left:16px;margin-right:16px;width:calc(100% - 32px)}
 @media (min-width:1024px){.v11-tiles{grid-template-columns:repeat(3,1fr);margin:0}.dmain .v11-after .v11-soft{margin-left:0;margin-right:0;width:100%}}
+
+.act-att{gap:6px;margin-top:10px}
+.act-name{font-size:17px;font-weight:700;color:#101828}
+.act-chip{font-size:13px;font-weight:600;border-radius:8px;padding:3px 8px;white-space:nowrap;flex-shrink:0}
+.act-why{font-size:16px;line-height:1.45;color:#101828;background:#F9FAFB;border-radius:12px;padding:10px 12px;margin-top:4px}
+.act-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.act-call{height:46px;border-radius:12px;background:#175CD3;color:#FFF;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;text-decoration:none}
+.act-done{height:46px;border-radius:12px;border:1px solid #D0D5DD;background:#FFF;color:#344054;font-size:15px;font-weight:600;font-family:inherit}
+.act-row{border-bottom:1px solid #F2F4F7}.act-row:last-child{border-bottom:none}
+.act-head{width:100%;min-height:66px;display:flex;align-items:center;gap:10px;border:none;background:none;padding:8px 0;text-align:left;font-family:inherit}
+.act-head .act-name{font-size:16px}
+.act-steps{padding:2px 0 12px}
+.act-step{display:grid;grid-template-columns:64px 14px 1fr;align-items:start;gap:8px;padding:5px 0;font-size:14.5px;color:#344054;line-height:1.4}
+.act-t{color:#667085;font-size:13px;padding-top:1px}
+.act-dot{width:8px;height:8px;border-radius:50%;background:#D0D5DD;margin-top:6px}
+.k-why .act-tx{color:#101828;font-weight:600}.k-booked .act-dot,.k-token .act-dot,.k-done .act-dot{background:#12B76A}.k-cb .act-dot,.k-why .act-dot{background:#F79009}.k-bot .act-dot{background:#175CD3}
+.act-link{display:inline-block;margin:6px 0 0 86px;color:#175CD3;font-size:14px;font-weight:600;text-decoration:none}
+.act-more{border:none;background:none;color:#175CD3;font-size:15px;font-weight:600;width:100%;font-family:inherit;min-height:52px}
+.act-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 8px}
+.act-nums div{display:flex;flex-direction:column}.act-nums b{font-size:22px}.act-nums span{font-size:13px;color:#667085}
 </style>
 </head>
 <body>
@@ -458,10 +478,10 @@ button.irow:active,a.irow:active{background:#F9FAFB}
       register: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
       inbox: '<path d="M4 13l2.5-7h11l2.5 7v5H4z"/><path d="M4 13h5l1 2h4l1-2h5"/>',
       clinic: '<path d="M5 20V11M12 20V5M19 20v-6"/>',
-      after: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+      after: '<path d="M3 12h4l3-8 4 16 3-8h4"/>',
       patients: '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.9-5 5.5-5s4.9 1.8 5.5 5"/><path d="M15.5 5.3a3 3 0 0 1 0 5.4M17.5 14.4c1.6.7 2.7 2.3 3 4.6"/>'
     };
-    var LAB = { queue: 'Queue', today: 'Today', register: 'Register', inbox: 'Inbox', patients: 'Patients', clinic: 'Clinic', after: 'After clinic' };
+    var LAB = { queue: 'Queue', today: 'Today', register: 'Register', inbox: 'Inbox', patients: 'Patients', clinic: 'Clinic', after: 'Activity' };
     var PHONE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>';
     var CHEV = '<svg width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="#98A2B3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0"><path d="M1 1l6 6-6 6"/></svg>';
     var GEAR = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg>';
@@ -580,7 +600,7 @@ button.irow:active,a.irow:active{background:#F9FAFB}
       var h = hdr('', 'Inbox') + '<div style="margin:12px 16px 0">' + seg([['calls', 'Missed calls · ' + ib.calls.length], ['cb', 'Call back · ' + ib.callbacks.length], ['wl', 'Waitlist · ' + ib.wait.length]], S.seg, 'data-seg') + '</div>';
       var L, head, foot, act;
       if (S.seg === 'calls') { L = ib.calls.map(function (x) { return [x.shown, x.at, x.booked ? 'WhatsApp sent · booked' : 'WhatsApp sent · not booked yet', x.booked ? C.ok : C.warn, x.call, x.phone, 'mc_done']; }); head = 'Missed calls'; foot = 'Each caller already got a WhatsApp with booking options.'; }
-      else if (S.seg === 'cb') { L = ib.callbacks.map(function (x) { return [x.name || x.shown, x.at, x.name ? x.shown : 'Asked for a call back', C.sec, x.call, x.phone, 'cb_done']; }); head = 'Asked for a call'; foot = 'Tap Done after you call.'; }
+      else if (S.seg === 'cb') { L = ib.callbacks.map(function (x) { return [x.name || x.shown, x.at, x.reason ? '"' + x.reason + '"' : (x.name ? x.shown + ' · no reason given yet' : 'Asked for a call back'), x.reason ? '#344054' : C.sec, x.call, x.phone, 'cb_done']; }); head = 'Asked for a call'; foot = 'Tap Done after you call.'; }
       else { L = ib.wait.map(function (x) { return [x.shown, x.day, 'Wants a slot if one opens', C.sec, x.call, x.phone, 'wl_done']; }); head = 'Waiting for a free slot'; foot = 'They get a WhatsApp the moment a slot opens.'; }
       h += sec(head) + (L.length ? '<div class="ilist">' + L.map(function (r) {
         return '<div class="irow"><span class="icol"><span style="display:flex;justify-content:space-between;gap:8px"><span>' + esc(r[0]) + '</span><span style="font-size:15px;color:' + C.sec + '">' + esc(r[1]) + '</span></span><span class="isub" style="color:' + r[3] + '">' + esc(r[2]) + '</span></span>' +
@@ -632,7 +652,7 @@ button.irow:active,a.irow:active{background:#F9FAFB}
       var PILL = { in: ['In clinic', '#12B76A', '#ECFDF3', '#067647'], late: ['Running ' + dc.mins + ' min late', '#F79009', '#FFFAEB', '#B54708'], away: ['Away' + (dc.until ? ' · back ' + dc.until : ''), '#F79009', '#FFFAEB', '#B54708'], leave: ['On leave', '#98A2B3', '#F2F4F7', '#344054'] }[k];
       var h = '<div class="v11"><div class="v11-hd"><span class="v11-date">' + esc(dt) + ' · ' + esc(docName()) + '</span>' +
         '<button class="v11-pill" data-sheet="vstat" style="background:' + PILL[2] + ';color:' + PILL[3] + '"><span class="dot" style="width:8px;height:8px;background:' + PILL[1] + '"></span>' + esc(PILL[0]) + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></div>';
-      if (!q.open && !cur && !w.length) h += '<button class="v11-closed" data-tab="after">Clinic hours are over · see After clinic</button>';
+      if (!q.open && !cur && !w.length) h += '<button class="v11-closed" data-tab="after">Clinic hours are over · see Activity</button>';
       h += '<div class="v11-grid"><div class="v11-main"><div class="v11-card">';
       if (cur) {
         if (S.cTok !== cur.tok) { S.cTok = cur.tok; S.cNote = ''; S.cFup = 0; S.noteOpen = false; }
@@ -671,19 +691,37 @@ button.irow:active,a.irow:active{background:#F9FAFB}
       return h + '</div></div></div>';
     }
     function scrAfter() {
-      var d = S.d, bo = d.boon || { lost: [] };
-      var h = '<div class="v11"><div class="v11-hd" style="flex-direction:column;align-items:flex-start;gap:2px"><span class="v11-date">' + (d.queue.open ? 'Clinic is open now' : 'Clinic hours are over') + '</span><h1 class="v11-h1">After clinic</h1></div><div class="v11-after">' +
-        '<div class="v11-card" style="display:grid;grid-template-columns:1fr 1fr;row-gap:2px"><span class="v11-meta" style="margin:0">Seen today</span><span class="v11-meta" style="margin:0">Recorded</span><span class="v11-big">' + d.today.seen + '</span><span class="v11-big">' + rupee(d.today.money) + '</span>' +
-        (d.today.nobill ? '<button class="v11-soft" data-tab="register" style="grid-column:1 / 3;margin:10px 0 0">' + d.today.nobill + ' seen without a bill · see Register</button>' : '') + '</div>';
-      var wa = d.wa || { today: {}, week: {} }, t = wa.today, wk = wa.week;
-      var tile = function (n, l, sub) { return '<div class="v11-tile"><span class="v11-big">' + n + '</span><span class="v11-meta" style="margin:0">' + l + '</span>' + (sub ? '<span class="v11-sub">' + sub + '</span>' : '') + '</div>'; };
-      h += '<div class="v11-lh" style="padding-top:22px"><span>What WhatsApp did today</span><span>' + ((wk.chats || 0) + ' chats this week') + '</span></div><div class="v11-tiles">' +
-        tile(t.chats || 0, 'Patients messaged', 'new chats on WhatsApp') + tile(t.mcalls || 0, 'Missed calls', (t.mcBooked || 0) + ' booked after our reply') + tile(t.booked || 0, 'Booked on WhatsApp', '') + tile(t.qr || 0, 'Tokens by QR', '') + tile(t.reminders || 0, 'Reminders sent', 'follow-ups') + tile(t.callbacks || 0, 'Asked for a call', 'waiting for reception') + '</div>' +
-        (d.me.role === 'owner' ? '<button class="v11-soft" data-tab="inbox" style="background:#EFF4FF;color:#175CD3;margin-top:10px">Open reception inbox · calls, call backs, waitlist</button>' : '');
+      var d = S.d, bo = d.boon || { lost: [] }, A = d.act || { attention: [], feed: [] };
+      if (!S.openEv) S.openEv = {};
+      var tone = { bad: ['#FEF3F2', '#B42318'], ok: ['#ECFDF3', '#067647'], mid: ['#F2F4F7', '#475467'] };
+      var who = function (x) { return esc(x.name || x.shown); };
+      var h = '<div class="v11"><div class="v11-hd" style="flex-direction:column;align-items:flex-start;gap:2px"><span class="v11-date">Everything that happened today</span><h1 class="v11-h1">Activity</h1></div><div class="v11-after">';
+      // needs attention
+      h += '<div class="v11-lh"><span>Needs attention</span><span>' + (A.attention.length ? A.attention.length + ' waiting' : 'All clear') + '</span></div>';
+      if (A.attention.length) h += A.attention.map(function (x) {
+        return '<div class="v11-card act-att"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span class="act-name">' + who(x) + '</span><span class="act-chip" style="background:' + tone.bad[0] + ';color:' + tone.bad[1] + '">' + esc(x.st.label.replace('Waiting for a call back · ', 'Waiting ')) + '</span></div>' +
+          '<div class="v11-meta" style="margin:0">Asked for a call back' + (x.name ? ' · ' + esc(x.shown) : '') + '</div>' +
+          (x.reason ? '<div class="act-why">"' + esc(x.reason) + '"</div>' : '<div class="v11-meta" style="margin:4px 0 0">No reason given yet</div>') +
+          '<div class="act-btns"><a class="act-call" href="tel:' + esc(x.call) + '">Call now</a><button class="act-done" data-done="cb_done" data-ph="' + esc(x.ph) + '">Mark called</button></div></div>'; }).join('');
+      else h += '<div class="v11-card"><div class="v11-meta" style="margin:0">Nobody is waiting for a call back.</div></div>';
+      // stories
+      h += '<div class="v11-lh" style="padding-top:22px"><span>Who reached out</span><span>' + A.feed.length + ' today</span></div><div class="v11-card v11-list">' +
+        (A.feed.length ? A.feed.map(function (x) {
+          var open = !!S.openEv[x.ph], last = x.items[x.items.length - 1];
+          return '<div class="act-row"><button class="act-head" data-ev="' + esc(x.ph) + '" aria-expanded="' + open + '"><span class="icol"><span class="act-name">' + who(x) + '</span><span class="tl-sub">' + esc(x.at) + ' · ' + esc(open ? 'Tap to close' : last.txt) + '</span></span><span class="act-chip" style="background:' + tone[x.st.tone][0] + ';color:' + tone[x.st.tone][1] + '">' + esc(x.st.label.replace('Waiting for a call back', 'Waiting')) + '</span></button>' +
+            (open ? '<div class="act-steps">' + x.items.map(function (i) { return '<div class="act-step k-' + i.k + '"><span class="act-t">' + esc(i.t) + '</span><span class="act-dot"></span><span class="act-tx">' + esc(i.txt) + '</span></div>'; }).join('') + '<a class="act-link" href="tel:' + esc(x.call) + '">Call ' + esc(x.shown) + '</a></div>' : '') + '</div>'; }).join('')
+          : '<div class="v11-row"><span class="v11-meta" style="margin:0">Nobody reached out yet today</span></div>') + '</div>';
+      // follow-ups + lost
       h += '<div class="v11-lh" style="padding-top:22px"><span>Follow-ups for today</span><span>' + (d.fups || []).length + '</span></div><div class="v11-card v11-list">' +
-        ((d.fups || []).length ? d.fups.map(function (f) { return '<div class="v11-row"><span class="icol"><span class="tl-name">' + esc(f.name) + '</span></span><span style="font-size:15px;color:' + (f.c === 'ok' ? '#067647' : f.c === 'warn' ? '#B54708' : '#475467') + '">' + esc(f.state) + '</span></div>'; }).join('') : '<div class="v11-row"><span class="v11-meta" style="margin:0">None today</span></div>') + '</div>';
+        ((d.fups || []).length ? d.fups.slice(0, S.allF ? 99 : 4).map(function (f) { return '<div class="v11-row"><span class="icol"><span class="tl-name">' + esc(f.name) + '</span></span><span style="font-size:15px;color:' + (f.c === 'ok' ? '#067647' : f.c === 'warn' ? '#B54708' : '#475467') + '">' + esc(f.state) + '</span></div>'; }).join('') + (d.fups.length > 4 && !S.allF ? '<button class="v11-row act-more" data-more="allF">See all ' + d.fups.length + '</button>' : '') : '<div class="v11-row"><span class="v11-meta" style="margin:0">None today</span></div>') + '</div>';
       h += '<div class="v11-lh" style="padding-top:22px"><span>Didn\'t come back</span><span>' + (bo.lost || []).length + '</span></div><div class="v11-card v11-list">' +
-        ((bo.lost || []).length ? bo.lost.map(function (p) { return '<div class="v11-row"><button class="dplain" data-pk="' + esc(p.pk) + '" style="flex:1"><span class="tl-name">' + esc(p.name) + '</span><span class="tl-sub">Was due ' + esc(p.due) + '</span></button>' + (p.wa ? '<a class="dmini" href="' + esc(p.wa) + '" target="_blank" rel="noopener" style="height:38px;font-size:15px">Remind</a>' : '') + '</div>'; }).join('') : '<div class="v11-row"><span class="v11-meta" style="margin:0">Everyone came back</span></div>') + '</div>';
+        ((bo.lost || []).length ? bo.lost.slice(0, S.allL ? 99 : 4).map(function (p) { return '<div class="v11-row"><button class="dplain" data-pk="' + esc(p.pk) + '" style="flex:1"><span class="tl-name">' + esc(p.name) + '</span><span class="tl-sub">Was due ' + esc(p.due) + '</span></button>' + (p.wa ? '<a class="dmini" href="' + esc(p.wa) + '" target="_blank" rel="noopener" style="height:38px;font-size:15px">Remind</a>' : '') + '</div>'; }).join('') + (bo.lost.length > 4 && !S.allL ? '<button class="v11-row act-more" data-more="allL">See all ' + bo.lost.length + '</button>' : '') : '<div class="v11-row"><span class="v11-meta" style="margin:0">Everyone came back</span></div>') + '</div>';
+      // the day in numbers
+      var t = (d.wa || { today: {} }).today;
+      h += '<div class="v11-lh" style="padding-top:22px"><span>Today in numbers</span><span></span></div><div class="v11-card act-nums">' +
+        [[d.today.seen, 'seen'], [rupee(d.today.money), 'recorded'], [t.chats || 0, 'WhatsApp chats'], [t.mcalls || 0, 'missed calls'], [t.booked || 0, 'booked on WhatsApp'], [t.qr || 0, 'tokens by QR']].map(function (n) { return '<div><b>' + n[0] + '</b><span>' + n[1] + '</span></div>'; }).join('') + '</div>' +
+        (d.today.nobill ? '<button class="v11-soft" data-tab="register" style="margin-top:10px">' + d.today.nobill + ' seen without a bill · see Register</button>' : '') +
+        (d.me.role === 'owner' ? '<button class="v11-soft" data-tab="inbox" style="background:#EFF4FF;color:#175CD3;margin-top:8px">Open reception inbox</button>' : '');
       return h + '<div style="height:28px"></div></div></div>';
     }
     var TYPES_DEF = [['skin', 'Skin & hair'], ['dental', 'Dental'], ['child', 'Child'], ['general', 'General'], ['eye', 'Eye'], ['physio', 'Physio']];
@@ -906,6 +944,7 @@ button.irow:active,a.irow:active{background:#F9FAFB}
         tr.style.transition = ''; fl.style.transition = ''; tr.style.top = to + 'px'; fl.style.height = (to - hh) + 'px'; tl.setAttribute('data-anim', '0'); }
       on('[data-callby]', function (el) { var v = el.getAttribute('data-callby'); call({ action: 'setup_save', cfg: { callBy: v } }, function (r) { if (r.saved) toast(v === 'doctor' ? 'Doctor calls the next patient' : 'Reception calls the next patient'); }); });
       on('#clearall', function () { S.sheet = { t: 'ask', text: 'Start fresh? This removes all patients, visits, bills, notes and the queue. Clinic settings and team stay.', ok: 'Remove everything', bad: true, body: { action: 'demo_clear' }, done: 'Clean start · ready for the clinic' }; draw(); });
+      on('[data-ev]', function (el) { var p = el.getAttribute('data-ev'); S.openEv[p] = !S.openEv[p]; draw(); });
       on('[data-vst]', function (el) { S.sheet.st = el.getAttribute('data-vst'); draw(); });
       on('[data-vmin]', function (el) { S.sheet.mins = Number(el.getAttribute('data-vmin')); draw(); });
       on('#vstatgo', function (el) { var s = S.sheet, st = s.st || S.d.doc.status; el.disabled = true; call({ action: 'set_status', status: st, mins: st === 'late' || st === 'away' ? (s.mins || 30) : 0 }, function (r) { S.sheet = null; toast(r.told ? 'Updated · ' + r.told + ' patients told on WhatsApp' : 'Status updated everywhere'); }); });
