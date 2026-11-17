@@ -539,11 +539,14 @@ if (mode === 'desk') {
         if (o.last && DateTime.fromISO(o.last) > now.minus({ seconds: 30 })) res = { ok: false, error: 'Please wait 30 seconds before asking for a new code.' };
         else if (sends.length >= 5) res = { ok: false, error: 'Too many codes asked. Try again in an hour.' };
         else {
-          const code = String(Math.floor(100000 + Math.random() * 900000)); const salt = rid(8);
-          mem.otp[full] = { salt, h: sha256(salt + code), exp: now.plus({ minutes: 10 }).toISO(), tries: 0, last: now.toISO(), sends: sends.concat([now.toISO()]) };
-          if (S.templates && S.templates.otp && !inWindow(full)) out.push({ messaging_product: 'whatsapp', to: full, type: 'template', template: { name: S.templates.otp, language: { code: 'en' }, components: [{ type: 'body', parameters: [{ type: 'text', text: code }] }, { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: code }] }] } });
-          else out.push(textTo(full, `*${code}* is your Clinic Desk login code.\nIt works for 10 minutes. Do not share it with anyone.`));
-          res = { ok: true, sentTo: '+' + full.slice(0, 2) + ' ••••• ' + full.slice(-5), name: st.name };
+          const sentTo = '+' + full.slice(0, 2) + ' ••••• ' + full.slice(-5);
+          if (inWindow(full) || (S.templates && S.templates.otp)) {
+            const code = String(Math.floor(100000 + Math.random() * 900000)); const salt = rid(8);
+            mem.otp[full] = { salt, h: sha256(salt + code), exp: now.plus({ minutes: 10 }).toISO(), tries: 0, last: now.toISO(), sends: sends.concat([now.toISO()]) };
+            if (!inWindow(full)) out.push({ messaging_product: 'whatsapp', to: full, type: 'template', template: { name: S.templates.otp, language: { code: 'en' }, components: [{ type: 'body', parameters: [{ type: 'text', text: code }] }, { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: code }] }] } });
+            else out.push(textTo(full, `*${code}* is your Clinic Desk login code.\nIt works for 10 minutes. Do not share it with anyone.`));
+            res = { ok: true, sentTo, name: st.name };
+          } else res = { ok: true, sentTo, name: st.name, viaWa: true };
         }
       } else {
         const c = String(b.code || '').replace(/\D/g, '');
@@ -890,7 +893,7 @@ function notifyPatient(r, bodyByLang, tplParams, btns) {
 const liveOpen = p => { const l = mem.live[p]; return l && DateTime.fromISO(l.last) > now.minus({ hours: 2 }); };
 const adminTarget = isAdmin ? mem.liveAdmin[me] : null;
 let liveHandled = false;
-const sysWord = /^(login|reset|token)$/i.test((raw || '').trim());
+const sysWord = /^(login|reset|code|token)$/i.test((raw || '').trim());
 if (!adminCmd && !sysWord && isAdmin && adminTarget && liveOpen(adminTarget) && !id) {
   liveHandled = true;
   const pl = langOf(adminTarget, '');
@@ -925,6 +928,12 @@ else if (!isAdmin && !sysWord && liveOpen(me) && !id) {
 const staffOf = p => (S.staff || []).find(x => same(x.phone, p));
 const docAsk = !id && has(['doctor', 'dr', 'daktar', 'doc']) && has(['aa', 'aaye', 'aayi', 'aaya', 'gaye', 'gayi', 'hai', 'hain', 'kab', 'kahan', 'late', 'available', 'here', 'in']);
 if (liveHandled) {}
+else if (!id && /^code$/i.test(raw) && staffOf(me)) {
+  if (!mem.otp) mem.otp = {};
+  const code = String(Math.floor(100000 + Math.random() * 900000)); const salt = rid(8); const o = mem.otp[me] || {};
+  mem.otp[me] = { salt, h: sha256(salt + code), exp: now.plus({ minutes: 10 }).toISO(), tries: 0, last: now.toISO(), sends: (o.sends || []).concat([now.toISO()]).slice(-10) };
+  payload = text(`*${code}* is your Clinic Desk login code.\nType it in the app. It works for 10 minutes. Do not share it with anyone.`);
+}
 else if (!id && /^(login|reset)$/i.test(raw) && staffOf(me)) {
   const st0 = staffOf(me); if (!mem.codes) mem.codes = {};
   const isReset = /^reset$/i.test(raw);

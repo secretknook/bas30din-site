@@ -238,10 +238,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       var err = msg ? '<div style="margin-top:16px;padding:12px 14px;border-radius:12px;background:#FFF2F2;color:' + C.bad + ';font-size:15px">' + esc(msg) + '</div>' : '';
       if (mode === 'code') {
         $app.innerHTML = top + '<button class="iback" data-lmode="login" style="padding:0;margin-bottom:18px"><svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2L2 10l8 8"/></svg>Change number</button>' +
-          '<div style="font-size:30px;font-weight:700;line-height:1.15">Enter the code</div><div style="margin-top:10px;font-size:17px;line-height:1.45;color:#3C3C43">We sent a 6-digit code on WhatsApp to ' + esc(S.sentTo || 'your number') + '.</div>' + err +
+          '<div style="font-size:30px;font-weight:700;line-height:1.15">Enter the code</div>' + (S.viaWa ? '<div style="margin-top:10px;font-size:17px;line-height:1.45;color:#3C3C43">Tap below. WhatsApp opens with <b>CODE</b> typed in. Press send and the code comes back in a second.</div><a class="ib" href="https://wa.me/' + esc(bn) + '?text=CODE" target="_blank" rel="noopener" style="text-decoration:none;margin-top:18px;background:#E7F8EE;color:#0B7A3B;font-weight:600">Get code on WhatsApp</a>'
+            : '<div style="margin-top:10px;font-size:17px;line-height:1.45;color:#3C3C43">We sent a 6-digit code on WhatsApp to ' + esc(S.sentTo || 'your number') + '.</div>') + err +
           '<input id="otp" class="otpin" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••" aria-label="6-digit code">' +
-          '<button class="ib pri" id="verify" style="margin-top:16px">Log in</button><button class="ilink" id="resend" style="margin-top:14px;align-self:center">Send the code again</button>' +
-          '<div style="flex:1"></div><div style="text-align:center;font-size:13px;color:' + C.sec + '">No code after a minute? Send <a href="https://wa.me/' + esc(bn) + '?text=LOGIN">LOGIN on WhatsApp</a> and tap the link you get.</div></div>';
+          '<button class="ib pri" id="verify" style="margin-top:16px">Log in</button>' + (S.viaWa ? '' : '<button class="ilink" id="resend" style="margin-top:14px;align-self:center">Send the code again</button>') +
+          '<div style="flex:1"></div>' + (S.viaWa ? '' : '<div style="text-align:center;font-size:13px;color:' + C.sec + '">No code after a minute? <a href="https://wa.me/' + esc(bn) + '?text=CODE" target="_blank" rel="noopener">Get it on WhatsApp</a> instead.</div>') + '</div>';
       } else {
         $app.innerHTML = top + '<div style="font-size:34px;font-weight:700;line-height:1.1">Clinic Desk</div><div style="margin-top:8px;font-size:17px;color:#3C3C43">Log in with your mobile number</div>' + err +
           '<label class="phonein"><span>+91</span><input id="lp" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="10" placeholder="10-digit mobile" value="' + esc(load('cd_ph') || '') + '" aria-label="Mobile number"></label>' +
@@ -252,7 +253,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       function send(btn) {
         var ph = (S.loginPh || '').replace(/\D/g, '').slice(-10); if (ph.length < 10) return drawLogin('Enter your 10-digit mobile number.');
         if (btn) btn.disabled = true;
-        post({ action: 'otp_send', phone: ph }).then(function (r) { if (!r.ok) return drawLogin(r.error || 'Could not send the code.', mode === 'code' ? 'code' : 'login'); S.sentTo = r.sentTo; drawLogin('', 'code'); var o = document.getElementById('otp'); if (o) o.focus(); })
+        post({ action: 'otp_send', phone: ph }).then(function (r) { if (!r.ok) return drawLogin(r.error || 'Could not send the code.', mode === 'code' ? 'code' : 'login'); S.sentTo = r.sentTo; S.viaWa = !!r.viaWa; drawLogin('', 'code'); var o = document.getElementById('otp'); if (o) o.focus(); })
           .catch(function () { drawLogin('No internet. Try again.', mode); });
       }
       var sc = document.getElementById('sendcode');
@@ -263,7 +264,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         var go = function () { var c = otp.value.replace(/\D/g, ''); if (c.length !== 6) return; vf.disabled = true;
           post({ action: 'otp_verify', phone: S.loginPh, code: c, ua: uaShort() }).then(function (r) { if (!r.ok) return drawLogin(r.error || 'Could not log in.', 'code'); store('cd_sid', r.sid); store('cd_role', r.role); S.sid = r.sid; S.role = r.role; S.d = null; draw(); call({}); }).catch(function () { drawLogin('No internet. Try again.', 'code'); }); };
         vf.onclick = go; otp.oninput = function () { otp.value = otp.value.replace(/\D/g, '').slice(0, 6); if (otp.value.length === 6) go(); };
-        document.getElementById('resend').onclick = function () { send(this); };
+        var rs = document.getElementById('resend'); if (rs) rs.onclick = function () { send(this); };
       }
     }
     var isDoc = function () { return S.role === 'doctor' || S.role === 'owner'; };
