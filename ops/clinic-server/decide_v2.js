@@ -478,14 +478,17 @@ function seedDemo() {
   const tm = now.plus({ days: 1 }).toFormat('yyyy-MM-dd'); mem.wait = Object.assign({}, mem.wait || {}); mem.wait[tm] = [{ phone: '910000055130', lang: 'hl', at: now.toISO() }, { phone: '910000055131', lang: 'en', at: now.toISO() }];
   mem.nightSent = '';
   mem.ev = {}; const evAt = (ph, minsAgo, k, t) => { if (!mem.ev[ph]) mem.ev[ph] = []; mem.ev[ph].push({ at: now.minus({ minutes: minsAgo }).toISO(), k, t }); };
-  evAt('910000077412', 190, 'call', 'Called · nobody picked up'); evAt('910000077412', 190, 'bot', 'Bot sent a WhatsApp reply'); evAt('910000077412', 182, 'cb', 'Asked for a call back'); evAt('910000077412', 181, 'why', 'Reason: "Laser hair removal ka price kya hai, aur kitne session lagenge?"');
+  evAt('910000077412', 190, 'call', 'Called · nobody picked up'); evAt('910000077412', 190, 'bot', 'Bot sent a WhatsApp reply'); evAt('910000077412', 182, 'cb', 'Asked for a call back'); evAt('910000077412', 181, 'why', 'Reason: "Laser hair removal ka price kya hai, aur kitne session lagenge?"'); evAt('910000077412', 150, 'msg', 'Messaged: "Hello? Koi call nahi aaya"');
   evAt(pool[6].ph, 95, 'call', 'Called · nobody picked up'); evAt(pool[6].ph, 95, 'bot', 'Bot sent a WhatsApp reply'); evAt(pool[6].ph, 88, 'booked', 'Booked Thu 20 Nov, 4:30 PM');
   evAt('910000055120', 70, 'msg', 'Messaged: "Kal ki report dikhani hai, doctor kab milenge?"'); evAt('910000055120', 69, 'cb', 'Asked for a call back'); evAt('910000055120', 68, 'why', 'Reason: "Report dikhani hai, kal subah aa sakta hoon?"');
   evAt('910000055121', 140, 'cb', 'Asked for a call back'); evAt('910000055121', 139, 'why', 'Reason: "Bete ko chehre pe allergy ho gayi hai"'); evAt('910000055121', 60, 'done', 'Called back by ' + recName);
   evAt('910000070908', 30, 'call', 'Called · nobody picked up'); evAt('910000070908', 30, 'bot', 'Bot sent a WhatsApp reply');
   evAt(pool[11].ph, 50, 'msg', 'Messaged: "Hi"'); evAt(pool[11].ph, 48, 'token', 'Came to the clinic · token A16');
   mem.pname = { '910000055121': 'Anjali Singh', '910000055120': 'Ramesh Gupta' };
-  mem.callbacks = [{ phone: '910000077412', name: '', at: now.minus({ minutes: 182 }).toISO(), reason: 'Laser hair removal ka price kya hai, aur kitne session lagenge?' }, { phone: '910000055120', name: 'Ramesh Gupta', at: now.minus({ minutes: 69 }).toISO(), reason: 'Report dikhani hai, kal subah aa sakta hoon?' }];
+  evAt('910000055120', 40, 'try', 'Called by ' + recName); evAt('910000055120', 39, 'noans', 'No answer · ' + recName + ' will try again');
+  evAt('910000063311', 60 * 26, 'msg', 'Messaged: "Sunday ko clinic khula hai?"'); evAt('910000063311', 60 * 26 - 2, 'bot', 'Bot sent clinic timings'); mem.pname['910000063311'] = 'Kavita Rao';
+  evAt('910000063312', 60 * 28, 'call', 'Called · nobody picked up'); evAt('910000063312', 60 * 28, 'bot', 'Bot sent a WhatsApp reply'); evAt('910000063312', 60 * 27, 'booked', 'Booked Wed 18 Nov, 11:00 AM');
+  mem.callbacks = [{ phone: '910000077412', name: '', at: now.minus({ minutes: 182 }).toISO(), reason: 'Laser hair removal ka price kya hai, aur kitne session lagenge?', pinged: now.toISO() }, { phone: '910000055120', name: 'Ramesh Gupta', at: now.minus({ minutes: 69 }).toISO(), reason: 'Report dikhani hai, kal subah aa sakta hoon?', noans: 1, pinged: now.toISO() }];
   mem.st = {}; for (let i = 6; i >= 0; i--) { const d = now.minus({ days: i }); if (d.weekday === 7) continue; mem.st[d.toFormat('yyyy-MM-dd')] = { chats: 8 + Math.floor(rnd() * 8), booked: 2 + Math.floor(rnd() * 4), qr: 10 + Math.floor(rnd() * 9), mcalls: 3 + Math.floor(rnd() * 4), reminders: 2 + Math.floor(rnd() * 4) }; }
 }
 
@@ -685,7 +688,9 @@ if (mode === 'desk') {
     else if (b.action === 'note' && isDoc) { const pk = String(b.pk || ''); if (!mem.notes) mem.notes = {}; mem.notes[pk] = { t: String(b.text || '').slice(0, 600), at: now.toISO(), by: sess.name }; }
     else if (b.action === 'mc_done') { mem.mcalls = (mem.mcalls || []).filter(x => x.ph !== digits(b.phone)); }
     else if (b.action === 'wl_done') { for (const d of Object.keys(mem.wait || {})) mem.wait[d] = (mem.wait[d] || []).filter(w => w.phone !== digits(b.phone)); }
-    else if (b.action === 'cb_done') { const ph = digits(b.phone); if ((mem.callbacks || []).some(x => x.phone === ph)) ev(ph, 'done', 'Called back by ' + sess.name); mem.callbacks = (mem.callbacks || []).filter(x => x.phone !== ph); }
+    else if (b.action === 'cb_try') { const ph = digits(b.phone); const cb = (mem.callbacks || []).find(x => x.phone === ph); if (cb) { cb.tries = (cb.tries || 0) + 1; cb.tryAt = now.toISO(); cb.by = sess.name; ev(ph, 'try', 'Called by ' + sess.name); } }
+    else if (b.action === 'cb_noans') { const ph = digits(b.phone); const cb = (mem.callbacks || []).find(x => x.phone === ph); if (cb) { cb.noans = (cb.noans || 0) + 1; cb.tryAt = null; ev(ph, 'noans', 'No answer · ' + sess.name + ' will try again'); } }
+    else if (b.action === 'cb_done') { const ph = digits(b.phone); if ((mem.callbacks || []).some(x => x.phone === ph)) ev(ph, 'done', 'Talked · called back by ' + sess.name); mem.callbacks = (mem.callbacks || []).filter(x => x.phone !== ph); }
     // the state every screen needs
     const q = qRead();
     const cur = servingOf(q);
@@ -744,16 +749,20 @@ if (mode === 'desk') {
       const feed = Object.keys(mem.ev || {}).map(ph => ({ ph, l: (mem.ev[ph] || []).filter(e => e.at >= since) })).filter(x => x.l.length).map(x => {
         const last = x.l[x.l.length - 1]; const cb = (mem.callbacks || []).find(c => c.phone === x.ph);
         let st;
-        if (cb) st = { label: 'Waiting for a call back · ' + ago(cb.at), tone: 'bad' };
+        if (cb) st = { label: (cb.noans ? 'No answer ×' + cb.noans + ' · ' : 'Waiting ') + ago(cb.at), tone: 'bad' };
         else if (last.k === 'booked') st = { label: last.t + ' ✓', tone: 'ok' };
         else if (last.k === 'token') st = { label: 'Came to the clinic ✓', tone: 'ok' };
         else if (last.k === 'done') st = { label: last.t + ' ✓', tone: 'ok' };
-        else if (last.k === 'bot' || last.k === 'call') st = { label: 'Got our WhatsApp · no reply yet', tone: 'mid' };
+        else if (last.k === 'bot' || last.k === 'call') st = { label: 'No reply to our WhatsApp', tone: 'mid' };
         else st = { label: 'Talking to the bot', tone: 'mid' };
-        return { ph: x.ph, name: nameOf(x.ph), shown: mask(x.ph), call: '+' + x.ph, at: DateTime.fromISO(x.l[0].at).setZone(TZ).toFormat('h:mm a'), last: last.at, st, reason: cb ? cb.reason || '' : '', items: x.l.map(e => ({ t: DateTime.fromISO(e.at).setZone(TZ).toFormat('h:mm a'), k: e.k, txt: e.t })) };
+        const lastDay = DateTime.fromISO(last.at).setZone(TZ).toFormat('yyyy-MM-dd'); return { ph: x.ph, day: lastDay === todayStr ? 'today' : 'before', tried: !!(cb && cb.tryAt), name: nameOf(x.ph), shown: '+' + x.ph.slice(0, 2) + ' ' + x.ph.slice(2, 7) + ' ' + x.ph.slice(7), call: '+' + x.ph, at: DateTime.fromISO(x.l[0].at).setZone(TZ).toFormat('h:mm a'), last: last.at, st, reason: cb ? cb.reason || '' : '', items: x.l.map(e => ({ t: DateTime.fromISO(e.at).setZone(TZ).toFormat('h:mm a'), k: e.k, txt: e.t })) };
       }).sort((a, c) => c.last.localeCompare(a.last)).slice(0, 40);
       res.act = { attention: feed.filter(x => x.st.tone === 'bad'), feed };
     }
+    { const rg = ((S.hours || {})[now.toFormat('ccc').toLowerCase()] || []); const hm = now.toFormat('HH:mm'); const cur = rg.find(r => hm < r.split('-')[1].trim()) || rg[rg.length - 1]; const f = t => DateTime.fromFormat(t.trim(), 'HH:mm').toFormat('h:mm a').replace(':00', '');
+      res.opd = cur ? { label: (+cur.split('-')[0].slice(0, 2) < 14 ? 'Morning OPD' : 'Evening OPD'), time: cur.split('-').map(f).join(' – ') } : { label: 'No OPD today', time: '' }; }
+      // tell reception on WhatsApp once if a call back waits 30+ min (only reaches staff who messaged the bot in the last 24 h)
+      for (const cb of (mem.callbacks || [])) if (!cb.pinged && cb.at < now.minus({ minutes: 30 }).toISO() && isOpenNow()) { cb.pinged = now.toISO(); for (const st of (S.staff || []).filter(x => x.role === 'reception' && inWindow(x.phone))) out.push(textTo(st.phone, '⏰ Call back pending 30+ min: ' + ((mem.pname || {})[cb.phone] || cb.name || '+' + cb.phone) + (cb.reason ? ' — "' + cb.reason + '"' : '') + '\nCall: +' + cb.phone)); }
     if (b.view === 'register' && isDoc) {
       const per = ['today', 'week', 'month'].includes(b.period) ? b.period : 'today';
       const from = per === 'today' ? todayStr : per === 'week' ? now.minus({ days: 6 }).toFormat('yyyy-MM-dd') : now.startOf('month').toFormat('yyyy-MM-dd');
@@ -793,7 +802,7 @@ if (mode === 'desk') {
       res.inbox = {
         calls: (mem.mcalls || []).slice(-40).reverse().map(x => ({ phone: x.ph, shown: mask(x.ph), call: '+' + x.ph, at: DateTime.fromISO(x.at).setZone(TZ).toFormat(DateTime.fromISO(x.at) > now.startOf('day') ? 'h:mm a' : 'd LLL'), booked: bookedAfter(x.ph, x.at) })),
         live: lv.map(p => { const l = (mem.chat || {})[p] || []; const last = l[l.length - 1]; return { phone: p, shown: mask(p), name: mem.live[p].name || 'Patient', last: last ? last.t : '', at: last ? DateTime.fromISO(last.at).setZone(TZ).toFormat('h:mm a') : '' }; }),
-        callbacks: (mem.callbacks || []).slice(-20).map(x => ({ phone: x.phone, shown: mask(x.phone), call: '+' + x.phone, name: x.name, reason: x.reason || '', at: DateTime.fromISO(x.at).setZone(TZ).toFormat('h:mm a') })),
+        callbacks: (mem.callbacks || []).slice(-20).map(x => ({ phone: x.phone, shown: mask(x.phone), call: '+' + x.phone, name: (mem.pname || {})[x.phone] || x.name, reason: x.reason || '', tried: !!x.tryAt, noans: x.noans || 0, at: DateTime.fromISO(x.at).setZone(TZ).toFormat('h:mm a') })),
         wait: Object.keys(mem.wait || {}).filter(d => d >= todayStr).flatMap(d => (mem.wait[d] || []).map(w => ({ phone: w.phone, shown: mask(w.phone), call: '+' + w.phone, day: DateTime.fromISO(d).toFormat('ccc d LLL') }))),
       };
       if (b.chat) { const ph = digits(b.chat); res.chat = { phone: ph, shown: mask(ph), name: (mem.live[ph] || {}).name || 'Patient', open: !!mem.live[ph], msgs: ((mem.chat || {})[ph] || []).map(m => ({ who: m.who, t: m.t, at: DateTime.fromISO(m.at).setZone(TZ).toFormat('h:mm a') })) }; }
@@ -869,7 +878,7 @@ if (mode === 'summary') {
 // ================= a message from WhatsApp =================
 const me = digits(msg.from);
 for (const k of Object.keys(mem.wait)) if (k < now.toFormat('yyyy-MM-dd')) delete mem.wait[k];
-if (!mem.seen[me] || DateTime.fromISO(mem.seen[me]) < now.minus({ hours: 24 })) { if (!staffOf2(me)) { bump('chats'); ev(me, 'msg', msg.type === 'text' && msg.text ? 'Messaged: "' + String(msg.text).slice(0, 90) + '"' : 'Started a WhatsApp chat'); } }
+if (!mem.seen[me] || DateTime.fromISO(mem.seen[me]) < now.minus({ hours: 24 })) { if (!staffOf2(me)) { bump('chats'); if (msg.type === 'text' && msg.text) ev(me, 'msg', 'Messaged: "' + String(msg.text).slice(0, 90) + '"'); else if (msg.type !== 'interactive' && msg.type !== 'button') ev(me, 'msg', 'Started a WhatsApp chat'); } }
 if (!mem.seen[me] || DateTime.fromISO(mem.seen[me]) < now.minus({ minutes: 20 })) mem.seen[me] = now.toISO();
 let id = String(msg.replyId || '').trim();
 const raw = String(msg.text || '').trim();
@@ -1028,7 +1037,11 @@ else if (id.startsWith('PB|') || (!id && raw.split(/\s+/).length >= 3 && !has(['
   if (tk) { tk.prob = id.startsWith('PB|') ? id.slice(3) : '"' + raw.slice(0, 120) + '"'; }
   payload = text(lang === 'en' ? 'Thanks 🙏 The doctor will see this.' : 'Shukriya 🙏 Doctor ko bata diya gaya hai.');
 }
-else if (!id && msg.type === 'text' && raw.length >= 3 && !/^(hi|hello|hey|ok|okay|thanks|thank you|haan|ha|yes|no|nahi|menu|token|login|code)$/i.test(raw.trim()) && (mem.callbacks || []).some(x => x.phone === me && !x.reason && x.at > now.minus({ hours: 12 }).toISO())) {
+else if ((String(id || '').startsWith('CBR|') || (!id && ['audio', 'voice'].includes(msg.type))) && (mem.callbacks || []).some(x => x.phone === me && !x.reason)) {
+  const cb = mem.callbacks.find(x => x.phone === me && !x.reason); const isV = !id; cb.reason = isV ? 'Sent a voice note (ask on the call)' : id.slice(4); ev(me, 'why', isV ? 'Sent a voice note about it' : 'Reason: ' + id.slice(4));
+  payload = text(lang === 'en' ? 'Thank you 🙏 Noted. The clinic will call you soon.' : 'Shukriya 🙏 Note kar liya hai. Clinic se jaldi call aayega.');
+}
+else if (!id && msg.type === 'text' && raw.length >= 3 && !/^(hi|hello|hey|ok|okay|thanks|thank you|haan|ha|yes|no|nahi|menu|token|login|code)$/i.test(raw.trim()) && (mem.callbacks || []).some(x => x.phone === me && !x.reason && x.at > now.minus({ minutes: 10 }).toISO())) {
   const cb = mem.callbacks.find(x => x.phone === me && !x.reason); cb.reason = raw.slice(0, 220); ev(me, 'why', 'Reason: "' + raw.slice(0, 160) + '"');
   payload = text(lang === 'en' ? 'Thank you 🙏 We have noted it. The clinic will call you soon.' : 'Shukriya 🙏 Note kar liya hai. Clinic se jaldi call aayega.');
 }
@@ -1070,7 +1083,7 @@ else if (adminCmd) {
 }
 // ---------- patients ----------
 else if (id === 'MC_Q') { payload = text(L.mcQ); }
-else if (id === 'MC_CALL') { notify = true; payload = text(L.mcCall + (lang === 'en' ? '\n\nWhat is it about? Write it in one line so the right person calls you.' : '\n\nKis baare mein baat karni hai? Ek line mein likh dijiye, taaki sahi jaankari ke saath call aaye.')); if (!mem.callbacks) mem.callbacks = []; mem.callbacks = mem.callbacks.filter(x => x.phone !== me).concat([{ phone: me, name: msg.name || '', at: now.toISO(), reason: '' }]).slice(-50); ev(me, 'cb', 'Asked for a call back'); }
+else if (id === 'MC_CALL') { notify = true; payload = buttons(L.mcCall + (lang === 'en' ? '\n\nWhat is it about? Tap one, or type it / send a voice note.' : '\n\nKis baare mein baat karni hai? Ek button dabaiye, ya likh kar / voice note bhej dijiye.'), lang === 'en' ? [['CBR|Price / fees', 'Price / fees'], ['CBR|Appointment', 'Appointment'], ['CBR|Show report', 'Show report']] : [['CBR|Price / fees', 'Price / fees'], ['CBR|Appointment', 'Appointment'], ['CBR|Report dikhani hai', 'Report dikhani hai']]); if (!mem.callbacks) mem.callbacks = []; mem.callbacks = mem.callbacks.filter(x => x.phone !== me).concat([{ phone: me, name: msg.name || '', at: now.toISO(), reason: '' }]).slice(-50); ev(me, 'cb', 'Asked for a call back'); }
 else if (!['text', 'interactive', 'button'].includes(msg.type)) { payload = buttons(L.textOnly, menuBtns()); }
 else if (!mem.lang[me] && !id && !upcoming.length && !holding) {
   payload = buttons(T.en.pickLang, [['LANG|en', 'English'], ['LANG|hl', 'Hinglish'], ['LIVE', 'Live Chat']]);
