@@ -5,7 +5,7 @@ const S = $('Clinic Settings').first().json;
 const TZ = 'Asia/Kolkata';
 const now = DateTime.now().setZone(TZ);
 const mem = $getWorkflowStaticData('global');
-mem.lang = mem.lang || {}; mem.seen = mem.seen || {}; mem.svc = mem.svc || {};
+mem.lang = mem.lang || {}; mem.seen = mem.seen || {}; mem.svc = mem.svc || {}; mem.wait = mem.wait || {};
 let msg = null;
 try { msg = $('Parse message').first().json; } catch (e) { msg = null; }
 const mode = msg ? 'chat' : 'summary';
@@ -90,6 +90,7 @@ function dayWord(d, lg) {
 function whenText(dStr, tStr, lg) {
   const dt = at(dStr, tStr);
   const w = dayWord(dt, lg);
+  if (lg === 'hl') return `${w ? w + ', ' : ''}${dt.toFormat('ccc d LLL')}, ${dt.toFormat('h:mm a')}`;
   return `${w ? w + ', ' : ''}${dt.toFormat('ccc d LLL')} at ${dt.toFormat('h:mm a')}`;
 }
 function dateLabel(dStr, lg) {
@@ -117,6 +118,12 @@ const T = {
     pickDate: 'Please choose a date for your appointment.',
     pickSvc: 'What would you like to book?', svcBtn: 'Choose', svcTitle: 'Treatments',
     svcChosen: n => `${n}. Please choose a date.`,
+    earliest: 'Earliest free slot', waitRow: 'None of these work?', waitRowD: 'Join the waitlist for a day',
+    waitPick: 'Which day do you want? If a slot opens up that day, we will message you right away.',
+    waitDone: d => `Done. You are on the waitlist for ${d}. The moment a slot opens, we will message you here.`,
+    slotOpen: (d) => `Good news: a slot just opened on ${d}. Tap below to book it before someone else does.`, bookIt: 'Book this slot',
+    feeLine: f => `\n💰 Consultation fee ₹${f}, pay at the clinic. No booking charge.`,
+    morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening',
     dateBtn: 'Choose date', datesTitle: 'Available dates', slotsFree: n => `${n} slot${n > 1 ? 's' : ''} available`,
     noSlots: `Sorry, there are no free slots in the next ${S.daysAhead} days. Please call us on ${S.clinicPhone}.`,
     dayFull: 'That day is now full. Please choose another date.',
@@ -124,7 +131,7 @@ const T = {
     held: w => `${w} is reserved for you for ${S.holdMinutes} minutes.\n\nWho is the appointment for? Tap *Myself* or type the patient's name.`,
     selfBtn: 'Myself',
     askName: "Please type the patient's full name (for example: Riya Sharma), or tap *Myself*.",
-    confirmed: (r, w) => `Your appointment is confirmed.\n\n*${D}*\n${C}\n\n📅 ${w}\n👤 ${r.name}${r.service ? `\n💆 ${r.service}` : ''}\n\nPlease arrive 10 minutes early and bring any previous reports or prescriptions. We will send you a reminder before your visit.`,
+    confirmed: (r, w) => `Your appointment is confirmed.\n\n*${D}*\n${C}\n\n📅 ${w}\n👤 ${r.name}${r.service ? `\n💆 ${r.service}` : ''}${S.fee ? T.en.feeLine(S.fee) : ''}\n\nPlease arrive 10 minutes early and bring any previous reports or prescriptions. We will send you a reminder before your visit.`,
     changeBtn: 'Change time', cancelBtn: 'Cancel',
     holdCancelled: 'No problem, the slot has been released. Send *Hi* whenever you want to book again.',
     limit: n => `You already have ${n} upcoming appointments, which is the maximum. Please cancel one to book a new time.`,
@@ -154,6 +161,12 @@ const T = {
     pickDate: 'Aap kis din aana chahenge?',
     pickSvc: 'Bataiye, aapko kis cheez ke liye appointment chahiye?', svcBtn: 'Select karein', svcTitle: 'Treatments',
     svcChosen: n => `${n} 👍\nAb bataiye, aap kis din aana chahenge?`,
+    earliest: 'Sabse pehla free slot', waitRow: 'Koi time suit nahi?', waitRowD: 'Waitlist mein naam daalein',
+    waitPick: 'Aapko kis din chahiye? Us din koi slot khulte hi hum aapko turant message karenge.',
+    waitDone: d => `Ho gaya. ${d} ki waitlist mein aapka naam add ho gaya hai. Slot khulte hi hum yahin message karenge.`,
+    slotOpen: (d) => `Good news: ${d} ka ek slot abhi khula hai. Kisi aur ke lene se pehle neeche dabakar book kar lijiye.`, bookIt: 'Ye slot book karein',
+    feeLine: f => `\n💰 Consultation fee ₹${f}, clinic par dena hai. Koi booking charge nahi.`,
+    morning: 'Subah', afternoon: 'Dopahar', evening: 'Shaam',
     dateBtn: 'Date select karein', datesTitle: 'Available dates', slotsFree: n => `${n} slot${n > 1 ? 's' : ''} available`,
     noSlots: `Sorry, agle ${S.daysAhead} din ke saare slots full hain. Please clinic ko call kar lijiye: ${S.clinicPhone}`,
     dayFull: 'Sorry, ye din full ho gaya hai. Please koi aur date select karein.',
@@ -161,7 +174,7 @@ const T = {
     held: w => `${w} ka slot aapke liye ${S.holdMinutes} minute ke liye hold kar diya hai.\n\nAppointment kiske liye hai? Apne liye hai toh *Mere liye* dabaiye, warna patient ka naam likh dijiye.`,
     selfBtn: 'Mere liye',
     askName: 'Please patient ka poora naam likh dijiye (jaise: Riya Sharma), ya *Mere liye* dabaiye.',
-    confirmed: (r, w) => `Aapka appointment confirm ho gaya hai ✅\n\n*${D}*\n${C}\n\n📅 ${w}\n👤 ${r.name}${r.service ? `\n💆 ${r.service}` : ''}\n\nPlease 10 minute pehle aa jaiye. Koi purani report ya prescription ho toh saath le aaiye. Visit se pehle hum aapko reminder bhej denge.`,
+    confirmed: (r, w) => `Aapka appointment confirm ho gaya hai ✅\n\n*${D}*\n${C}\n\n📅 ${w}\n👤 ${r.name}${r.service ? `\n💆 ${r.service}` : ''}${S.fee ? T.hl.feeLine(S.fee) : ''}\n\nPlease 10 minute pehle aa jaiye. Koi purani report ya prescription ho toh saath le aaiye. Visit se pehle hum aapko reminder bhej denge.`,
     changeBtn: 'Time change karein', cancelBtn: 'Cancel karein',
     holdCancelled: 'Koi baat nahi, slot cancel kar diya hai. Jab bhi book karna ho, bas *Hi* bhej dijiye.',
     limit: n => `Aapke already ${n} appointments booked hain. Naya book karne ke liye pehle ek cancel karna hoga.`,
@@ -199,6 +212,9 @@ const buttonsTo = (to, body, btns, header, footer) => {
 const listTo = (to, body, button, title, rowsOut, lg) => ({ messaging_product: 'whatsapp', to, type: 'interactive',
   interactive: { type: 'list', header: { type: 'text', text: String(C).slice(0, 60) }, body: { text: body }, footer: { text: T[lg].foot },
     action: { button: button.slice(0, 20), sections: [{ title: title.slice(0, 24), rows: rowsOut.slice(0, 10) }] } } });
+const sectionsTo = (to, body, button, sections, lg) => ({ messaging_product: 'whatsapp', to, type: 'interactive',
+  interactive: { type: 'list', header: { type: 'text', text: String(C).slice(0, 60) }, body: { text: body }, footer: { text: T[lg].foot },
+    action: { button: button.slice(0, 20), sections: sections.filter(x => x.rows.length).map(x => ({ title: x.title.slice(0, 24), rows: x.rows })) } } });
 const locationTo = to => (S.location && S.location.lat) ? { messaging_product: 'whatsapp', to, type: 'location',
   location: { latitude: S.location.lat, longitude: S.location.lng, name: C, address: S.address } } : null;
 const templateTo = (to, name, params, btnPayloads) => ({ messaging_product: 'whatsapp', to, type: 'template',
@@ -234,6 +250,7 @@ if (mode === 'summary') {
 
 // ================= a message from WhatsApp =================
 const me = digits(msg.from);
+for (const k of Object.keys(mem.wait)) if (k < now.toFormat('yyyy-MM-dd')) delete mem.wait[k];
 mem.seen[me] = now.toISO();
 let id = String(msg.replyId || '').trim();
 const raw = String(msg.text || '').trim();
@@ -243,7 +260,16 @@ const isAdmin = (S.adminNumbers || []).some(a => same(a, me));
 const mine = rows.filter(r => same(r.phone, me));
 const upcoming = mine.filter(r => active(r) && at(r.date, r.time) >= now).sort((a, b) => at(a.date, a.time) - at(b.date, b.time));
 const holding = mine.filter(r => r.status === 'holding' && holdFresh(r)).sort((a, b) => b.row_number - a.row_number)[0];
-const setStatus = (r, status, name) => { action = 'update'; rec = { ...r, status, name: name !== undefined ? name : r.name }; };
+const setStatus = (r, status, name) => {
+  action = 'update'; rec = { ...r, status, name: name !== undefined ? name : r.name };
+  if (['Cancelled', 'Rescheduled'].includes(status) && r.status !== 'holding' && at(r.date, r.time) > now) {
+    for (const w of (mem.wait[r.date] || [])) {
+      if (w.phone === me || !inWindow(w.phone)) continue;
+      const lg = ['en', 'hl'].includes(w.lang) ? w.lang : 'hl';
+      more.push(buttonsTo(w.phone, T[lg].slotOpen(whenText(r.date, r.time, lg)), [[`S|${r.date}|${r.time}`, T[lg].bookIt]]));
+    }
+  }
+};
 const byRow = n => mine.find(r => String(r.row_number) === String(n));
 
 // language
@@ -259,25 +285,29 @@ const list = (body, button, title, rowsOut) => listTo(msg.from, body, button, ti
 const canBookMore = upcoming.length < S.maxBookingsPerPhone;
 const menuBtns = () => [canBookMore ? ['NEW', upcoming.length ? L.anotherBtn : L.bookBtn] : null, upcoming.length ? ['CANCEL', L.cancelBookingBtn] : null, ['TALK', L.talkBtn]].filter(Boolean);
 function dateList(intro) {
-  const out = [];
-  for (let i = 0; i <= S.daysAhead && out.length < 10; i++) {
+  const out = []; let first = null;
+  for (let i = 0; i <= S.daysAhead && out.length < 8; i++) {
     const d = now.plus({ days: i }).toFormat('yyyy-MM-dd');
-    const n = slotsFor(d).length;
-    if (n > 0) out.push({ id: `D|${d}`, title: dateLabel(d, lang).slice(0, 24), description: L.slotsFree(n) });
+    const sl = slotsFor(d);
+    if (sl.length > 0) { if (!first) first = [d, sl[0]]; out.push({ id: `D|${d}`, title: dateLabel(d, lang).slice(0, 24), description: L.slotsFree(sl.length) }); }
   }
-  if (!out.length) return text(`${intro}\n\n${L.noSlots}`);
-  return list(intro, L.dateBtn, L.datesTitle, out);
+  if (!out.length) return buttons(`${intro}\n\n${L.noSlots}`, [['WL', L.waitRowD.slice(0, 20)], ['TALK', L.talkBtn]]);
+  const sections = [
+    { title: L.earliest, rows: [{ id: `S|${first[0]}|${first[1]}`, title: `${dateLabel(first[0], lang)} · ${timeLabel(first[0], first[1], lang)}`.slice(0, 24), description: L.earliest }] },
+    { title: L.datesTitle, rows: out },
+    { title: L.waitRow, rows: [{ id: 'WL', title: L.waitRow.slice(0, 24), description: L.waitRowD }] },
+  ];
+  return sectionsTo(msg.from, intro, L.dateBtn, sections, lang);
 }
 function timeList(d, after) {
-  let s = slotsFor(d);
-  if (after) s = s.filter(x => x > after);
-  if (!s.length) return dateList(L.dayFull);
-  let out;
-  if (s.length > 10) {
-    out = s.slice(0, 9).map(x => ({ id: `S|${d}|${x}`, title: timeLabel(d, x, lang) }));
-    out.push({ id: `M|${d}|${s[8]}`, title: L.later });
-  } else out = s.map(x => ({ id: `S|${d}|${x}`, title: timeLabel(d, x, lang) }));
-  return list(L.timesFor(dateLabel(d, lang)), L.timeBtn, L.timesTitle, out);
+  let sl = slotsFor(d);
+  if (after) sl = sl.filter(x => x > after);
+  if (!sl.length) return dateList(L.dayFull);
+  const show = sl.length > 10 ? sl.slice(0, 9) : sl;
+  const part = x => { const h = Number(x.slice(0, 2)); return h < 12 ? 'morning' : h < 16 ? 'afternoon' : 'evening'; };
+  const sections = ['morning', 'afternoon', 'evening'].map(k => ({ title: L[k], rows: show.filter(x => part(x) === k).map(x => ({ id: `S|${d}|${x}`, title: timeLabel(d, x, lang) })) }));
+  if (sl.length > 10) sections.push({ title: L.later, rows: [{ id: `M|${d}|${sl[8]}`, title: L.later }] });
+  return sectionsTo(msg.from, L.timesFor(dateLabel(d, lang)), L.timeBtn, sections, lang);
 }
 const svcs = S.services || [];
 const svcName = sid => { const x = svcs.find(v => v.id === sid); return x ? x.name : ''; };
@@ -356,6 +386,17 @@ else if (holding && (id === 'SELF' || (!id && raw && !raw.includes('?') && raw.s
   else { setStatus(holding, 'Booked', name); payload = confirmMsg({ ...holding, name }); pin(); }
 }
 else if (holding && has(['cancel'])) { setStatus(holding, 'Cancelled'); payload = text(L.holdCancelled); }
+else if (id === 'WL') {
+  const rowsW = [];
+  for (let i = 0; i <= S.daysAhead && rowsW.length < 10; i++) { const d = now.plus({ days: i }).toFormat('yyyy-MM-dd'); if (!holidays.includes(d) && ((S.hours || {})[DateTime.fromISO(d).toFormat('ccc').toLowerCase()] || []).length) rowsW.push({ id: `WD|${d}`, title: dateLabel(d, lang).slice(0, 24) }); }
+  payload = list(L.waitPick, L.dateBtn, L.datesTitle, rowsW);
+}
+else if (id.startsWith('WD|')) {
+  const d = id.split('|')[1];
+  mem.wait[d] = (mem.wait[d] || []).filter(w => w.phone !== me);
+  mem.wait[d].push({ phone: me, lang, at: now.toISO() });
+  payload = text(L.waitDone(dateLabel(d, lang)));
+}
 else if (id.startsWith('TR|')) { mem.svc[me] = id.split('|')[1]; payload = dateList(L.svcChosen(svcName(mem.svc[me]))); }
 else if (id.startsWith('S|')) {
   const [, d, tm] = id.split('|');
