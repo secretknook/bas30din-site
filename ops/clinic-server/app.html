@@ -97,6 +97,37 @@ button.irow:active,a.irow:active{background:#E5E5EA}
 .isheet{background:#F2F2F7;width:100%;max-width:520px;max-height:92vh;overflow:auto;border-radius:12px 12px 0 0;padding:6px 16px calc(env(safe-area-inset-bottom) + 24px);box-sizing:border-box;display:flex;flex-direction:column}
 .isheet .grab{background:#C4C4C7;width:36px;height:5px;border-radius:3px;align-self:center}
 .ishead{display:flex;justify-content:space-between;align-items:center;padding-top:10px}
+
+/* ---- v7: doctor app in the v5 look ---- */
+.wrap.i.dwhite{background:#FFF}
+.dpage{color:#101828;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+.dstat{height:64px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:12.5px;font-weight:600;line-height:1.2;text-align:center;font-family:inherit;padding:0 2px}
+.dcard{border:1px solid #EAECF0;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;background:#FFF}
+.dcap{font-size:12px;font-weight:700;letter-spacing:.6px;color:#175CD3}
+.dplain{border:none;background:none;padding:0;text-align:left;display:flex;flex-direction:column;gap:4px;color:#101828;font-family:inherit;min-width:0}
+.dplain:disabled{cursor:default}
+.dchip{font-size:12.5px;font-weight:600;color:#344054;background:#F2F4F7;border-radius:12px;padding:4px 10px}
+.dbtn{height:48px;border-radius:12px;border:none;background:#175CD3;color:#FFF;font-size:16px;font-weight:700;font-family:inherit;width:100%}
+.dbtn:disabled{opacity:.45;cursor:default}
+.dbtn2{height:46px;border-radius:12px;border:1px solid #D0D5DD;background:#FFF;color:#344054;font-size:15px;font-weight:600;font-family:inherit;width:100%;margin-top:6px}
+.dsec{padding:20px 16px 8px;display:flex;justify-content:space-between;align-items:baseline;font-size:15px;font-weight:700;color:#101828}
+.dsec span:last-child{font-size:13px;font-weight:400;color:#667085}
+.drow{width:100%;display:flex;align-items:center;gap:12px;padding:11px 0;border:none;border-top:1px solid #F2F4F7;background:none;text-align:left;color:#101828;font-family:inherit;text-decoration:none;box-sizing:border-box;min-height:48px}
+.drow:disabled{cursor:default}
+.dsub{font-size:13px;color:#667085;line-height:1.4}
+.drow .dsub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dtile{border:1px solid #EAECF0;border-radius:12px;background:#FFF;padding:12px;display:flex;flex-direction:column;align-items:flex-start;font-family:inherit;color:#101828}
+.dwarn{margin:8px 16px 0;width:calc(100% - 32px);border:none;border-radius:12px;background:#FFFAEB;color:#B54708;font-size:14px;font-weight:600;padding:12px;text-align:left;font-family:inherit}
+.dmini{height:34px;padding:0 12px;border-radius:8px;border:1px solid #D0D5DD;background:#FFF;color:#344054;font-size:13px;font-weight:600;display:flex;align-items:center;text-decoration:none;flex-shrink:0;font-family:inherit}
+.dinput{height:46px;border:1px solid #D0D5DD;border-radius:10px;padding:0 12px;font-size:16px;font-family:inherit;width:100%;box-sizing:border-box;color:#101828;background:#FFF}
+.dlab{font-size:13px;font-weight:600;color:#475467;margin-top:12px;display:block}
+.dh{margin:4px 0 4px;font-size:26px;font-weight:700;letter-spacing:-.3px}
+.dopt{height:48px;border-radius:12px;font-size:14px;font-weight:600;font-family:inherit}
+.itabs.dtabs{background:#FFF;-webkit-backdrop-filter:none;backdrop-filter:none;border-top:1px solid #EAECF0}
+.itabs.dtabs button{font-size:12px;color:#667085}
+.itabs.dtabs button.on{color:#175CD3;font-weight:600}
+.asbar{position:sticky;top:0;z-index:7;background:#101828;color:#FFF;font-size:13px;display:flex;justify-content:space-between;align-items:center;padding:calc(env(safe-area-inset-top) + 8px) 12px 8px 16px}
+.asbar button{border:none;background:#FFF;color:#101828;border-radius:14px;height:28px;padding:0 12px;font-size:13px;font-weight:600;font-family:inherit}
 </style>
 </head>
 <body>
@@ -187,26 +218,47 @@ button.irow:active,a.irow:active{background:#E5E5EA}
       seg: 'calls', per: 'today', q: '', pk: null, busy: false, err: '' };
     var C = { blue: '#0A63D6', sec: '#6C6C70', ok: '#1E7A34', warn: '#C93400', bad: '#D70015' };
     function logout() { store('cd_sid', null); store('cd_role', null); S.sid = null; S.d = null; drawLogin(); }
-    function drawLogin(msg) {
-      var bn = load('cd_bot') || '15551823589';
-      $app.innerHTML = '<div class="wrap i" style="padding:calc(env(safe-area-inset-top) + 88px) 24px 32px;background:#FFF">' +
-        '<div style="font-size:34px;font-weight:700;letter-spacing:.2px;line-height:1.1">Clinic Desk</div>' +
-        '<div style="margin-top:10px;font-size:17px;line-height:1.45;color:#3C3C43">Send <b>LOGIN</b> on WhatsApp from the number your clinic added for you. You will get a login link.</div>' +
-        (msg ? '<div style="margin-top:18px;padding:12px 14px;border-radius:12px;background:#FFF2F2;color:' + C.bad + ';font-size:15px">' + esc(msg) + '</div>' : '') +
-        '<div style="flex:1"></div>' +
-        '<a class="ib pri" style="text-decoration:none" href="https://wa.me/' + esc(bn) + '?text=LOGIN">Get login link on WhatsApp</a>' +
-        '<div style="margin-top:12px;text-align:center;font-size:13px;color:' + C.sec + '">No password. The link works once.</div></div>';
+    function uaShort() { var u = navigator.userAgent; var os = /Android/.test(u) ? 'Android' : /iPhone|iPad/.test(u) ? 'iPhone' : /Windows/.test(u) ? 'Windows' : /Mac/.test(u) ? 'Mac' : 'Phone';
+      var br = /Edg\//.test(u) ? 'Edge' : /Chrome\//.test(u) ? 'Chrome' : /Safari\//.test(u) ? 'Safari' : /Firefox/.test(u) ? 'Firefox' : 'Browser'; return br + ' · ' + os; }
+    function drawLogin(msg, mode) {
+      var bn = load('cd_bot') || '15551823589'; mode = mode || 'login';
+      var top = '<div class="wrap i" style="padding:calc(env(safe-area-inset-top) + 72px) 24px calc(env(safe-area-inset-bottom) + 28px);background:#FFF">';
+      var err = msg ? '<div style="margin-top:16px;padding:12px 14px;border-radius:12px;background:#FFF2F2;color:' + C.bad + ';font-size:15px">' + esc(msg) + '</div>' : '';
+      if (mode === 'forgot') {
+        $app.innerHTML = top + '<button class="iback" data-lmode="login" style="padding:0;margin-bottom:18px"><svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2L2 10l8 8"/></svg>Log in</button>' +
+          '<div style="font-size:30px;font-weight:700;line-height:1.15">Forgot password</div><div style="margin-top:10px;font-size:17px;line-height:1.45;color:#3C3C43">Send <b>RESET</b> on WhatsApp from your own number. You will get a link to set a new password.</div>' +
+          '<div style="flex:1"></div><a class="ib pri" style="text-decoration:none" href="https://wa.me/' + esc(bn) + '?text=RESET">Send RESET on WhatsApp</a><div style="margin-top:12px;text-align:center;font-size:13px;color:' + C.sec + '">The link only goes to your own WhatsApp, so nobody else can reset your password.</div></div>';
+      } else if (mode === 'setpw') {
+        $app.innerHTML = top + '<div style="font-size:30px;font-weight:700;line-height:1.15">Set your password</div><div style="margin-top:10px;font-size:17px;line-height:1.45;color:#3C3C43">Next time, log in with your phone number and this password.</div>' + err +
+          '<div class="ilist" style="margin:24px 0 0;background:#F2F2F7"><label class="ifield" style="background:#F2F2F7"><span style="width:110px">Password</span><input id="np1" type="password" autocomplete="new-password" placeholder="6+ characters"></label><label class="ifield" style="border:none;background:#F2F2F7"><span style="width:110px">Again</span><input id="np2" type="password" autocomplete="new-password"></label></div>' +
+          '<div style="flex:1"></div><button class="ib pri" id="setpw">Save password</button></div>';
+      } else {
+        $app.innerHTML = top + '<div style="font-size:34px;font-weight:700;line-height:1.1">Clinic Desk</div><div style="margin-top:8px;font-size:17px;color:#3C3C43">Log in to your clinic</div>' + err +
+          '<div class="ilist" style="margin:26px 0 0;background:#F2F2F7"><label class="ifield" style="background:#F2F2F7"><span style="width:84px">Phone</span><input id="lp" type="tel" inputmode="tel" autocomplete="tel" placeholder="10-digit mobile" value="' + esc(load('cd_ph') || '') + '"></label><label class="ifield" style="border:none;background:#F2F2F7"><span style="width:84px">Password</span><input id="lw" type="password" autocomplete="current-password"></label></div>' +
+          '<button class="ib pri" id="dologin" style="margin-top:16px">Log in</button><button class="ilink" data-lmode="forgot" style="margin-top:14px;align-self:center">Forgot password?</button>' +
+          '<div style="flex:1"></div><div style="text-align:center;font-size:15px;color:' + C.sec + '">First time here?</div><a class="ib" style="text-decoration:none;background:#F2F2F7" href="https://wa.me/' + esc(bn) + '?text=LOGIN">Get login link on WhatsApp</a>' +
+          '<div style="margin-top:10px;text-align:center;font-size:13px;color:' + C.sec + '">Doctor and reception each log in with their own number and see their own app.</div></div>';
+      }
+      [].forEach.call($app.querySelectorAll('[data-lmode]'), function (b) { b.onclick = function () { drawLogin('', b.getAttribute('data-lmode')); }; });
+      var dl = document.getElementById('dologin');
+      if (dl) { var go = function () { var ph = document.getElementById('lp').value.replace(/\D/g, ''), pw = document.getElementById('lw').value; if (ph.length < 10) return drawLogin('Enter your 10-digit mobile number.'); store('cd_ph', ph.slice(-10)); dl.disabled = true;
+          post({ action: 'pw_login', phone: ph, pw: pw, ua: uaShort() }).then(function (r) { if (!r.ok) return drawLogin(r.error || 'Could not log in.'); store('cd_sid', r.sid); store('cd_role', r.role); S.sid = r.sid; S.role = r.role; S.d = null; draw(); call({}); }).catch(function () { drawLogin('No internet. Try again.'); }); };
+        dl.onclick = go; document.getElementById('lw').onkeydown = function (e) { if (e.key === 'Enter') go(); }; }
+      var sp = document.getElementById('setpw');
+      if (sp) sp.onclick = function () { var a = document.getElementById('np1').value, b2 = document.getElementById('np2').value; if (a.length < 6) return drawLogin('Use at least 6 characters.', 'setpw'); if (a !== b2) return drawLogin('The two passwords are not the same.', 'setpw');
+        sp.disabled = true; post({ action: 'set_pw', pw: a, sid: S.sid }).then(function (r) { if (r.pwSet) { S.needPw = false; toast('Password saved'); draw(); call({}); } else drawLogin(r.error || 'Could not save.', 'setpw'); }); };
     }
     var isDoc = function () { return S.role === 'doctor' || S.role === 'owner'; };
-    function tabsFor(role) { return role === 'doctor' ? ['today', 'register', 'patients'] : role === 'owner' ? ['queue', 'today', 'register', 'inbox', 'patients'] : ['queue', 'inbox', 'patients']; }
+    function tabsFor(role) { return (role === 'doctor' || role === 'owner') && S.viewAs !== 'reception' ? ['today', 'patients', 'register', 'clinic'] : ['queue', 'inbox', 'patients']; }
     var ICON = {
       queue: '<path d="M4 6h16M4 12h16M4 18h10"/>',
       today: '<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/>',
       register: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
       inbox: '<path d="M4 13l2.5-7h11l2.5 7v5H4z"/><path d="M4 13h5l1 2h4l1-2h5"/>',
+      clinic: '<path d="M5 20V11M12 20V5M19 20v-6"/>',
       patients: '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.9-5 5.5-5s4.9 1.8 5.5 5"/><path d="M15.5 5.3a3 3 0 0 1 0 5.4M17.5 14.4c1.6.7 2.7 2.3 3 4.6"/>'
     };
-    var LAB = { queue: 'Queue', today: 'Today', register: 'Register', inbox: 'Inbox', patients: 'Patients' };
+    var LAB = { queue: 'Queue', today: 'Today', register: 'Register', inbox: 'Inbox', patients: 'Patients', clinic: 'Clinic' };
     var PHONE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>';
     var CHEV = '<svg width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="#C4C4C7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0"><path d="M1 1l6 6-6 6"/></svg>';
     var GEAR = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg>';
@@ -352,6 +404,100 @@ button.irow:active,a.irow:active{background:#E5E5EA}
       return h + '<div style="height:24px"></div>';
     }
 
+    // ---------- doctor app (the v5 look) ----------
+    var DS = { in: ['In clinic', '#12B76A', '#ECFDF3', '#067647'], late: ['Running late', '#F79009', '#FFFAEB', '#B54708'], away: ['Away', '#F04438', '#FEF3F2', '#B42318'], leave: ['On leave', '#98A2B3', '#F2F4F7', '#344054'] };
+    function greet() { var h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; }
+    function docName() { var n = (S.d.cfg && S.d.cfg.doctorName) || S.d.clinic.doctor || ''; var p = n.replace(/^Dr\.?\s*/i, '').split(' ')[0]; return p ? 'Dr. ' + p : 'Doctor'; }
+    function histLine(x) { var a = []; a.push(x.visits ? 'Visit ' + (x.visits + 1) + ' · last ' + x.last : 'First visit'); return a.join(''); }
+    function scrDocToday() {
+      var d = S.d, dc = d.doc, k = DS[dc.status] ? dc.status : 'in', bo = d.boon || { next: [], lost: [] }, q = d.queue;
+      var dt = new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+      var lab = k === 'late' ? 'Running ' + dc.mins + ' min late' : k === 'away' ? 'Away' + (dc.until ? ', back ~' + dc.until : '') : DS[k][0];
+      var h = '<div class="dpage"><div style="padding:calc(env(safe-area-inset-top) + 20px) 16px 0"><div style="font-size:13px;color:#667085">' + esc(dt) + '</div><h1 style="margin:2px 0 0;font-size:24px;font-weight:700;letter-spacing:-.3px">' + esc(greet() + ', ' + docName()) + '</h1></div>' +
+        '<div style="margin:16px 16px 0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px">' + ['in', 'late', 'away', 'leave'].map(function (s) {
+          var on = s === k; return '<button class="dstat" data-dst="' + s + '" aria-pressed="' + on + '" style="border:' + (on ? '1.5px solid ' + DS[s][1] : '1px solid #EAECF0') + ';background:' + (on ? DS[s][2] : '#FFF') + ';color:' + (on ? DS[s][3] : '#344054') + '"><span class="dot" style="width:10px;height:10px;background:' + DS[s][1] + '"></span><span>' + DS[s][0] + '</span></button>'; }).join('') + '</div>' +
+        '<div style="margin:8px 16px 0;font-size:12.5px;color:#667085;display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#12B76A" stroke-width="2.4" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>' + esc(lab) + ' · shown to reception and patients' + (dc.setAt ? ' · updated ' + esc(dc.setAt) : '') + '</div>';
+      var cur = bo.now, w = q.waiting;
+      h += '<div class="dcard" style="margin:16px 16px 0">';
+      if (cur) {
+        h += '<div style="display:flex;justify-content:space-between;align-items:center"><span class="dcap">WITH YOU NOW · TOKEN ' + esc(cur.tok) + '</span><span style="font-size:12.5px;color:#667085">' + w.length + ' waiting</span></div>' +
+          '<button class="dplain" data-pk="' + esc(cur.pk) + '"' + (cur.pk ? '' : ' disabled') + '><span style="font-size:20px;font-weight:700">' + esc(cur.name) + '</span>' + (cur.prob ? '<span style="font-size:15px;color:#344054;line-height:1.45">' + esc(cur.prob) + '</span>' : '') + '</button>' +
+          '<div style="display:flex;gap:6px;flex-wrap:wrap">' + '<span class="dchip">' + esc(histLine(cur)) + '</span>' + (cur.fu ? '<span class="dchip" style="background:#EFF4FF;color:#175CD3">Follow-up visit</span>' : '') + '</div>' +
+          (cur.note ? '<div style="background:#F9FAFB;border-radius:10px;padding:10px 12px;font-size:14px;line-height:1.45;color:#344054"><span style="font-size:12px;font-weight:600;color:#667085">YOUR LAST NOTE</span><br>' + esc(cur.note) + '</div>' : '');
+      } else {
+        h += '<div style="display:flex;justify-content:space-between;align-items:center"><span class="dcap">WITH YOU NOW</span><span style="font-size:12.5px;color:#667085">' + w.length + ' waiting</span></div><span style="font-size:20px;font-weight:700">Nobody yet</span>';
+      }
+      h += '<button class="dbtn" data-a="call_next"' + (!w.length && !cur ? ' disabled' : '') + '>' + (w.length ? 'Call next' : cur ? 'Done with ' + esc(cur.tok) : 'No one waiting') + '</button></div>';
+      h += '<div class="dsec"><span>Up next</span><span>' + (w.length ? w.length + ' waiting' + (bo.finish ? ' · done by ~' + esc(bo.finish) : '') : 'Nobody waiting') + '</span></div><div style="padding:0 16px">' +
+        (bo.next || []).map(function (x) {
+          return '<button class="drow" data-pk="' + esc(x.pk) + '"' + (x.pk ? '' : ' disabled') + '><span class="tok" style="width:48px;flex-shrink:0;font-size:15px;font-weight:700">' + esc(x.tok) + '</span><span class="icol"><span style="font-size:15px;font-weight:600">' + esc(x.name) + (x.visits ? '' : '<span style="font-weight:600;color:#175CD3;font-size:12px">  NEW</span>') + (x.fu ? '<span style="font-weight:600;color:#175CD3;font-size:12px">  FOLLOW-UP</span>' : '') + '</span><span class="dsub">' + esc(x.prob || (x.note ? 'Last: ' + x.note : histLine(x))) + '</span></span>' + (x.pk ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#98A2B3" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>' : '') + '</button>'; }).join('') + '</div>';
+      h += '<div style="margin:14px 16px 0;display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="dtile" data-tab="register"><span class="dsub">Seen today</span><span class="tok" style="font-size:24px;font-weight:700">' + d.today.seen + '</span></button><button class="dtile" data-tab="register"><span class="dsub">Recorded today</span><span class="tok" style="font-size:24px;font-weight:700">' + rupee(d.today.money) + '</span></button></div>' +
+        (d.today.nobill ? '<button class="dwarn" data-tab="register">' + d.today.nobill + ' seen today without a bill · check Register</button>' : '');
+      var ap = S.appts || [];
+      if (ap.length) h += '<div class="dsec"><span>Booked appointments</span><span>' + ap.length + '</span></div><div style="padding:0 16px">' + ap.map(function (a) { return '<div class="drow"><span class="tok" style="width:72px;flex-shrink:0;font-size:14px;font-weight:600">' + esc(a.time) + '</span><span class="icol"><span style="font-size:15px;font-weight:600">' + esc(a.name) + (a.isNew ? '<span style="font-weight:600;color:#175CD3;font-size:12px">  NEW</span>' : '') + '</span><span class="dsub">' + esc(a.treat) + '</span></span></div>'; }).join('') + '</div>';
+      if (d.fups && d.fups.length) h += '<div class="dsec"><span>Follow-ups due today</span><span>' + d.fups.length + '</span></div><div style="padding:0 16px">' + d.fups.slice(0, 5).map(function (f) { return '<div class="drow"><span class="icol"><span style="font-size:15px;font-weight:600">' + esc(f.name) + '</span></span><span style="font-size:13px;color:' + (f.c === 'ok' ? '#067647' : f.c === 'warn' ? '#B54708' : '#667085') + '">' + esc(f.state) + '</span></div>'; }).join('') + '</div>';
+      if (bo.lost && bo.lost.length) h += '<div class="dsec"><span>Didn\'t come back</span><span>' + bo.lost.length + '</span></div><div style="padding:0 16px">' + bo.lost.slice(0, 5).map(function (p) {
+        return '<div class="drow"><button class="dplain" data-pk="' + esc(p.pk) + '" style="flex-grow:1"><span style="font-size:15px;font-weight:600">' + esc(p.name) + '</span><span class="dsub">Follow-up was due ' + esc(p.due) + '</span></button>' + (p.wa ? '<a class="dmini" href="' + esc(p.wa) + '" target="_blank" rel="noopener">Message</a>' : '') + '</div>'; }).join('') + '</div><div style="padding:6px 16px 0;font-size:12.5px;color:#667085">Patients you asked to come back who have not come yet.</div>';
+      return h + '<div style="height:28px"></div></div>';
+    }
+    var TYPES_DEF = [['skin', 'Skin & hair'], ['dental', 'Dental'], ['child', 'Child'], ['general', 'General'], ['eye', 'Eye'], ['physio', 'Physio']];
+    var DAYS = [['mon', 'M'], ['tue', 'T'], ['wed', 'W'], ['thu', 'T'], ['fri', 'F'], ['sat', 'S'], ['sun', 'S']];
+    function fmt12(t) { var p = (t || '10:00').split(':'), hh = +p[0], m = p[1]; return (hh % 12 || 12) + ':' + m + ' ' + (hh < 12 ? 'AM' : 'PM'); }
+    function scrClinic() {
+      var d = S.d, c = d.cfg || {}, L = d.links || {};
+      var tl = (TYPES_DEF.filter(function (t) { return t[0] === c.type; })[0] || ['', 'Clinic'])[1];
+      var days = DAYS.filter(function (x) { return (c.days || []).indexOf(x[0]) >= 0; }).map(function (x) { return x[0].charAt(0).toUpperCase() + x[0].slice(1, 3); });
+      var h = '<div class="dpage"><div style="padding:calc(env(safe-area-inset-top) + 20px) 16px 0"><h1 style="margin:0;font-size:24px;font-weight:700;letter-spacing:-.3px">Clinic</h1></div>' +
+        '<div class="dcard" style="margin:16px 16px 0;gap:6px"><span style="font-size:18px;font-weight:700">' + esc(c.clinicName) + '</span><span class="dsub" style="font-size:14px">' + esc(tl) + ' · ' + esc(c.doctorName) + ' · fee ' + rupee(c.fee) + '</span><span class="dsub" style="font-size:14px">' + esc(days.join(', ')) + ' · ' + fmt12(c.open) + ' – ' + fmt12(c.close) + '</span>' +
+        '<button class="dbtn2" data-setup="1">Edit clinic setup</button></div>';
+      h += '<div class="dsec"><span>Team</span><span>Who can log in</span></div><div style="padding:0 16px">' + (d.team || []).map(function (t) {
+        return '<div class="drow"><span class="icol"><span style="font-size:15px;font-weight:600">' + esc(t.name) + (t.me ? ' <span style="font-weight:500;color:#667085">(you)</span>' : '') + '</span><span class="dsub">' + esc(t.role === 'owner' ? 'Owner' : t.role === 'doctor' ? 'Doctor' : 'Reception') + ' · ' + esc(t.phone) + '</span><span class="dsub">Last login: ' + esc(t.last) + (t.pw ? '' : ' · no password yet') + '</span></span>' +
+          (!t.me && t.role !== 'owner' ? '<button class="dmini" data-trm="' + esc(t.phone) + '" data-trmname="' + esc(t.name) + '" style="color:#B42318">Remove</button>' : '') + '</div>'; }).join('') +
+        '<button class="drow" data-sheet="team" style="color:#175CD3;font-weight:600;font-size:15px">+ Add person</button></div><div style="padding:6px 16px 0;font-size:12.5px;color:#667085">A new person logs in the first time by sending LOGIN on WhatsApp from their number, then sets a password.</div>';
+      h += '<div class="dsec"><span>Payments</span><span></span></div><div style="padding:0 16px"><div class="drow"><span class="icol"><span style="font-size:15px;font-weight:600">Clinic UPI ID</span><span class="dsub">Shown as a QR when reception bills by UPI</span></span></div>' +
+        '<div style="display:flex;gap:8px;margin-top:4px"><input id="upi" class="dinput" placeholder="name@okhdfc" value="' + esc(c.upiId || '') + '" autocomplete="off" style="flex:1"><button class="dmini" id="saveupi" style="height:44px">Save</button></div></div>';
+      h += '<div class="dsec"><span>Waiting room</span><span></span></div><div style="padding:0 16px">' +
+        (L.poster ? '<a class="drow" href="' + esc(L.poster) + '" target="_blank" rel="noopener"><span class="icol"><span style="font-size:15px;font-weight:600">QR poster</span><span class="dsub">Print and stick at reception</span></span></a>' : '') +
+        (L.tv ? '<a class="drow" href="' + esc(L.tv) + '" target="_blank" rel="noopener"><span class="icol"><span style="font-size:15px;font-weight:600">TV screen</span><span class="dsub">Open on any TV or old phone</span></span></a>' : '') +
+        '<button class="drow" id="asrec"><span class="icol"><span style="font-size:15px;font-weight:600">See the reception app</span><span class="dsub">What your receptionist sees</span></span></button>' +
+        (d.me.role === 'owner' ? '<button class="drow" id="seed"><span class="icol"><span style="font-size:15px;font-weight:600">Load demo data</span><span class="dsub">Fills 2 months of sample patients, for showing the app</span></span></button>' : '') +
+        '<button class="drow" id="logout" style="color:#B42318;font-weight:600;font-size:15px">Log out</button></div><div style="height:28px"></div></div>';
+      return h;
+    }
+    function scrSetup() {
+      var c = S.cfgDraft, st = S.setup;
+      var top = '<div class="dpage" style="min-height:100vh;display:flex;flex-direction:column"><div style="padding:calc(env(safe-area-inset-top) + 18px) 16px 0;display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;color:#667085">Step ' + st + ' of 4</span><span style="display:flex;gap:6px">' + [1, 2, 3, 4].map(function (i) { return '<span style="width:28px;height:4px;border-radius:2px;background:' + (i <= st ? '#175CD3' : '#EAECF0') + '"></span>'; }).join('') + '</span></div>';
+      var body = '', cta = 'Next';
+      if (st === 1) {
+        body = '<h1 class="dh">Your clinic</h1><div class="dlab">Type of clinic</div><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">' + TYPES_DEF.map(function (t) { var on = c.type === t[0]; return '<button class="dopt" data-ctype="' + t[0] + '" aria-pressed="' + on + '" style="border:' + (on ? '1.5px solid #175CD3' : '1px solid #EAECF0') + ';background:' + (on ? '#EFF4FF' : '#FFF') + ';color:' + (on ? '#175CD3' : '#344054') + '">' + t[1] + '</button>'; }).join('') + '</div>' +
+          '<div class="dsub" style="margin-top:6px">This sets the treatments the WhatsApp bot offers. You can change them later.</div>' +
+          '<label class="dlab" for="cn">Clinic name</label><input class="dinput" id="cn" value="' + esc(c.clinicName) + '">' +
+          '<label class="dlab" for="dn">Doctor name</label><input class="dinput" id="dn" value="' + esc(c.doctorName) + '">' +
+          '<label class="dlab" for="cf">Consultation fee (₹)</label><input class="dinput" id="cf" inputmode="numeric" value="' + esc(c.fee) + '">';
+      } else if (st === 2) {
+        body = '<h1 class="dh">Clinic timings</h1><div class="dlab">Open on</div><div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px">' + DAYS.map(function (x, i) { var on = c.days.indexOf(x[0]) >= 0; return '<button class="dopt" data-cday="' + x[0] + '" aria-label="' + x[0] + '" aria-pressed="' + on + '" style="height:44px;border:' + (on ? '1.5px solid #175CD3' : '1px solid #EAECF0') + ';background:' + (on ? '#EFF4FF' : '#FFF') + ';color:' + (on ? '#175CD3' : '#667085') + '">' + x[1] + '</button>'; }).join('') + '</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div><label class="dlab" for="co">Opens</label><input class="dinput" id="co" type="time" value="' + esc(c.open) + '"></div><div><label class="dlab" for="cc">Closes</label><input class="dinput" id="cc" type="time" value="' + esc(c.close) + '"></div></div>' +
+          '<div class="dsub" style="margin-top:8px">Patients can book and take tokens only in these hours.</div>';
+      } else if (st === 3) {
+        body = '<h1 class="dh">Team and payments</h1><div class="dlab">Who uses the app</div>' + (S.d.team || []).map(function (t) { return '<div class="drow"><span class="icol"><span style="font-size:15px;font-weight:600">' + esc(t.name) + (t.me ? ' (you)' : '') + '</span><span class="dsub">' + esc(t.role === 'reception' ? 'Reception' : t.role === 'doctor' ? 'Doctor' : 'Owner') + ' · ' + esc(t.phone) + '</span></span></div>'; }).join('') +
+          '<button class="drow" data-sheet="team" style="color:#175CD3;font-weight:600;font-size:15px">+ Add receptionist</button>' +
+          '<label class="dlab" for="cu">Clinic UPI ID (optional)</label><input class="dinput" id="cu" placeholder="name@okhdfc" value="' + esc(c.upiId) + '" autocomplete="off"><div class="dsub" style="margin-top:6px">Reception can show this as a QR when a patient pays by UPI. Money goes straight to you.</div>';
+      } else {
+        body = '<h1 class="dh">Your QR poster</h1><div class="dcard" style="align-items:center;text-align:center;gap:10px;padding:24px 16px">' + qrSvg(S.d.links.qr, 200) + '<span style="font-size:18px;font-weight:700">Token chahiye? Scan karein</span><span class="dsub" style="font-size:14px">' + esc(c.clinicName) + ' · ' + esc(c.doctorName) + '</span></div>' +
+          '<a class="dbtn2" href="' + esc(S.d.links.poster) + '" target="_blank" rel="noopener" style="text-decoration:none;display:flex;align-items:center;justify-content:center">Open poster to print</a><div class="dsub" style="margin-top:8px;text-align:center">Stick it at reception. Patients scan it and get a token on WhatsApp.</div>';
+        cta = 'Finish setup';
+      }
+      return top + '<div style="padding:8px 16px 0;display:flex;flex-direction:column;gap:6px">' + body + '</div><div style="flex:1"></div><div style="padding:16px 16px calc(env(safe-area-inset-bottom) + 20px);display:flex;gap:10px">' +
+        (st > 1 ? '<button class="dbtn2" data-sback="1" style="width:110px;margin:0">Back</button>' : (S.d.setupDone ? '<button class="dbtn2" data-sclose="1" style="width:110px;margin:0">Close</button>' : '')) +
+        '<button class="dbtn" id="snext" style="flex:1;margin:0">' + cta + '</button></div></div>';
+    }
+    function readSetup() {
+      var c = S.cfgDraft, g = function (id) { var e = document.getElementById(id); return e ? e.value : null; };
+      if (g('cn') !== null) c.clinicName = g('cn'); if (g('dn') !== null) c.doctorName = g('dn'); if (g('cf') !== null) c.fee = Number(g('cf').replace(/\D/g, '')) || 0;
+      if (g('co') !== null) c.open = g('co'); if (g('cc') !== null) c.close = g('cc'); if (g('cu') !== null) c.upiId = g('cu').trim();
+    }
+    function startSetup(step) { var c = S.d.cfg || {}; S.cfgDraft = { type: c.type || 'skin', clinicName: c.clinicName || '', doctorName: c.doctorName || '', fee: c.fee || 0, open: c.open || '10:00', close: c.close || '20:00', days: (c.days || ['mon', 'tue', 'wed', 'thu', 'fri', 'sat']).slice(), upiId: c.upiId || '' }; S.setup = step || 1; draw(); window.scrollTo(0, 0); }
+
     // ---------- sheets ----------
     function sheetHtml() {
       var s = S.sheet; if (!s) return '';
@@ -380,6 +526,21 @@ button.irow:active,a.irow:active{background:#E5E5EA}
         inner = '<div class="ishead"><button class="ilink" data-close="1">Cancel</button><span style="font-size:17px;font-weight:600">Doctor status</span><span style="width:56px"></span></div><div style="margin-top:16px">' + seg([['in', 'In'], ['late', 'Late'], ['away', 'Away'], ['leave', 'Leave']], k, 'data-sst') + '</div>' +
           ((k === 'late' || k === 'away') ? '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">' + [15, 30, 45, 60].map(function (m) { return '<button class="ichip' + ((s.mins || 30) === m ? ' on' : '') + '" data-smin="' + m + '">' + (m === 60 ? '1 hr' : m + ' min') + '</button>'; }).join('') + '</div>' : '') +
           '<div class="ifoot" style="padding-left:4px">Patients waiting today get a WhatsApp about it.</div><button class="ib pri" id="savest" style="margin-top:14px">Update everywhere</button>';
+      } else if (s.t === 'dstat') {
+        var titles = { late: 'How late are you running?', away: 'Back in about…', leave: 'On leave today?' };
+        var nW = S.d.queue.waiting.length;
+        inner = '<div style="font-size:19px;font-weight:700;padding:14px 4px 0">' + titles[s.st] + '</div>' +
+          (s.st !== 'leave' ? '<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:14px">' + [15, 30, 45, 60].map(function (m) { var on = s.mins === m; return '<button data-dmin="' + m + '" style="height:46px;border-radius:10px;font-size:14px;font-weight:600;border:' + (on ? '2px solid #175CD3' : '1px solid #D0D5DD') + ';background:' + (on ? '#EFF4FF' : '#FFF') + ';color:' + (on ? '#175CD3' : '#344054') + '">' + (m === 60 ? '1 hour' : m + ' min') + '</button>'; }).join('') + '</div>' : '') +
+          '<div style="margin-top:14px;border:1px solid #EAECF0;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:600;color:#475467">This updates everywhere</span>' +
+          [s.st === 'leave' ? 'Reception app shows "Doctor on leave"' : 'Reception app shows it at the top', s.st === 'leave' ? 'No new tokens today; the bot tells patients' : 'WhatsApp bot answers "Doctor aa gaye?"', nW ? nW + ' waiting patient' + (nW > 1 ? 's get' : ' gets') + ' a WhatsApp' : 'Patients who come later see it on their token'].map(function (t) { return '<span style="display:flex;align-items:center;gap:8px;font-size:14px;color:#344054"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#12B76A" stroke-width="2.4" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>' + esc(t) + '</span>'; }).join('') + '</div>' +
+          '<button class="dbtn" id="dstatgo" style="margin-top:14px">Update everywhere</button><button data-close="1" style="height:44px;border:none;background:none;font-size:15px;font-weight:600;color:#475467;margin-top:4px">Cancel</button>';
+      } else if (s.t === 'team') {
+        var r = s.role || 'reception';
+        inner = '<div class="ishead"><button class="ilink" data-close="1">Cancel</button><span style="font-size:17px;font-weight:600">Add person</span><span style="width:56px"></span></div>' +
+          '<div class="ilist" style="margin:18px 0 0"><label class="ifield"><span>Name</span><input id="tn" autocomplete="off" value="' + esc(s.name || '') + '"></label><label class="ifield" style="border:none"><span>Phone</span><input id="tp" type="tel" inputmode="tel" placeholder="10-digit mobile" value="' + esc(s.phone || '') + '"></label></div>' +
+          '<div style="margin-top:14px">' + seg([['reception', 'Reception'], ['doctor', 'Doctor']], r, 'data-trole') + '</div>' +
+          '<div class="ifoot" style="padding-left:4px">Reception sees the queue, billing and inbox. Only doctors see money totals and the register.</div>' +
+          '<button class="ib pri" id="tadd" style="margin-top:16px">Add</button>';
       } else if (s.t === 'menu') {
         var L = S.d.links || {};
         inner = '<div class="ishead"><span style="width:56px"></span><span style="font-size:17px;font-weight:600">' + esc(S.d.me.name) + ' · ' + esc(S.d.me.role) + '</span><button class="ilink" data-close="1" style="font-weight:600">Done</button></div><div class="ilist" style="margin:16px 0 0">' +
@@ -387,25 +548,29 @@ button.irow:active,a.irow:active{background:#E5E5EA}
           (L.tv ? '<a class="irow" href="' + esc(L.tv) + '" target="_blank" rel="noopener"><span class="icol"><span>Waiting-room TV screen</span></span>' + CHEV + '</a>' : '') +
           '<button class="irow" id="logout" style="color:' + C.bad + '"><span>Log out</span></button></div>';
       }
-      return '<div class="isheetbg" data-close="1"><div class="isheet" role="dialog" aria-modal="true"><div class="grab"></div>' + inner + '</div></div>';
+      return '<div class="isheetbg" data-close="1"><div class="isheet" role="dialog" aria-modal="true"' + (s.t === 'dstat' ? ' style="background:#FFF"' : '') + '><div class="grab"></div>' + inner + '</div></div>';
     }
 
     // ---------- draw ----------
     function draw() {
       if (!S.sid) return drawLogin();
+      if (S.needPw) return drawLogin('', 'setpw');
       if (!S.d) { $app.innerHTML = '<div class="wrap i"><div class="ifoot" style="padding-top:120px;text-align:center">Loading…</div></div>'; return; }
       var tabs = tabsFor(S.d.me.role); if (tabs.indexOf(S.tab) < 0) S.tab = tabs[0];
       var ae = document.activeElement;
       if (ae && ae.id === 'psearch' && S.tab === 'patients' && !S.pk) { var pl = document.getElementById('plist'); if (pl) { pl.innerHTML = plist(S.d.patients); return; } }
-      if (ae && (ae.id === 'pnote' || ae.id === 'fee' || ae.id === 'wn' || ae.id === 'wp')) return;
-      var scr = { queue: scrQueue, today: scrToday, register: scrRegister, inbox: scrInbox, patients: scrPatients }[S.tab]();
+      if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA') && $app.contains(ae)) return;
+      var docApp = isDoc() && S.viewAs !== 'reception';
+      if (docApp && !S.d.setupDone && !S.setup && !S.setupSeen) { S.setupSeen = true; var c0 = S.d.cfg || {}; S.cfgDraft = { type: c0.type || 'skin', clinicName: c0.clinicName || '', doctorName: c0.doctorName || '', fee: c0.fee || 0, open: c0.open || '10:00', close: c0.close || '20:00', days: (c0.days || ['mon', 'tue', 'wed', 'thu', 'fri', 'sat']).slice(), upiId: c0.upiId || '' }; S.setup = 1; }
+      if (S.setup && docApp) { $app.innerHTML = '<div class="wrap i" style="background:#FFF">' + scrSetup() + (S.toast ? '<div class="itoast" role="status">' + esc(S.toast) + '</div>' : '') + sheetHtml() + '</div>'; bind(); return; }
+      var scr = { queue: scrQueue, today: docApp ? scrDocToday : scrToday, register: scrRegister, inbox: scrInbox, patients: scrPatients, clinic: scrClinic }[S.tab]();
       var y = window.scrollY;
       var ib = S.d.inbox; var badge = ib ? ib.calls.filter(function (x) { return !x.booked; }).length + ib.callbacks.length : 0;
       var regBadge = S.d.today && S.d.today.nobill ? S.d.today.nobill : 0;
-      $app.innerHTML = '<div class="wrap i">' + (S.err ? '<div style="position:sticky;top:0;z-index:4;background:#FFF2F2;color:' + C.bad + ';font-size:13px;text-align:center;padding:calc(env(safe-area-inset-top) + 6px) 8px 6px">' + esc(S.err) + '</div>' : '') +
+      $app.innerHTML = '<div class="wrap i' + (docApp && (S.tab === 'today' || S.tab === 'clinic') ? ' dwhite' : '') + '">' + (isDoc() && S.viewAs === 'reception' ? '<div class="asbar">Reception view<button data-asdoc="1">Back to doctor app</button></div>' : '') + (S.err ? '<div style="position:sticky;top:0;z-index:4;background:#FFF2F2;color:' + C.bad + ';font-size:13px;text-align:center;padding:calc(env(safe-area-inset-top) + 6px) 8px 6px">' + esc(S.err) + '</div>' : '') +
         '<div class="content">' + scr + '</div>' +
         (S.toast ? '<div class="itoast" role="status">' + esc(S.toast) + '</div>' : '') +
-        '<nav class="itabs"><div class="in" style="grid-template-columns:repeat(' + tabs.length + ',minmax(0,1fr))">' + tabs.map(function (t) {
+        '<nav class="itabs' + (docApp ? ' dtabs' : '') + '"><div class="in" style="grid-template-columns:repeat(' + tabs.length + ',minmax(0,1fr))">' + tabs.map(function (t) {
           var bd = t === 'inbox' && badge ? badge : t === 'register' && regBadge ? regBadge : 0;
           return '<button data-tab="' + t + '" class="' + (t === S.tab ? 'on' : '') + '"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[t] + '</svg>' + LAB[t] + (bd ? '<span class="badge">' + bd + '</span>' : '') + '</button>'; }).join('') + '</div></nav>' +
         sheetHtml() + '</div>';
@@ -435,11 +600,32 @@ button.irow:active,a.irow:active{background:#E5E5EA}
       on('[data-per]', function (el) { S.per = el.getAttribute('data-per'); S.d.register = null; draw(); call({}); });
       on('[data-seg]', function (el) { S.seg = el.getAttribute('data-seg'); draw(); });
       on('[data-done]', function (el) { call({ action: el.getAttribute('data-done'), phone: el.getAttribute('data-ph') }, function () { toast('Done'); }); });
-      on('[data-pk]', function (el) { S.pk = el.getAttribute('data-pk'); S.d.patient = null; draw(); window.scrollTo(0, 0); call({}); });
+      on('[data-pk]', function (el) { if (!el.getAttribute('data-pk')) return; S.tab = 'patients'; S.pk = el.getAttribute('data-pk'); S.d.patient = null; draw(); window.scrollTo(0, 0); call({}); });
       on('[data-back]', function () { S.pk = null; draw(); call({}); });
       on('[data-tokfor]', function () { var p = S.d.patient; S.sheet = { t: 'add', name: p.name, phone: p.call ? p.call.replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '') : '' }; draw(); });
       on('#savenote', function () { var t = document.getElementById('pnote').value; call({ action: 'note', pk: S.pk, text: t }, function () { toast('Note saved'); }); });
       on('#logout', function () { S.sheet = null; logout(); });
+      on('[data-dst]', function (el) { var st = el.getAttribute('data-dst'); if (st === 'in') call({ action: 'set_status', status: 'in', mins: 0 }, function (r) { toast(r.told ? 'Back in clinic · ' + r.told + ' patients told' : 'In clinic · updated everywhere'); }); else { S.sheet = { t: 'dstat', st: st, mins: 30 }; draw(); } });
+      on('[data-dmin]', function (el) { S.sheet.mins = Number(el.getAttribute('data-dmin')); draw(); });
+      on('#dstatgo', function (el) { var s = S.sheet; el.disabled = true; call({ action: 'set_status', status: s.st, mins: s.st === 'leave' ? 0 : s.mins }, function (r) { S.sheet = null; toast(r.told ? 'Updated · ' + r.told + ' patients told on WhatsApp' : 'Updated everywhere'); }); });
+      on('[data-setup]', function () { startSetup(1); });
+      on('[data-ctype]', function (el) { readSetup(); var t = el.getAttribute('data-ctype'); var fees = { skin: 500, dental: 300, child: 500, general: 300, eye: 400, physio: 500 }; if (S.cfgDraft.type !== t && (!S.cfgDraft.fee || S.cfgDraft.fee === fees[S.cfgDraft.type])) S.cfgDraft.fee = fees[t]; S.cfgDraft.type = t; draw(); });
+      on('[data-cday]', function (el) { readSetup(); var d = el.getAttribute('data-cday'), a = S.cfgDraft.days, i = a.indexOf(d); if (i >= 0) a.splice(i, 1); else a.push(d); draw(); });
+      on('[data-sback]', function () { readSetup(); S.setup--; draw(); window.scrollTo(0, 0); });
+      on('[data-sclose]', function () { S.setup = null; draw(); });
+      on('#snext', function (el) { readSetup(); var c = S.cfgDraft;
+        if (S.setup === 1 && (!c.clinicName.trim() || !c.doctorName.trim())) return toast('Add the clinic and doctor name');
+        if (S.setup === 2 && !c.days.length) return toast('Pick at least one day');
+        if (S.setup < 4) { S.setup++; draw(); window.scrollTo(0, 0); return; }
+        el.disabled = true; call({ action: 'setup_save', cfg: { type: c.type, clinicName: c.clinicName, doctorName: c.doctorName, fee: c.fee, open: c.open, close: c.close, days: c.days, upiId: c.upiId, done: true } }, function (r) { if (r.saved) { S.setup = null; S.tab = 'today'; toast('Setup saved · your clinic is live'); } }); });
+      on('[data-trm]', function (el) { if (!confirm('Remove ' + el.getAttribute('data-trmname') + '? They will be logged out.')) return; call({ action: 'team_remove', phone: el.getAttribute('data-trm') }, function (r) { if (r.removed) toast('Removed'); }); });
+      on('[data-trole]', function (el) { var n = document.getElementById('tn'), p = document.getElementById('tp'); S.sheet.name = n ? n.value : ''; S.sheet.phone = p ? p.value : ''; S.sheet.role = el.getAttribute('data-trole'); draw(); });
+      on('#tadd', function (el) { var n = document.getElementById('tn').value.trim(), p = document.getElementById('tp').value; if (!n) return document.getElementById('tn').focus(); el.disabled = true; call({ action: 'team_add', name: n, phone: p, role: S.sheet.role || 'reception' }, function (r) { if (r.added) { S.sheet = null; toast(n + ' added · they send LOGIN on WhatsApp'); } }); });
+      on('#saveupi', function () { call({ action: 'setup_save', cfg: { upiId: document.getElementById('upi').value } }, function (r) { if (r.saved) toast('UPI ID saved'); }); });
+      on('#asrec', function () { S.viewAs = 'reception'; S.tab = 'queue'; draw(); window.scrollTo(0, 0); });
+      on('[data-asdoc]', function () { S.viewAs = null; S.tab = 'today'; draw(); window.scrollTo(0, 0); });
+      on('#seed', function () { if (!confirm('Load demo data? This replaces the current patients, queue and register with sample data.')) return; call({ action: 'demo_seed' }, function (r) { if (r.seeded) { S.appts = null; toast('Demo data loaded'); } }); });
+      ['cn', 'dn', 'cf', 'co', 'cc', 'cu'].forEach(function (id) { var e = document.getElementById(id); if (e) e.addEventListener('input', readSetup); });
       var ps = document.getElementById('psearch');
       if (ps) { var tm; ps.addEventListener('input', function () { S.q = ps.value; clearTimeout(tm); tm = setTimeout(function () { call({}); }, 300); }); }
       var fee = document.getElementById('fee');
@@ -451,10 +637,10 @@ button.irow:active,a.irow:active{background:#E5E5EA}
     if (code) {
       history.replaceState(null, '', location.pathname);
       $app.innerHTML = '<div class="wrap i"><div class="ifoot" style="padding-top:120px;text-align:center">Logging you in…</div></div>';
-      post({ action: 'login', code: code }).then(function (r) {
+      post({ action: 'login', code: code, ua: uaShort() }).then(function (r) {
         if (!r.ok) return drawLogin(r.error || 'Login link not valid.');
         store('cd_sid', r.sid); store('cd_role', r.role); if (r.clinic && r.clinic.botNumber) store('cd_bot', r.clinic.botNumber);
-        S.sid = r.sid; S.role = r.role; call({});
+        S.sid = r.sid; S.role = r.role; if (r.needPw) { S.needPw = true; return drawLogin('', 'setpw'); } call({});
       }).catch(function () { drawLogin('Could not reach the server. Try again.'); });
     } else if (S.sid) { draw(); call({}); } else drawLogin();
     setInterval(poll, 8000);

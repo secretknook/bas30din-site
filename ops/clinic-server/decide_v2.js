@@ -1,11 +1,13 @@
 // Clinic bot brain v2 - languages (English / Hinglish), photo confirmation, location pin,
 // doctor commands (TODAY, LATE 30, LEAVE <date>, HELP) and the 8 AM doctor summary.
 // All clinic details live in the "Clinic Settings" node.
-const S = $('Clinic Settings').first().json;
+const S = Object.assign({}, $('Clinic Settings').first().json);
 const TZ = 'Asia/Kolkata';
 const now = DateTime.now().setZone(TZ);
 const mem = $getWorkflowStaticData('global');
 for (const k of ['lang', 'seen', 'svc', 'wait', 'live', 'liveAdmin']) if (!mem[k]) mem[k] = {};
+if (mem.cfg) Object.assign(S, mem.cfg);
+if (Array.isArray(mem.team) && mem.team.length) S.staff = mem.team;
 let deskReq = null;
 try { deskReq = $('Desk API (POST)').first().json.body || {}; } catch (e) { deskReq = null; }
 let msg = null;
@@ -364,6 +366,108 @@ const mask = p => p ? `+${String(p).slice(0, 4)}••• ••${String(p).slic
 const chatLog = (phone, who, txt) => { if (!mem.chat) mem.chat = {}; const l = mem.chat[phone] || []; l.push({ who, t: String(txt).slice(0, 500), at: now.toISO() }); mem.chat[phone] = l.slice(-40); };
 
 
+
+// ---------- staff accounts: passwords (salted SHA-256, no plain text kept) ----------
+function sha256(m) {
+  const K = [], H = [1779033703, -1150833019, 1013904242, -1521486534, 1359893119, -1694144372, 528734635, 1541459225];
+  let n = 2, c = 0; while (c < 64) { let p = true; for (let f = 2; f * f <= n; f++) if (n % f === 0) { p = false; break; } if (p) { K[c++] = (Math.pow(n, 1 / 3) * 4294967296) | 0; } n++; }
+  const b = unescape(encodeURIComponent(m)); const L = b.length; const w = []; for (let i = 0; i < L; i++) w[i >> 2] |= b.charCodeAt(i) << (24 - (i % 4) * 8);
+  w[L >> 2] |= 0x80 << (24 - (L % 4) * 8); w[(((L + 8) >> 6) << 4) + 15] = L * 8;
+  const h = H.slice();
+  for (let j = 0; j < w.length; j += 16) {
+    const W = []; let [a, bb, cc, d, e, f, g, hh] = h;
+    for (let i = 0; i < 64; i++) {
+      if (i < 16) W[i] = w[j + i] | 0;
+      else { const x = W[i - 15], y = W[i - 2]; W[i] = (((x >>> 7) | (x << 25)) ^ ((x >>> 18) | (x << 14)) ^ (x >>> 3)) + W[i - 7] + (((y >>> 17) | (y << 15)) ^ ((y >>> 19) | (y << 13)) ^ (y >>> 10)) + W[i - 16] | 0; }
+      const t1 = hh + (((e >>> 6) | (e << 26)) ^ ((e >>> 11) | (e << 21)) ^ ((e >>> 25) | (e << 7))) + ((e & f) ^ (~e & g)) + K[i] + W[i] | 0;
+      const t2 = (((a >>> 2) | (a << 30)) ^ ((a >>> 13) | (a << 19)) ^ ((a >>> 22) | (a << 10))) + ((a & bb) ^ (a & cc) ^ (bb & cc)) | 0;
+      hh = g; g = f; f = e; e = d + t1 | 0; d = cc; cc = bb; bb = a; a = t1 + t2 | 0;
+    }
+    h[0] = h[0] + a | 0; h[1] = h[1] + bb | 0; h[2] = h[2] + cc | 0; h[3] = h[3] + d | 0; h[4] = h[4] + e | 0; h[5] = h[5] + f | 0; h[6] = h[6] + g | 0; h[7] = h[7] + hh | 0;
+  }
+  return h.map(x => ('00000000' + (x >>> 0).toString(16)).slice(-8)).join('');
+}
+const pwHash = (salt, pw) => { let x = salt + ':' + pw; for (let i = 0; i < 300; i++) x = sha256(salt + x); return x; };
+const staffRec = p => (S.staff || []).find(x => String(x.phone || '').replace(/\D/g, '').slice(-10) === String(p || '').replace(/\D/g, '').slice(-10) && String(p || '').replace(/\D/g, '').length >= 10);
+const PRESETS = {
+  skin: { label: 'Skin & hair', services: ['Skin consultation', 'Acne treatment', 'Hair fall / PRP', 'Pigmentation & tan', 'Laser hair removal', 'HydraFacial / glow'], fee: 500 },
+  dental: { label: 'Dental', services: ['Check-up', 'Cleaning', 'Filling', 'Root canal', 'Braces consult', 'Tooth pain'], fee: 300 },
+  child: { label: 'Child', services: ['Check-up', 'Fever / cough', 'Vaccination', 'Growth review'], fee: 500 },
+  general: { label: 'General', services: ['Consultation', 'Fever / cough', 'BP / sugar review', 'Report review'], fee: 300 },
+  eye: { label: 'Eye', services: ['Eye check-up', 'Glasses power', 'Red / itchy eyes', 'Cataract consult'], fee: 400 },
+  physio: { label: 'Physio', services: ['Back pain', 'Knee pain', 'Neck / shoulder', 'Post-surgery rehab'], fee: 500 },
+};
+
+// ---------- demo data: a clinic that has been running for 2 months ----------
+function seedDemo() {
+  let sd = 11; const rnd = () => { sd = (sd * 9301 + 49297) % 233280; return sd / 233280; };
+  const pick = a => a[Math.floor(rnd() * a.length)];
+  const NAMES = ['Riya Sharma', 'Aman Gupta', 'Sunita Devi', 'Mohd. Faizan', 'Kavya Nair', 'Rahul Yadav', 'Pooja Verma', 'Arjun Mehta', 'Neha Bansal', 'Vikas Malhotra', 'Shreya Kapoor', 'Ankit Tiwari', 'Priya Singh', 'Sanjay Kumar', 'Farah Ali', 'Rohit Jain', 'Gita Rani', 'Om Prakash', 'Simran Kaur', 'Deepak Rao',
+    'Meera Joshi', 'Kabir Khan', 'Shalini Verma', 'Nikhil Arora', 'Ayesha Siddiqui', 'Manish Pandey', 'Tanya Chawla', 'Harsh Vardhan', 'Komal Saini', 'Yash Agarwal', 'Isha Goyal', 'Rajesh Kumar', 'Sneha Mishra', 'Varun Bhatia', 'Nidhi Sharma', 'Imran Qureshi', 'Payal Jain', 'Sameer Khan', 'Divya Rawat', 'Gaurav Saxena',
+    'Muskan Gupta', 'Aditya Chauhan', 'Ritika Sood', 'Karan Malik', 'Anjali Thakur', 'Mohit Garg', 'Swati Dubey', 'Rakesh Yadav', 'Preeti Negi', 'Tushar Sethi', 'Bhavna Rathi', 'Sahil Ahuja', 'Jyoti Kumari', 'Akash Verma', 'Naina Kohli', 'Pankaj Mittal', 'Ruchi Bhardwaj', 'Vivek Shukla', 'Heena Parveen', 'Lokesh Bisht'];
+  const PROBS = ['"Gaalon pe pimples, 2 hafte se"', 'Hair fall · PRP session', 'Follow-up', '"Baal bahut gir rahe hain"', '"Chehre pe daag, dhoop se"', 'Skin', '"Haathon pe khujli, 1 mahine se"', 'Laser · session 3 of 6', '"Dandruff nahi ja raha"', 'Hair', '"Forehead pe pimples, 3 mahine se"', ''];
+  const NOTES = ['Acne grade 2. Started adapalene at night. Review in 2 weeks.', 'PRP 2 of 4 done. Good response, less shedding.', 'Melasma both cheeks. Sunscreen daily + cream at night.', 'Hand eczema. Steroid cream 1 week, then moisturiser only.', 'Laser full arms, session 3. Mild redness is normal.', 'Hair fall after fever (telogen). Minoxidil 5% + biotin.', 'Fungal infection groin. Antifungal 4 weeks, keep dry.', 'Dandruff + scalp itch. Ketoconazole shampoo twice a week.', 'Mild acne, oily skin. Face wash + gel. Avoid picking.', 'Post-acne marks. Start peel next visit.'];
+  const pool = NAMES.map((n, i) => ({ name: n, ph: '9100000' + String(10000 + i * 137).slice(-5) }));
+  const FIRST = ['Aarti', 'Ajay', 'Alka', 'Amit', 'Anil', 'Anita', 'Asha', 'Bharat', 'Chetan', 'Dinesh', 'Ekta', 'Geeta', 'Hemant', 'Jaya', 'Kamal', 'Kiran', 'Lata', 'Mahesh', 'Mamta', 'Naveen', 'Neelam', 'Prakash', 'Rekha', 'Ritu', 'Sachin', 'Sapna', 'Seema', 'Sunil', 'Usha', 'Vinod', 'Zoya', 'Arif', 'Rubina', 'Tarun', 'Pallavi', 'Gunjan', 'Hitesh', 'Mansi', 'Nitin', 'Sonal'];
+  const LAST = ['Sharma', 'Verma', 'Gupta', 'Singh', 'Yadav', 'Jain', 'Agarwal', 'Chauhan', 'Rawat', 'Saxena', 'Mishra', 'Tyagi', 'Bhatia', 'Khan', 'Ansari', 'Kumar', 'Rana', 'Negi', 'Malhotra', 'Bhardwaj'];
+  let extra = 0; const newPatient = () => { const p = { name: FIRST[Math.floor(rnd() * FIRST.length)] + ' ' + LAST[Math.floor(rnd() * LAST.length)], ph: '9100001' + String(10000 + extra * 7).slice(-5) }; extra++; pool.push(p); return p; };
+  const recName = ((S.staff || []).find(x => x.role === 'reception') || { name: 'Reception' }).name;
+  const fees = () => { const r = rnd(); return r < 0.06 ? 2500 : r < 0.11 ? 3000 : (S.fee || 500); };
+  const vis = {}; const start = now.minus({ days: 60 }).startOf('day');
+  let kseq = 0; const key = () => 'dm' + (kseq++).toString(36) + rid(6);
+  for (let d = start; d < now.startOf('day'); d = d.plus({ days: 1 })) {
+    if (d.weekday === 7) continue;
+    const day = d.toFormat('yyyy-MM-dd'); const n = 14 + Math.floor(rnd() * 13); const L = [];
+    let t = d.set({ hour: 10, minute: 5 });
+    for (let i = 0; i < n; i++) {
+      const p = rnd() < 0.5 && pool.length > 70 ? pool[60 + Math.floor(rnd() * (pool.length - 60))] : rnd() < 0.12 ? pick(pool.slice(0, 60)) : newPatient();
+      const len = 7 + Math.floor(rnd() * 9); const out = t.plus({ minutes: len });
+      const r = rnd(); const m = r < 0.6 ? 'upi' : r < 0.95 ? 'cash' : r < 0.98 ? 'free' : null;
+      const fu = m && rnd() < 0.3 ? pick([7, 14, 30]) : 0;
+      L.push({ k: key(), tok: 'A-' + (i + 1), name: p.name, ph: p.ph, in: t.toISO(), out: out.toISO(), fee: m ? (m === 'free' ? 0 : fees()) : null, m, by: m ? (rnd() < 0.85 ? recName : S.doctorName) : undefined, at: m ? out.plus({ minutes: 2 }).toISO() : undefined, fup: fu ? d.plus({ days: fu }).toFormat('yyyy-MM-dd') : null });
+      t = out.plus({ minutes: 2 + Math.floor(rnd() * 6) }); if (t.hour === 14 && t.minute < 20) t = t.set({ hour: 15, minute: 0 });
+    }
+    vis[day] = L;
+  }
+  const days = Object.keys(vis).sort();
+  pool.slice(0, 60).forEach(p => { const k = 1 + Math.floor(rnd() * 3); for (let j = 0; j < k; j++) { const dd = days[Math.floor(rnd() * days.length)]; const base = DateTime.fromISO(dd, { zone: TZ }).set({ hour: 11 + j, minute: 10 });
+    vis[dd].push({ k: key(), tok: 'A-' + (vis[dd].length + 1), name: p.name, ph: p.ph, in: base.toISO(), out: base.plus({ minutes: 11 }).toISO(), fee: fees(), m: rnd() < 0.6 ? 'upi' : 'cash', by: recName, at: base.plus({ minutes: 13 }).toISO(), fup: null }); } });
+  // today: 11 seen, 1 with the doctor, 8 waiting
+  const q = { date: todayStr, seq: 0, list: [], durs: [9, 12, 10, 11, 8] };
+  const todayL = []; let t = now.startOf('day').set({ hour: 10, minute: 5 });
+  const newTk = (p, st, extra) => { q.seq++; const tk = Object.assign({ tok: 'A-' + q.seq, n: q.seq, phone: p.ph, name: p.name, src: rnd() < 0.7 ? 'qr' : 'desk', st, at: t.minus({ minutes: 20 }).toISO(), key: rid(10), missed: 0, prob: pick(PROBS) }, extra || {}); q.list.push(tk); return tk; };
+  const used = new Set(); const nextP = () => { let p; do { p = pick(pool); } while (used.has(p.name)); used.add(p.name); return p; };
+  for (let i = 0; i < 11; i++) {
+    const p = i < 3 ? pool[i + 4] : nextP(); used.add(p.name); const len = 8 + Math.floor(rnd() * 6);
+    const tk = newTk(p, 'd', { calledAt: t.toISO() }); const out = t.plus({ minutes: len });
+    const m = i === 10 ? null : (i === 6 ? 'free' : rnd() < 0.6 ? 'upi' : 'cash');
+    todayL.push({ k: tk.key, tok: tk.tok, name: p.name, ph: p.ph, in: t.toISO(), out: out.toISO(), fee: m ? (m === 'free' ? 0 : fees()) : null, m, by: m ? recName : undefined, at: m ? out.plus({ minutes: 2 }).toISO() : undefined, fup: m && i % 3 === 0 ? now.plus({ days: 7 }).toFormat('yyyy-MM-dd') : null });
+    t = out.plus({ minutes: 3 });
+  }
+  vis[todayStr] = todayL;
+  const cur = newTk(pool[0], 's', { calledAt: now.minus({ minutes: 4 }).toISO(), prob: '"Gaalon pe pimples, 2 hafte se"', toldTurn: true });
+  ['Aman Gupta', 'Sunita Devi', 'Mohd. Faizan', 'Shreya Kapoor', 'Ankit Tiwari', 'Meera Joshi', 'Kabir Khan', 'Nikhil Arora'].forEach((nm, i) => {
+    const p = pool.find(x => x.name === nm); newTk(p, 'w', { here: i < 3, told2: i < 2, prob: ['Hair fall · PRP 3 of 4', 'Follow-up · eczema cream review', '"Forehead pe pimples, 3 mahine se"', 'Laser · session 3 of 6', '', '"Chehre pe daag, dhoop se"', 'Skin', '"Baal bahut gir rahe hain"'][i] });
+  });
+  // follow-ups: some due today, some missed
+  const fixFup = (name, date) => { const p = pool.find(x => x.name === name); for (const dd of Object.keys(vis).sort().reverse()) { const v = vis[dd].find(x => x.ph === p.ph && x.m); if (v && dd < todayStr) { v.fup = date; return; } } };
+  ['Riya Sharma', 'Sunita Devi', 'Vikas Malhotra'].forEach(n => fixFup(n, todayStr));
+  [['Arjun Mehta', 9], ['Neha Bansal', 15], ['Rohit Jain', 4], ['Gita Rani', 21]].forEach(([n, ago]) => { const p = pool.find(x => x.name === n);
+    for (const dd of Object.keys(vis)) if (dd < todayStr) vis[dd] = vis[dd].filter(v => !(v.ph === p.ph && dd > now.minus({ days: ago + 10 }).toFormat('yyyy-MM-dd')));
+    const dd = now.minus({ days: ago + 12 }).toFormat('yyyy-MM-dd'); if (!vis[dd]) vis[dd] = [];
+    vis[dd].push({ k: key(), tok: 'A-9', name: p.name, ph: p.ph, in: now.minus({ days: ago + 12 }).set({ hour: 11 }).toISO(), out: now.minus({ days: ago + 12 }).set({ hour: 11, minute: 12 }).toISO(), fee: S.fee || 500, m: 'upi', by: recName, at: now.minus({ days: ago + 12 }).toISO(), fup: now.minus({ days: ago }).toFormat('yyyy-MM-dd') });
+  });
+  mem.vis = vis; mem.q = q;
+  mem.notes = {}; pool.slice(0, 30).forEach((p, i) => { mem.notes['p' + p.ph] = { t: NOTES[i % NOTES.length], at: now.toISO(), by: S.doctorName }; });
+  mem.fup = [];
+  for (const dd of Object.keys(vis)) for (const v of vis[dd]) if (v.fup && v.fup >= todayStr && v.ph) mem.fup.push({ k: v.k, ph: v.ph, name: v.name, date: v.fup, sent: v.fup === todayStr });
+  mem.doc = { status: 'in', setAt: now.startOf('day').set({ hour: 9, minute: 58 }).toISO() };
+  mem.mcalls = [{ ph: '910000077412', at: now.minus({ minutes: 47 }).toISO() }, { ph: pool[6].ph, at: now.minus({ minutes: 95 }).toISO() }, { ph: '910000070908', at: now.minus({ minutes: 160 }).toISO() }];
+  mem.callbacks = [{ phone: '910000055120', name: 'Ramesh Gupta', at: now.minus({ minutes: 30 }).toISO() }, { phone: '910000055121', name: 'Anjali Singh', at: now.minus({ minutes: 85 }).toISO() }];
+  const tm = now.plus({ days: 1 }).toFormat('yyyy-MM-dd'); mem.wait = Object.assign({}, mem.wait || {}); mem.wait[tm] = [{ phone: '910000055130', lang: 'hl', at: now.toISO() }, { phone: '910000055131', lang: 'en', at: now.toISO() }];
+  mem.nightSent = '';
+}
+
 // ---------- register: every visit, every bill, patients, follow-ups ----------
 const hm = iso => { const d = DateTime.fromISO(iso || ''); return d.isValid ? d.setZone(TZ).toFormat('h:mm a') : ''; };
 const visOf = d => (mem.vis && mem.vis[d]) || [];
@@ -401,7 +505,7 @@ if (mode === 'desk') {
   const out = [];
   let res = { ok: true };
   const sess = b.sid && mem.sess && mem.sess[b.sid];
-  const live = sess && DateTime.fromISO(sess.exp) > now;
+  const live = sess && DateTime.fromISO(sess.exp) > now && !!staffRec(sess.phone);
   const qr = `https://wa.me/${S.botNumber || ''}?text=TOKEN`;
   const publicQ = (q) => { const cur = servingOf(q); const w = waitingOf(q); return { now: cur ? cur.tok : null, next: w.slice(0, 3).map(x => x.tok), waiting: w.length, avg: avgMin(q) }; };
   const docInfo = () => { const d = docRead(); return { status: d.status || 'in', mins: d.mins || 0, until: d.until ? DateTime.fromISO(d.until).setZone(TZ).toFormat('h:mm a') : null, setAt: d.setAt ? DateTime.fromISO(d.setAt).setZone(TZ).toFormat('h:mm a') : null, told: (d.told || []).length, line: docLine('en') }; };
@@ -420,11 +524,28 @@ if (mode === 'desk') {
     const c = mem.codes && mem.codes[String(b.code || '').toLowerCase()];
     if (!c || DateTime.fromISO(c.exp) < now) res = { ok: false, error: 'This login link has expired. Send LOGIN on WhatsApp again.' };
     else { const sid = rid(28); if (!mem.sess) mem.sess = {}; mem.sess[sid] = { phone: c.phone, role: c.role, name: c.name, exp: now.plus({ days: 30 }).toISO() };
-      delete mem.codes[String(b.code).toLowerCase()]; res = { ok: true, sid, role: c.role, name: c.name, clinic }; }
+      delete mem.codes[String(b.code).toLowerCase()]; if (!mem.users) mem.users = {};
+      const u = mem.users[c.phone] || (mem.users[c.phone] = {}); u.last = { at: now.toISO(), ua: String(b.ua || '').slice(0, 40) };
+      res = { ok: true, sid, role: c.role, name: c.name, clinic, needPw: !u.hash || !!c.reset }; }
+  } else if (b.action === 'pw_login') {
+    let ph = String(b.phone || '').replace(/\D/g, ''); if (ph.length === 10) ph = '91' + ph;
+    const st = staffRec(ph); if (!mem.users) mem.users = {};
+    const u = st ? mem.users[String(st.phone).replace(/\D/g, '')] : null;
+    if (u && u.lock && DateTime.fromISO(u.lock) > now) res = { ok: false, error: 'Too many wrong tries. Wait 15 minutes, or reset your password on WhatsApp.' };
+    else if (!st || !u || !u.hash || pwHash(u.salt, String(b.pw || '')) !== u.hash) {
+      if (u && u.hash) { u.fails = (u.fails || 0) + 1; if (u.fails >= 5) { u.lock = now.plus({ minutes: 15 }).toISO(); u.fails = 0; } }
+      res = { ok: false, error: st && (!u || !u.hash) ? 'No password set yet. Use "First time? Get login link" below.' : 'Phone number or password is wrong.' };
+    } else {
+      u.fails = 0; u.lock = null; u.last = { at: now.toISO(), ua: String(b.ua || '').slice(0, 40) };
+      const sid = rid(28); if (!mem.sess) mem.sess = {};
+      for (const k of Object.keys(mem.sess)) if (DateTime.fromISO(mem.sess[k].exp) < now) delete mem.sess[k];
+      mem.sess[sid] = { phone: String(st.phone).replace(/\D/g, ''), role: st.role || 'reception', name: st.name || 'Staff', exp: now.plus({ days: 30 }).toISO() };
+      res = { ok: true, sid, role: st.role || 'reception', name: st.name || 'Staff', clinic };
+    }
   } else if (!live) {
     res = { ok: false, auth: true, error: 'Please log in again.' };
   } else {
-    const role = sess.role; const isDoc = role === 'doctor' || role === 'owner';
+    const stNow = staffRec(sess.phone); const role = stNow.role || sess.role; const isDoc = role === 'doctor' || role === 'owner'; sess.name = stNow.name || sess.name;
     const q0 = qRead();
     if (b.action === 'call_next') { const q = qWrite(); callNext(q, out); }
     else if (b.action === 'not_here') { const q = qWrite(); notHere(q, out); }
@@ -434,6 +555,40 @@ if (mode === 'desk') {
     else if (b.action === 'set_status') { res.told = setDoc(String(b.status || 'in'), b.mins, out); }
     else if (b.action === 'chat_send' && !isDoc || (b.action === 'chat_send' && role === 'owner')) { const ph = digits(b.phone); if (ph && b.text) { out.push(textTo(ph, String(b.text).slice(0, 1000))); chatLog(ph, 'staff', b.text); if (mem.live[ph]) mem.live[ph].last = now.toISO(); } }
     else if (b.action === 'chat_end') { const ph = digits(b.phone); if (mem.live[ph]) { delete mem.live[ph]; const lg = langOf(ph, ''); out.push(textTo(ph, T[lg].liveOff)); chatLog(ph, 'bot', T[lg].liveOff); } }
+    else if (b.action === 'set_pw') {
+      const pw = String(b.pw || '');
+      if (pw.length < 6) res.error = 'Password needs at least 6 characters.';
+      else { if (!mem.users) mem.users = {}; const u = mem.users[sess.phone] || (mem.users[sess.phone] = {}); u.salt = rid(16); u.hash = pwHash(u.salt, pw); u.fails = 0; u.lock = null; u.setAt = now.toISO(); res.pwSet = true; }
+    }
+    else if (b.action === 'setup_save' && isDoc) {
+      const c0 = b.cfg || {}; const cfg = Object.assign({}, mem.cfg || {});
+      const str = (v, n) => String(v || '').trim().slice(0, n);
+      if (c0.type && PRESETS[c0.type]) { if (cfg.type !== c0.type) cfg.services = PRESETS[c0.type].services; cfg.type = c0.type; }
+      if (c0.clinicName) cfg.clinicName = str(c0.clinicName, 60);
+      if (c0.doctorName) cfg.doctorName = str(c0.doctorName, 60);
+      if (c0.address !== undefined) cfg.address = str(c0.address, 120);
+      if (c0.fee !== undefined) cfg.fee = Math.max(0, Math.min(100000, Math.round(Number(c0.fee) || 0)));
+      if (c0.upiId !== undefined) { cfg.upiId = str(c0.upiId, 60).replace(/\s/g, ''); cfg.upiName = cfg.clinicName || S.clinicName; }
+      if (c0.open && c0.close && Array.isArray(c0.days)) {
+        const ok = t => /^\d{2}:\d{2}$/.test(t); if (ok(c0.open) && ok(c0.close)) { const H = {}; ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].forEach(d => { H[d] = c0.days.includes(d) ? [`${c0.open}-${c0.close}`] : []; }); cfg.hours = H; cfg.open = c0.open; cfg.close = c0.close; cfg.days = c0.days.filter(d => H[d]); }
+      }
+      if (c0.done) cfg.setupDone = true;
+      mem.cfg = cfg; Object.assign(S, cfg); res.saved = true;
+    }
+    else if (b.action === 'team_add' && isDoc) {
+      let ph = String(b.phone || '').replace(/\D/g, ''); if (ph.length === 10) ph = '91' + ph;
+      if (ph.length < 12) res.error = 'Enter a 10-digit mobile number.';
+      else { const T = (Array.isArray(mem.team) && mem.team.length ? mem.team : (S.staff || [])).filter(x => String(x.phone).slice(-10) !== ph.slice(-10));
+        T.push({ phone: ph, name: String(b.name || 'Staff').trim().slice(0, 40) || 'Staff', role: ['reception', 'doctor'].includes(b.role) ? b.role : 'reception' }); mem.team = T; S.staff = T; res.added = true; }
+    }
+    else if (b.action === 'team_remove' && isDoc) {
+      const ph = String(b.phone || '').replace(/\D/g, '');
+      const T = (Array.isArray(mem.team) && mem.team.length ? mem.team : (S.staff || []));
+      const x = T.find(y => String(y.phone).slice(-10) === ph.slice(-10));
+      if (!x || x.role === 'owner' || String(x.phone).slice(-10) === sess.phone.slice(-10)) res.error = 'This person can not be removed.';
+      else { mem.team = T.filter(y => y !== x); S.staff = mem.team; for (const k of Object.keys(mem.sess || {})) if (mem.sess[k].phone.slice(-10) === ph.slice(-10)) delete mem.sess[k]; res.removed = true; }
+    }
+    else if (b.action === 'demo_seed' && role === 'owner') { seedDemo(); res.seeded = true; }
     else if (b.action === 'bill') {
       const day = /^\d{4}-\d{2}-\d{2}$/.test(b.day || '') ? b.day : todayStr;
       const v = visOf(day).find(x => x.k === b.k);
@@ -470,6 +625,28 @@ if (mode === 'desk') {
       const t0 = regSum(todayStr, todayStr); res.today.money = t0.money; res.today.nobill = t0.nobill;
       const inQ = ph => q.list.find(x => x.phone === ph && x.st !== 'x');
       res.fups = (mem.fup || []).filter(f => f.date === todayStr).map(f => { const t = inQ(f.ph); return { name: f.name, state: t ? (t.st === 'd' ? 'Visited' : 'In queue · ' + t.tok) : f.sent ? 'Reminded' : 'Not booked', c: t ? 'ok' : f.sent ? '' : 'warn' }; });
+    }
+
+    res.me.phone = sess.phone;
+    res.setupDone = !!(mem.cfg && mem.cfg.setupDone);
+    if (isDoc) {
+      const cf = Object.assign({ type: 'skin' }, mem.cfg || {});
+      res.cfg = { type: cf.type || 'skin', clinicName: S.clinicName, doctorName: S.doctorName, address: S.address || '', fee: S.fee || 0, upiId: S.upiId || '', open: cf.open || '10:00', close: cf.close || '20:00', days: cf.days || ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'], types: Object.keys(PRESETS).map(k => [k, PRESETS[k].label]) };
+      res.team = (S.staff || []).map(x => { const u = (mem.users || {})[String(x.phone).replace(/\D/g, '')] || {}; const l = u.last ? DateTime.fromISO(u.last.at).setZone(TZ) : null;
+        return { name: x.name, role: x.role, phone: '+' + String(x.phone).replace(/\D/g, ''), me: String(x.phone).slice(-10) === sess.phone.slice(-10), pw: !!u.hash, last: l ? (l > now.startOf('day') ? 'today ' + l.toFormat('h:mm a') : l.toFormat('d LLL, h:mm a')) + (u.last.ua ? ' · ' + u.last.ua : '') : 'never' }; });
+      // what helps the doctor most, on one screen
+      const P = allPatients(); const byKey = {}; P.forEach(p => { byKey[p.key] = p; });
+      const hist = x => { const p = byKey[patKey(x.phone, x.name)]; const nt = (mem.notes || {})[patKey(x.phone, x.name)];
+        const fu = p && p.fup && p.fup >= now.minus({ days: 5 }).toFormat('yyyy-MM-dd') && p.fup <= now.plus({ days: 3 }).toFormat('yyyy-MM-dd');
+        return { visits: p ? p.n : 0, last: p ? (p.last === todayStr ? 'today' : DateTime.fromISO(p.last).toFormat('d LLL')) : '', note: nt ? nt.t : '', fu: !!fu, pk: p ? p.key : '' }; };
+      const cur2 = servingOf(q); const w2 = waitingOf(q);
+      res.boon = {
+        now: cur2 ? Object.assign({ tok: cur2.tok, name: cur2.name, prob: cur2.prob || '' }, hist(cur2)) : null,
+        next: w2.slice(0, 3).map(x => Object.assign({ tok: x.tok, name: x.name, prob: x.prob || '' }, hist(x))),
+        finish: (w2.length || cur2) ? now.plus({ minutes: (w2.length + (cur2 ? 0.5 : 0)) * avgMin(q) }).toFormat('h:mm a') : '',
+        lost: P.filter(p => p.fup && p.fup < todayStr && p.fup >= now.minus({ days: 45 }).toFormat('yyyy-MM-dd')).sort((a, c) => c.fup.localeCompare(a.fup)).slice(0, 8)
+          .map(p => ({ name: p.name, pk: p.key, due: DateTime.fromISO(p.fup).toFormat('d LLL'), wa: p.ph ? 'https://wa.me/' + p.ph : '' })),
+      };
     }
     if (b.view === 'register' && isDoc) {
       const per = ['today', 'week', 'month'].includes(b.period) ? b.period : 'today';
@@ -680,7 +857,7 @@ function notifyPatient(r, bodyByLang, tplParams, btns) {
 const liveOpen = p => { const l = mem.live[p]; return l && DateTime.fromISO(l.last) > now.minus({ hours: 2 }); };
 const adminTarget = isAdmin ? mem.liveAdmin[me] : null;
 let liveHandled = false;
-const sysWord = /^(login|token)$/i.test((raw || '').trim());
+const sysWord = /^(login|reset|token)$/i.test((raw || '').trim());
 if (!adminCmd && !sysWord && isAdmin && adminTarget && liveOpen(adminTarget) && !id) {
   liveHandled = true;
   const pl = langOf(adminTarget, '');
@@ -715,18 +892,27 @@ else if (!isAdmin && !sysWord && liveOpen(me) && !id) {
 const staffOf = p => (S.staff || []).find(x => same(x.phone, p));
 const docAsk = !id && has(['doctor', 'dr', 'daktar', 'doc']) && has(['aa', 'aaye', 'aayi', 'aaya', 'gaye', 'gayi', 'hai', 'hain', 'kab', 'kahan', 'late', 'available', 'here', 'in']);
 if (liveHandled) {}
-else if (!id && /^login$/i.test(raw) && staffOf(me)) {
+else if (!id && /^(login|reset)$/i.test(raw) && staffOf(me)) {
   const st0 = staffOf(me); if (!mem.codes) mem.codes = {};
+  const isReset = /^reset$/i.test(raw);
   for (const k of Object.keys(mem.codes)) if (DateTime.fromISO(mem.codes[k].exp) < now) delete mem.codes[k];
-  const code = rid(8); mem.codes[code] = { phone: me, role: st0.role || 'reception', name: st0.name || 'Staff', exp: now.plus({ minutes: 15 }).toISO() };
-  payload = ctaTo(msg.from, `Clinic Desk login for ${st0.name || 'you'} (${st0.role || 'reception'}).\nThis link works once and expires in 15 minutes.`, 'Open Clinic Desk', `${APP}?code=${code}`);
+  const code = rid(8); mem.codes[code] = { phone: me, role: st0.role || 'reception', name: st0.name || 'Staff', reset: isReset, exp: now.plus({ minutes: 15 }).toISO() };
+  payload = ctaTo(msg.from, isReset ? `Password reset for ${st0.name || 'you'}.\nTap below and set a new password. The link works once and expires in 15 minutes.\n\nDidn't ask for this? Ignore this message.`
+    : `Clinic Desk login for ${st0.name || 'you'} (${st0.role || 'reception'}).\nThis link works once and expires in 15 minutes.`, isReset ? 'Set new password' : 'Open Clinic Desk', `${APP}?code=${code}`);
 }
 else if ((!id && /^token\b/i.test(raw)) || id === 'TQ|NEW') {
   const q0 = qRead(); const mineTk = q0.list.find(x => x.phone === me && ['w', 's'].includes(x.st));
   if (mineTk) payload = mineTk.st === 's' ? text(QT[lang].turn(cabin)) : tokenMsg(q0, mineTk, msg.from);
   else if (docRead().status === 'leave') payload = text(QT[lang].leave(D));
   else if (!isOpenNow() && !S.tokensAnytime) payload = text(QT[lang].closed);
-  else { const q = qWrite(); const tk = issueToken(q, me, msg.name, 'qr'); payload = tokenMsg(q, tk, msg.from); }
+  else { const q = qWrite(); const tk = issueToken(q, me, msg.name, 'qr'); payload = tokenMsg(q, tk, msg.from);
+    more.push(buttonsTo(msg.from, lang === 'en' ? 'Want to tell the doctor what it is about? Pick one, or type it in your own words. (Optional)' : 'Doctor ko pehle se bata dein, kya problem hai? Neeche chuniye ya apne shabdon mein likh dijiye. (Zaroori nahi)',
+      [['PB|Skin', lang === 'en' ? 'Skin' : 'Skin / chehra'], ['PB|Hair', lang === 'en' ? 'Hair' : 'Baal'], ['PB|Follow-up', 'Follow-up']])); }
+}
+else if (id.startsWith('PB|') || (!id && raw.split(/\s+/).length >= 3 && !has(['hi', 'hello', 'cancel', 'book', 'menu', 'token', 'doctor', 'dr', 'help', 'talk', 'chat']) && (() => { const q0 = qRead(); const tk = q0.list.find(x => x.phone === me && x.st === 'w'); return tk && !tk.prob; })())) {
+  const q = qWrite(); const tk = q.list.find(x => x.phone === me && ['w', 's'].includes(x.st));
+  if (tk) { tk.prob = id.startsWith('PB|') ? id.slice(3) : '"' + raw.slice(0, 120) + '"'; }
+  payload = text(lang === 'en' ? 'Thanks 🙏 The doctor will see this.' : 'Shukriya 🙏 Doctor ko bata diya gaya hai.');
 }
 else if (id === 'TQ|HERE') {
   const q0 = qRead(); const tk = q0.list.find(x => x.phone === me && x.st === 'w');
