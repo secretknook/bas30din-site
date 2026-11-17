@@ -622,6 +622,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
           '<div style="margin-top:14px">' + seg([['reception', 'Reception'], ['doctor', 'Doctor']], r, 'data-trole') + '</div>' +
           '<div class="ifoot" style="padding-left:4px">Reception sees the queue, billing and inbox. Only doctors see money totals and the register.</div>' +
           '<button class="ib pri" id="tadd" style="margin-top:16px">Add</button>';
+      } else if (s.t === 'ask') {
+        inner = '<div style="padding:18px 4px 6px;font-size:16px;line-height:1.45;color:#101828">' + esc(s.text) + '</div><button class="ib pri" id="askok" style="margin-top:12px' + (s.bad ? ';background:#D92D20' : '') + '">' + esc(s.ok) + '</button><button class="ib" data-close="1" style="font-weight:600;color:#344054">Cancel</button>';
       } else if (s.t === 'menu') {
         var L = S.d.links || {};
         inner = '<div class="ishead"><span style="width:56px"></span><span style="font-size:17px;font-weight:600">' + esc(S.d.me.name) + ' · ' + esc(S.d.me.role) + '</span><button class="ilink" data-close="1" style="font-weight:600">Done</button></div><div class="ilist" style="margin:16px 0 0">' +
@@ -702,7 +704,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         el.disabled = true; var dp = (c.docPhone || '').replace(/\D/g, '');
         var fin = function () { call({ action: 'setup_save', cfg: { type: c.type, clinicName: c.clinicName, doctorName: c.doctorName, fee: c.fee, open: c.open, close: c.close, days: c.days, upiId: c.upiId, done: true } }, function (r) { if (r.saved) { S.setup = null; S.tab = 'today'; toast('Setup saved · your clinic is live'); } }); };
         if (dp.length >= 10 && dp.slice(-10) !== String(S.d.me.phone || '').slice(-10)) call({ action: 'team_add', name: c.doctorName, phone: dp, role: 'doctor' }, fin); else fin(); });
-      on('[data-trm]', function (el) { if (!confirm('Remove ' + el.getAttribute('data-trmname') + '? They will be logged out.')) return; call({ action: 'team_remove', phone: el.getAttribute('data-trm') }, function (r) { if (r.removed) toast('Removed'); }); });
+      on('[data-trm]', function (el) { S.sheet = { t: 'ask', text: 'Remove ' + el.getAttribute('data-trmname') + '? They will be logged out and can not log in again.', ok: 'Remove', bad: true, body: { action: 'team_remove', phone: el.getAttribute('data-trm') }, done: 'Removed' }; draw(); });
       on('[data-trole]', function (el) { var n = document.getElementById('tn'), p = document.getElementById('tp'); S.sheet.name = n ? n.value : ''; S.sheet.phone = p ? p.value : ''; S.sheet.role = el.getAttribute('data-trole'); draw(); });
       on('#tadd', function (el) { var n = document.getElementById('tn').value.trim(), p = document.getElementById('tp').value; if (!n) return document.getElementById('tn').focus(); el.disabled = true; call({ action: 'team_add', name: n, phone: p, role: S.sheet.role || 'reception' }, function (r) { if (r.added) { S.sheet = null; toast(n + ' added · they can log in with their number now'); } }); });
       on('[data-trole2]', function (el) { var r = el.getAttribute('data-trole2'), n = el.getAttribute('data-tnm'); call({ action: 'team_add', name: n, phone: el.getAttribute('data-tph'), role: r }, function (x) { if (x.added) toast(n + ' is now ' + (r === 'doctor' ? 'a doctor · sees the doctor app' : 'reception')); }); });
@@ -712,7 +714,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       on('#saveupi', function () { call({ action: 'setup_save', cfg: { upiId: document.getElementById('upi').value } }, function (r) { if (r.saved) toast('UPI ID saved'); }); });
       on('#asrec', function () { S.viewAs = 'reception'; S.tab = 'queue'; draw(); window.scrollTo(0, 0); });
       on('[data-asdoc]', function () { S.viewAs = null; S.tab = 'today'; draw(); window.scrollTo(0, 0); });
-      on('#seed', function () { if (!confirm('Load demo data? This replaces the current patients, queue and register with sample data.')) return; call({ action: 'demo_seed' }, function (r) { if (r.seeded) { S.appts = null; toast('Demo data loaded'); } }); });
+      on('#seed', function () { S.sheet = { t: 'ask', text: 'Load demo data? This replaces the current patients, queue and register with 2 months of sample data.', ok: 'Load demo data', body: { action: 'demo_seed' }, done: 'Demo data loaded' }; draw(); });
+      on('#askok', function (el) { var s = S.sheet; el.disabled = true; call(s.body, function (r) { S.sheet = null; S.appts = null; S.apptsAt = 0; if (!r.error) { toast(s.done); if (s.body.action === 'demo_seed') { S.tab = 'today'; window.scrollTo(0, 0); } } }); });
       ['cn', 'dn', 'cf', 'dp', 'co', 'cc', 'cu'].forEach(function (id) { var e = document.getElementById(id); if (e) e.addEventListener('input', readSetup); });
       var ps = document.getElementById('psearch');
       if (ps) { var tm; ps.addEventListener('input', function () { S.q = ps.value; clearTimeout(tm); tm = setTimeout(function () { call({}); }, 300); }); }
