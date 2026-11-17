@@ -477,11 +477,14 @@ function seedDemo() {
   mem.callbacks = [{ phone: '910000055120', name: 'Ramesh Gupta', at: now.minus({ minutes: 30 }).toISO() }, { phone: '910000055121', name: 'Anjali Singh', at: now.minus({ minutes: 85 }).toISO() }];
   const tm = now.plus({ days: 1 }).toFormat('yyyy-MM-dd'); mem.wait = Object.assign({}, mem.wait || {}); mem.wait[tm] = [{ phone: '910000055130', lang: 'hl', at: now.toISO() }, { phone: '910000055131', lang: 'en', at: now.toISO() }];
   mem.nightSent = '';
+  mem.st = {}; for (let i = 6; i >= 0; i--) { const d = now.minus({ days: i }); if (d.weekday === 7) continue; mem.st[d.toFormat('yyyy-MM-dd')] = { chats: 8 + Math.floor(rnd() * 8), booked: 2 + Math.floor(rnd() * 4), qr: 10 + Math.floor(rnd() * 9), mcalls: 3 + Math.floor(rnd() * 4), reminders: 2 + Math.floor(rnd() * 4) }; }
 }
 
 // ---------- register: every visit, every bill, patients, follow-ups ----------
 const hm = iso => { const d = DateTime.fromISO(iso || ''); return d.isValid ? d.setZone(TZ).toFormat('h:mm a') : ''; };
 const visOf = d => (mem.vis && mem.vis[d]) || [];
+const staffOf2 = p => (S.staff || []).some(x => String(x.phone || '').replace(/\D/g, '').slice(-10) === String(p || '').slice(-10));
+function bump(k, n) { if (!mem.st) mem.st = {}; const day = now.toFormat('yyyy-MM-dd'); if (!mem.st[day]) { mem.st[day] = {}; const cut = now.minus({ days: 90 }).toFormat('yyyy-MM-dd'); for (const d of Object.keys(mem.st)) if (d < cut) delete mem.st[d]; } mem.st[day][k] = (mem.st[day][k] || 0) + (n || 1); }
 const patKey = (ph, name) => ph ? 'p' + ph : 'n' + String(name || '').trim().toLowerCase();
 const rupees = n => '₹' + Number(n || 0).toLocaleString('en-IN');
 function addVisit(tk) {
@@ -527,7 +530,7 @@ if (mode === 'desk') {
     else { if (b.cancel && tk.st === 'w') { qWrite(); tk.st = 'x'; }
       const n = aheadOf(q, tk); res = { ok: true, tok: tk.tok, st: tk.st, ahead: tk.st === 'w' ? n : 0, eta: tk.st === 'w' ? etaText(q, n, 'hl') : '', now: (servingOf(q) || {}).tok || null, missed: tk.missed || 0, clinic, doc: Object.assign(docInfo(), { line: docLine(langOf(tk.phone, '')) }), lang: langOf(tk.phone, '') }; }
   } else if (b.action === 'mc_log') {
-    if (S.hookKey && b.key === S.hookKey && digits(b.phone || '')) { if (!mem.mcalls) mem.mcalls = []; mem.mcalls = mem.mcalls.filter(x => x.at > now.minus({ days: 3 }).toISO()).concat([{ ph: digits(b.phone), at: now.toISO() }]).slice(-200); res = { ok: true }; }
+    if (S.hookKey && b.key === S.hookKey && digits(b.phone || '')) { if (!mem.mcalls) mem.mcalls = []; mem.mcalls = mem.mcalls.filter(x => x.at > now.minus({ days: 3 }).toISO()).concat([{ ph: digits(b.phone), at: now.toISO() }]).slice(-200); bump('mcalls'); res = { ok: true }; }
     else res = { ok: false };
   } else if (b.action === 'tv') {
     res = (b.k && b.k === S.tvKey) ? { ok: true, ...publicQ(qRead()), clinic, doc: docInfo(), cabin } : { ok: false };
@@ -648,6 +651,7 @@ if (mode === 'desk') {
       else { mem.team = T.filter(y => y !== x); S.staff = mem.team; for (const k of Object.keys(mem.sess || {})) if (mem.sess[k].phone.slice(-10) === ph.slice(-10)) delete mem.sess[k]; res.removed = true; }
     }
     else if (b.action === 'demo_seed' && role === 'owner') { seedDemo(); res.seeded = true; }
+    else if (b.action === 'demo_clear' && role === 'owner') { for (const k of ['vis', 'q', 'notes', 'fup', 'mcalls', 'callbacks', 'st', 'otp']) delete mem[k]; mem.wait = {}; mem.nightSent = ''; mem.doc = { status: 'in', setAt: now.toISO() }; res.cleared = true; }
     else if (b.action === 'bill') {
       const day = /^\d{4}-\d{2}-\d{2}$/.test(b.day || '') ? b.day : todayStr;
       const v = visOf(day).find(x => x.k === b.k);
@@ -713,6 +717,11 @@ if (mode === 'desk') {
         lost: P.filter(p => p.fup && p.fup < todayStr && p.fup >= now.minus({ days: 45 }).toFormat('yyyy-MM-dd')).sort((a, c) => c.fup.localeCompare(a.fup)).slice(0, 8)
           .map(p => ({ name: p.name, pk: p.key, due: DateTime.fromISO(p.fup).toFormat('d LLL'), wa: p.ph ? 'https://wa.me/' + p.ph : '' })),
       };
+    }
+    if (isDoc) {
+      const st0 = (mem.st || {})[todayStr] || {}; const wk = {}; for (const d of Object.keys(mem.st || {})) if (d >= now.minus({ days: 6 }).toFormat('yyyy-MM-dd')) for (const k of Object.keys(mem.st[d])) wk[k] = (wk[k] || 0) + mem.st[d][k];
+      const mcToday = (mem.mcalls || []).filter(x => x.at >= now.startOf('day').toISO());
+      res.wa = { today: { chats: st0.chats || 0, booked: st0.booked || 0, qr: st0.qr || 0, mcalls: mcToday.length, mcBooked: mcToday.filter(x => rows.some(r => r.phone === x.ph && active(r))).length, reminders: st0.reminders || 0, callbacks: (mem.callbacks || []).length }, week: wk };
     }
     if (b.view === 'register' && isDoc) {
       const per = ['today', 'week', 'month'].includes(b.period) ? b.period : 'today';
@@ -800,7 +809,7 @@ if (mode === 'summary' && now.hour >= 16) {
     if (hasBooking) { f.sent = true; continue; }
     const msgTxt = lg === 'en' ? `Hello ${f.name} 🙏\n${D} had asked you to come back for a follow-up tomorrow, ${whenTxt}.\n\nTap below to pick a time, or just come and send TOKEN at the clinic.`
       : `Namaste ${f.name} 🙏\n${D} ne aapko kal, ${whenTxt}, follow-up ke liye bulaya hai.\n\nTime book karne ke liye neeche dabaiye, ya seedha clinic aakar TOKEN bhejiye.`;
-    if (inWindow(f.ph)) { more.push(buttonsTo(f.ph, msgTxt, [['NEW', lg === 'en' ? 'Book a time' : 'Time book karein']])); f.sent = true; }
+    if (inWindow(f.ph)) { more.push(buttonsTo(f.ph, msgTxt, [['NEW', lg === 'en' ? 'Book a time' : 'Time book karein']])); f.sent = true; bump('reminders'); }
     else if (S.templates && S.templates.followup) { more.push(templateTo(f.ph, S.templates.followup, [f.name, D, whenTxt], ['NEW'])); f.sent = true; }
   }
   if (!more.length) return [];
@@ -829,6 +838,7 @@ if (mode === 'summary') {
 // ================= a message from WhatsApp =================
 const me = digits(msg.from);
 for (const k of Object.keys(mem.wait)) if (k < now.toFormat('yyyy-MM-dd')) delete mem.wait[k];
+if (!mem.seen[me] || DateTime.fromISO(mem.seen[me]) < now.minus({ hours: 24 })) { if (!staffOf2(me)) bump('chats'); }
 if (!mem.seen[me] || DateTime.fromISO(mem.seen[me]) < now.minus({ minutes: 20 })) mem.seen[me] = now.toISO();
 let id = String(msg.replyId || '').trim();
 const raw = String(msg.text || '').trim();
@@ -978,7 +988,7 @@ else if ((!id && /^token\b/i.test(raw)) || id === 'TQ|NEW') {
   if (mineTk) payload = mineTk.st === 's' ? text(QT[lang].turn(cabin)) : tokenMsg(q0, mineTk, msg.from);
   else if (docRead().status === 'leave') payload = text(QT[lang].leave(D));
   else if (!isOpenNow() && !S.tokensAnytime) payload = text(QT[lang].closed);
-  else { const q = qWrite(); const tk = issueToken(q, me, msg.name, 'qr'); payload = tokenMsg(q, tk, msg.from);
+  else { const q = qWrite(); const tk = issueToken(q, me, msg.name, 'qr'); payload = tokenMsg(q, tk, msg.from); bump('qr');
     more.push(buttonsTo(msg.from, lang === 'en' ? 'Want to tell the doctor what it is about? Pick one, or type it in your own words. (Optional)' : 'Doctor ko pehle se bata dein, kya problem hai? Neeche chuniye ya apne shabdon mein likh dijiye. (Zaroori nahi)',
       [['PB|Skin', lang === 'en' ? 'Skin' : 'Skin / chehra'], ['PB|Hair', lang === 'en' ? 'Hair' : 'Baal'], ['PB|Follow-up', 'Follow-up']])); }
 }
@@ -1036,7 +1046,7 @@ else if (!id && has(['language', 'bhasha', 'lang'])) {
 else if (holding && (id === 'SELF' || (!id && raw && !raw.includes('?') && raw.split(/\s+/).length <= 4 && !has(['cancel', 'hi', 'hello', 'menu', 'book', 'talk', 'help'])))) {
   const name = id === 'SELF' ? cleanName(msg.name) || 'Patient' : cleanName(raw);
   if (!name || name.length < 2) payload = buttons(L.askName, [['SELF', L.selfBtn]]);
-  else { setStatus(holding, 'Booked', name); payload = confirmMsg({ ...holding, name }); pin(); }
+  else { setStatus(holding, 'Booked', name); payload = confirmMsg({ ...holding, name }); pin(); bump('booked'); }
 }
 else if (holding && has(['cancel'])) { setStatus(holding, 'Cancelled'); payload = text(L.holdCancelled); }
 else if (id === 'WL') {

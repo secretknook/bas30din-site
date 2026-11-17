@@ -316,6 +316,12 @@ button.irow:active,a.irow:active{background:#F9FAFB}
 }
 .v11-date{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 @media (max-width:420px){.v11-fu button{font-size:13px;white-space:nowrap;letter-spacing:-.2px}}
+
+.v11-tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 16px}
+.v11-tile{background:#FFF;border-radius:16px;box-shadow:0 1px 2px rgba(16,24,40,.05),0 2px 8px rgba(16,24,40,.06);padding:14px 16px;display:flex;flex-direction:column;gap:2px}
+.v11-sub{font-size:13px;color:#667085}
+.v11-after .v11-soft{margin-left:16px;margin-right:16px;width:calc(100% - 32px)}
+@media (min-width:1024px){.v11-tiles{grid-template-columns:repeat(3,1fr);margin:0}.dmain .v11-after .v11-soft{margin-left:0;margin-right:0;width:100%}}
 </style>
 </head>
 <body>
@@ -452,7 +458,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       }
     }
     var isDoc = function () { return S.role === 'doctor' || S.role === 'owner'; };
-    function tabsFor(role) { return (role === 'doctor' || role === 'owner') && S.viewAs !== 'reception' ? ['today', 'after', 'patients', 'register', 'clinic'] : ['queue', 'inbox', 'patients']; }
+    function tabsFor(role) { return (role === 'doctor' || role === 'owner') && S.viewAs !== 'reception' ? ['today', 'patients', 'register', 'after', 'clinic'] : ['queue', 'inbox', 'patients']; }
     var ICON = {
       queue: '<path d="M4 6h16M4 12h16M4 18h10"/>',
       today: '<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/>',
@@ -676,6 +682,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       var h = '<div class="v11"><div class="v11-hd" style="flex-direction:column;align-items:flex-start;gap:2px"><span class="v11-date">' + (d.queue.open ? 'Clinic is open now' : 'Clinic hours are over') + '</span><h1 class="v11-h1">After clinic</h1></div><div class="v11-after">' +
         '<div class="v11-card" style="display:grid;grid-template-columns:1fr 1fr;row-gap:2px"><span class="v11-meta" style="margin:0">Seen today</span><span class="v11-meta" style="margin:0">Recorded</span><span class="v11-big">' + d.today.seen + '</span><span class="v11-big">' + rupee(d.today.money) + '</span>' +
         (d.today.nobill ? '<button class="v11-soft" data-tab="register" style="grid-column:1 / 3;margin:10px 0 0">' + d.today.nobill + ' seen without a bill · see Register</button>' : '') + '</div>';
+      var wa = d.wa || { today: {}, week: {} }, t = wa.today, wk = wa.week;
+      var tile = function (n, l, sub) { return '<div class="v11-tile"><span class="v11-big">' + n + '</span><span class="v11-meta" style="margin:0">' + l + '</span>' + (sub ? '<span class="v11-sub">' + sub + '</span>' : '') + '</div>'; };
+      h += '<div class="v11-lh" style="padding-top:22px"><span>What WhatsApp did today</span><span>' + ((wk.chats || 0) + ' chats this week') + '</span></div><div class="v11-tiles">' +
+        tile(t.chats || 0, 'Patients messaged', 'new chats on WhatsApp') + tile(t.mcalls || 0, 'Missed calls', (t.mcBooked || 0) + ' booked after our reply') + tile(t.booked || 0, 'Booked on WhatsApp', '') + tile(t.qr || 0, 'Tokens by QR', '') + tile(t.reminders || 0, 'Reminders sent', 'follow-ups') + tile(t.callbacks || 0, 'Asked for a call', 'waiting for reception') + '</div>' +
+        (d.me.role === 'owner' ? '<button class="v11-soft" data-tab="inbox" style="background:#EFF4FF;color:#175CD3;margin-top:10px">Open reception inbox · calls, call backs, waitlist</button>' : '');
       h += '<div class="v11-lh" style="padding-top:22px"><span>Follow-ups for today</span><span>' + (d.fups || []).length + '</span></div><div class="v11-card v11-list">' +
         ((d.fups || []).length ? d.fups.map(function (f) { return '<div class="v11-row"><span class="icol"><span class="tl-name">' + esc(f.name) + '</span></span><span style="font-size:15px;color:' + (f.c === 'ok' ? '#067647' : f.c === 'warn' ? '#B54708' : '#475467') + '">' + esc(f.state) + '</span></div>'; }).join('') : '<div class="v11-row"><span class="v11-meta" style="margin:0">None today</span></div>') + '</div>';
       h += '<div class="v11-lh" style="padding-top:22px"><span>Didn\'t come back</span><span>' + (bo.lost || []).length + '</span></div><div class="v11-card v11-list">' +
@@ -703,6 +714,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         (L.poster ? '<a class="drow" href="' + esc(L.poster) + '" target="_blank" rel="noopener"><span class="icol"><span style="font-size:15px;font-weight:600">QR poster</span><span class="dsub">Print and stick at reception</span></span></a>' : '') +
         (L.tv ? '<a class="drow" href="' + esc(L.tv) + '" target="_blank" rel="noopener"><span class="icol"><span style="font-size:15px;font-weight:600">TV screen</span><span class="dsub">Open on any TV or old phone</span></span></a>' : '') +
         '<button class="drow" id="asrec"><span class="icol"><span style="font-size:15px;font-weight:600">See the reception app</span><span class="dsub">What your receptionist sees</span></span></button>' +
+        (d.me.role === 'owner' ? '<button class="drow" id="clearall"><span class="icol"><span style="font-size:15px;font-weight:600">Start fresh</span><span class="dsub">Removes demo or test patients before a real clinic starts</span></span></button>' : '') +
         (d.me.role === 'owner' ? '<button class="drow" id="seed"><span class="icol"><span style="font-size:15px;font-weight:600">Load demo data</span><span class="dsub">Fills 2 months of sample patients, for showing the app</span></span></button>' : '') +
         '<button class="drow" id="logout" style="color:#B42318;font-weight:600;font-size:15px">Log out</button></div><div style="height:28px"></div></div>';
       return h;
@@ -813,7 +825,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     function draw() {
       if (!S.sid) return drawLogin();
       if (!S.d) { S.lastHtml = null; $app.innerHTML = '<div class="wrap i"><div class="ifoot" style="padding-top:120px;text-align:center">Loading…</div></div>'; return; }
-      var tabs = tabsFor(S.d.me.role); if (tabs.indexOf(S.tab) < 0) S.tab = tabs[0];
+      var tabs = tabsFor(S.d.me.role); if (tabs.indexOf(S.tab) < 0 && !(S.tab === 'inbox' && S.d.me.role === 'owner')) S.tab = tabs[0];
       var ae = document.activeElement;
       if (ae && ae.id === 'psearch' && S.tab === 'patients' && !S.pk) { var pl = document.getElementById('plist'); if (pl) { pl.innerHTML = plist(S.d.patients); return; } }
       if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA') && $app.contains(ae)) return;
@@ -900,6 +912,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         tr.style.transition = 'none'; fl.style.transition = 'none'; tr.style.top = fr + 'px'; var hh = Number(tl.getAttribute('data-rh') || 58) / 2; fl.style.height = (fr - hh) + 'px'; void tr.offsetHeight;
         tr.style.transition = ''; fl.style.transition = ''; tr.style.top = to + 'px'; fl.style.height = (to - hh) + 'px'; tl.setAttribute('data-anim', '0'); }
       on('[data-callby]', function (el) { var v = el.getAttribute('data-callby'); call({ action: 'setup_save', cfg: { callBy: v } }, function (r) { if (r.saved) toast(v === 'doctor' ? 'Doctor calls the next patient' : 'Reception calls the next patient'); }); });
+      on('#clearall', function () { S.sheet = { t: 'ask', text: 'Start fresh? This removes all patients, visits, bills, notes and the queue. Clinic settings and team stay.', ok: 'Remove everything', bad: true, body: { action: 'demo_clear' }, done: 'Clean start · ready for the clinic' }; draw(); });
       on('[data-vst]', function (el) { S.sheet.st = el.getAttribute('data-vst'); draw(); });
       on('[data-vmin]', function (el) { S.sheet.mins = Number(el.getAttribute('data-vmin')); draw(); });
       on('#vstatgo', function (el) { var s = S.sheet, st = s.st || S.d.doc.status; el.disabled = true; call({ action: 'set_status', status: st, mins: st === 'late' || st === 'away' ? (s.mins || 30) : 0 }, function (r) { S.sheet = null; toast(r.told ? 'Updated · ' + r.told + ' patients told on WhatsApp' : 'Status updated everywhere'); }); });
