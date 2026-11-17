@@ -127,7 +127,11 @@
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { msg.textContent = 'That email looks off. Try once more?'; msg.classList.add('is-err'); return; }
     btn.disabled = true; msg.textContent = 'One sec...';
     fetch(S.inbox.sheetUrl, { method: 'POST', mode: 'no-cors', body: new URLSearchParams({ email: email, website: f.website.value, source: 'bas30din.com/' + (box.id || '') }) })
-      .then(function () { box.classList.add('is-done'); msg.textContent = S.inbox.done; f.reset(); })
+      .then(function () {
+        // Email is saved in the Sheet now: ping n8n so the welcome email goes out right away
+        if (S.inbox.welcomeHook && !f.website.value) fetch(S.inbox.welcomeHook, { method: 'POST', mode: 'no-cors', body: new URLSearchParams({ email: email }) }).catch(function () {});
+        box.classList.add('is-done'); msg.textContent = S.inbox.done; f.reset();
+      })
       .catch(function () { msg.textContent = "That didn't go through. Try once more?"; msg.classList.add('is-err'); })
       .then(function () { btn.disabled = false; });
   });
