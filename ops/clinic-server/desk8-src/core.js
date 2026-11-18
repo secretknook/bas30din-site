@@ -188,6 +188,7 @@
     document.getElementById('root').innerHTML = demoBar() + '<div class="app-' + UI.app + '">' + body + '</div>';
     document.body.className = 'app-' + UI.app;
     renderModal();
+    document.querySelectorAll('.train').forEach(t => { t.scrollLeft = t.scrollWidth; });
     const af = document.querySelector('[data-autofocus]'); if (af) af.focus();
   }
   CD.render = render;

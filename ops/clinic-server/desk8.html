@@ -1492,6 +1492,57 @@ textarea.field{height:auto;min-height:96px;padding:12px 16px;line-height:1.45;re
 @media print{.demo,.hdr,.no-print{display:none!important}}
 @media (max-width:900px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}main.pg{padding:20px}.hdr{padding:14px 20px}.grid2,.grid3{grid-template-columns:1fr}}
 
+/* ---------- phones (one hand, Indian Android, 360–430 px) ---------- */
+@media (max-width:640px){
+  html,body{font-size:16px;overflow-x:hidden}
+  .demo{padding:6px 10px;gap:6px;font-size:13px;flex-wrap:nowrap;overflow-x:auto}
+  .demo.live b,.demo.live .lv-me,.demo.live .lv-rf{display:none}
+  .demo.live{overflow:visible}
+  .demo .pill{padding:4px 10px;font-size:13px;white-space:nowrap}
+  .hdr{padding:10px 14px;gap:6px 10px}
+  .hdr .nm{font-size:19px}
+  .hdr .logo{width:30px;height:30px;font-size:15px}
+  .hdr .who{font-size:14px}
+  .hdr .sp{flex-basis:100%;height:0}
+  .hdr .muted,.hdr .sw-link{font-size:13px}
+  main.pg{padding:14px 12px 90px;gap:14px}
+  h1.t{font-size:27px;line-height:1.15}
+  h2.t{font-size:21px}
+  .card.pad,.card[style*="padding:28px"]{padding:16px!important}
+  .tiles{gap:10px}
+  .tile{min-height:132px;padding:14px;border-radius:16px;gap:6px}
+  .tile .ic{width:38px;height:38px;border-radius:11px;font-size:18px}
+  .tile .tt{font-size:18px;line-height:1.2}
+  .tile .sb{font-size:14px}
+  .btn,.ghost{height:48px;font-size:16px;padding:0 16px;max-width:100%}
+  .btn.big{height:54px}
+  .choice{min-height:46px;font-size:15px;padding:0 12px}
+  .choices{gap:8px}
+  .field{font-size:16px}
+  .pg [style*="flex:1 1"]{flex:1 1 100%!important;min-width:0}
+  .pg .grow{min-width:0}
+  .flex{flex-wrap:wrap;gap:10px}
+  .row{flex-wrap:wrap;gap:6px 12px}
+  .list-card{flex-wrap:wrap;gap:8px 12px;padding:14px}
+  .list-card .grow{flex:1 1 55%}
+  .list-card>.btn,.list-card>.ghost,.list-card>button:last-child{margin-left:auto}
+  .list-card .tok{font-size:20px;min-width:52px}
+  .nm2{font-size:18px}
+  .train{overflow-x:auto;gap:6px;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+  .coach{width:64px;min-width:64px;height:48px;font-size:14px;border-radius:10px 10px 5px 5px}
+  .scrim{padding:10px;align-items:flex-end}
+  .modal{max-width:none;padding:18px 16px 20px;border-radius:18px 18px 14px 14px;gap:12px}
+  .toast{left:10px!important;right:10px!important;transform:none!important;bottom:16px!important;text-align:center}
+  .kbd{display:none}
+  label.card.flex{flex-wrap:nowrap;height:54px!important;padding:0 14px!important}
+  table{display:block;overflow-x:auto}
+  img{max-width:100%}
+  .pg{overflow-wrap:anywhere}
+  .vitals{grid-template-columns:1fr 1fr!important}
+  .vitals>div:last-child{grid-column:1/-1}
+}
+@media (hover:none){.tile:hover{transform:none;box-shadow:none}}
+
 .demo.live{background:#FFFFFF;color:#4A5468;border-bottom:1px solid #E7E1D6}
 .demo.live b{color:#16213A;font-family:'Newsreader',serif;font-size:17px;font-weight:600;margin-right:6px}
 .demo.live .pill{border-color:#E1DACE;color:#4A5468;background:#FFF}
@@ -2139,6 +2190,7 @@ textarea.field{height:auto;min-height:96px;padding:12px 16px;line-height:1.45;re
     document.getElementById('root').innerHTML = demoBar() + '<div class="app-' + UI.app + '">' + body + '</div>';
     document.body.className = 'app-' + UI.app;
     renderModal();
+    document.querySelectorAll('.train').forEach(t => { t.scrollLeft = t.scrollWidth; });
     const af = document.querySelector('[data-autofocus]'); if (af) af.focus();
   }
   CD.render = render;
@@ -2282,7 +2334,7 @@ textarea.field{height:auto;min-height:96px;padding:12px 16px;line-height:1.45;re
     if (c.boxes.r_close) tiles.push(CD.tile('close', '✓', 'Close the day', closed ? 'Closed at ' + CD.t(closed) + ' ✓' : 'Count cash before you leave', '#E8EFE9', '#24563A', closed ? 'ok' : ''));
     const done = tq.filter(v => v.status === 'done').length;
     return hdr() + '<main class="pg">' +
-      '<div><label class="card flex" style="height:64px;padding:0 22px;border-radius:16px;border-width:1.5px"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5B6474" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg><input id="home-search" data-f="q" data-u="search" value="' + esc(UI.f.q || '') + '" placeholder="Search a patient — name or phone number" autocomplete="off" style="flex:1;border:0;outline:none;font-size:19px;background:transparent"><span class="muted small">F2</span></label>' + CD.region('search') + '</div>' +
+      '<div><label class="card flex" style="height:64px;padding:0 22px;border-radius:16px;border-width:1.5px"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5B6474" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg><input id="home-search" data-f="q" data-u="search" value="' + esc(UI.f.q || '') + '" placeholder="Search a patient — name or phone number" autocomplete="off" style="flex:1;border:0;outline:none;font-size:19px;background:transparent"><span class="muted small kbd">F2</span></label>' + CD.region('search') + '</div>' +
       outBanners() + now +
       '<div class="tiles">' + tiles.join('') + '</div>' +
       '<div class="flex wrap" style="justify-content:center;gap:10px"><span class="muted">More:</span>' + [['patients', 'Patients'], ['bills', 'Bills and refunds'], ['inbox', 'WhatsApp inbox'], ['status', 'Doctor status'], ['more', 'Print and export']].map(([k, l]) => '<button class="link" data-a="nav" data-v="' + k + '">' + l + '</button>').join('') + '</div>' +
@@ -2488,7 +2540,7 @@ textarea.field{height:auto;min-height:96px;padding:12px 16px;line-height:1.45;re
     const items = UI.f.items || []; const sub = items.reduce((s, x) => s + x.amt, 0); const disc = Math.min(sub, Number(UI.f.disc) || 0);
     return '<div style="font-size:54px;font-weight:700;line-height:1">' + rs(sub - disc) + '</div>' + (disc ? '<div class="muted small">' + rs(sub) + ' − ' + rs(disc) + ' discount</div>' : '');
   };
-  A.selPay = ds => { selectPay(ds.id); CD.render(); };
+  A.selPay = ds => { selectPay(ds.id); CD.render(); if (window.innerWidth < 700) { const b = document.querySelector('[data-a=markPaid]'); if (b) b.closest('.card').scrollIntoView({ behavior: 'smooth', block: 'start' }); } };
   A.rmItem = ds => { UI.f.items.splice(Number(ds.i), 1); CD.render(); };
   A.addItem = (ds, el) => { const t = C().treatments.find(x => x.id === el.value); if (!t) return; (UI.f.items = UI.f.items || []).push({ n: t.n, amt: t.p, cat: t.cat, gst: t.gst }); CD.render(); };
   A.otherBill = () => {
@@ -2843,7 +2895,7 @@ textarea.field{height:auto;min-height:96px;padding:12px 16px;line-height:1.45;re
       (reps.length ? '<div class="card pad"><div class="muted small">Reports</div>' + reps.map(r => '<button class="txt" style="display:block" data-a="seeReport" data-id="' + r.id + '">' + esc(r.name) + ' · ' + CD.d(r.date) + (r.seen ? '' : ' · new') + '</button>').join('') + '</div>' : '') + '</aside>';
     const main = '<section class="card" style="flex:2 1 560px;padding:26px 28px;display:flex;flex-direction:column;gap:18px">' +
       '<div><span class="flbl">What you found</span><input class="field" data-f="finding" value="' + esc(f.finding) + '" placeholder="e.g. Acne vulgaris, grade 2 — cheeks and jaw" data-autofocus></div>' +
-      '<div class="grid3" style="grid-template-columns:1fr 1fr 2fr"><div><span class="flbl">Weight (kg)</span><input class="field" inputmode="decimal" data-f="wt" value="' + esc(f.wt) + '"></div><div><span class="flbl">BP</span><input class="field" data-f="bp" value="' + esc(f.bp) + '" placeholder="120/80"></div><div><span class="flbl">Tests advised (comma between)</span><input class="field" data-f="tests" value="' + esc(f.tests) + '" placeholder="e.g. CBC, Thyroid profile"></div></div>' +
+      '<div class="grid3 vitals" style="grid-template-columns:1fr 1fr 2fr"><div><span class="flbl">Weight (kg)</span><input class="field" inputmode="decimal" data-f="wt" value="' + esc(f.wt) + '"></div><div><span class="flbl">BP</span><input class="field" data-f="bp" value="' + esc(f.bp) + '" placeholder="120/80"></div><div><span class="flbl">Tests advised (comma between)</span><input class="field" data-f="tests" value="' + esc(f.tests) + '" placeholder="e.g. CBC, Thyroid profile"></div></div>' +
       '<div><span class="flbl">Medicines — tap a ready set, then change anything</span><div class="choices" style="margin-bottom:12px">' + c.sets.slice().sort((a, b) => b.used - a.used).slice(0, 8).map(st => '<button class="choice sm' + (f.set === st.id ? ' on' : '') + '" data-a="useSet" data-id="' + st.id + '">' + esc(st.n) + '</button>').join('') + '</div>' + CD.region('meds') + '</div>' +
       '<div><span class="flbl">Advice</span><input class="field" data-f="advice" value="' + esc(f.advice) + '" placeholder="e.g. Wash face twice a day. Don\'t squeeze. Sunscreen in the day."></div>' +
       '<div><span class="flbl">See ' + pron(p) + ' again</span>' + CD.choices('follow', [['14', '2 weeks'], ['28', '4 weeks'], ['42', '6 weeks'], ['0', 'Only if needed']], f.follow) + '</div>' +
@@ -4071,7 +4123,7 @@ textarea.field{height:auto;min-height:96px;padding:12px 16px;line-height:1.45;re
   CD.liveBar = () => {
     const apps = APPS[L.role] || APPS.reception; const me = (S() && S().me) || {};
     return '<div class="demo live no-print" role="navigation"><b>' + esc(C().name) + '</b>' + (apps.length > 1 ? apps.map(([id, l]) => '<button class="pill' + (UI.app === id ? ' on' : '') + '" data-a="app" data-v="' + id + '">' + l + '</button>').join('') : '') +
-      '<span class="sp"></span><span id="lv-dot">' + dot() + '</span><span>' + esc(me.name || '') + '</span><button class="pill" data-a="lvRefresh" title="Get the latest">↻</button><button class="pill" data-a="lvMenu">⋯</button></div>';
+      '<span class="sp"></span><span id="lv-dot">' + dot() + '</span><span class="lv-me">' + esc(me.name || '') + '</span><button class="pill lv-rf" data-a="lvRefresh" title="Get the latest">↻</button><button class="pill" data-a="lvMenu">⋯</button></div>';
   };
   function paintBar() { const el = document.getElementById('lv-dot'); if (el) el.innerHTML = dot(); }
   CD.A.lvRefresh = () => refresh(true).then(() => CD.toast('Up to date'));

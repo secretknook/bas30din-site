@@ -210,7 +210,7 @@
   CD.liveBar = () => {
     const apps = APPS[L.role] || APPS.reception; const me = (S() && S().me) || {};
     return '<div class="demo live no-print" role="navigation"><b>' + esc(C().name) + '</b>' + (apps.length > 1 ? apps.map(([id, l]) => '<button class="pill' + (UI.app === id ? ' on' : '') + '" data-a="app" data-v="' + id + '">' + l + '</button>').join('') : '') +
-      '<span class="sp"></span><span id="lv-dot">' + dot() + '</span><span>' + esc(me.name || '') + '</span><button class="pill" data-a="lvRefresh" title="Get the latest">↻</button><button class="pill" data-a="lvMenu">⋯</button></div>';
+      '<span class="sp"></span><span id="lv-dot">' + dot() + '</span><span class="lv-me">' + esc(me.name || '') + '</span><button class="pill lv-rf" data-a="lvRefresh" title="Get the latest">↻</button><button class="pill" data-a="lvMenu">⋯</button></div>';
   };
   function paintBar() { const el = document.getElementById('lv-dot'); if (el) el.innerHTML = dot(); }
   CD.A.lvRefresh = () => refresh(true).then(() => CD.toast('Up to date'));

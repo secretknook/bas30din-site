@@ -87,7 +87,7 @@
     if (c.boxes.r_close) tiles.push(CD.tile('close', '✓', 'Close the day', closed ? 'Closed at ' + CD.t(closed) + ' ✓' : 'Count cash before you leave', '#E8EFE9', '#24563A', closed ? 'ok' : ''));
     const done = tq.filter(v => v.status === 'done').length;
     return hdr() + '<main class="pg">' +
-      '<div><label class="card flex" style="height:64px;padding:0 22px;border-radius:16px;border-width:1.5px"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5B6474" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg><input id="home-search" data-f="q" data-u="search" value="' + esc(UI.f.q || '') + '" placeholder="Search a patient — name or phone number" autocomplete="off" style="flex:1;border:0;outline:none;font-size:19px;background:transparent"><span class="muted small">F2</span></label>' + CD.region('search') + '</div>' +
+      '<div><label class="card flex" style="height:64px;padding:0 22px;border-radius:16px;border-width:1.5px"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5B6474" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg><input id="home-search" data-f="q" data-u="search" value="' + esc(UI.f.q || '') + '" placeholder="Search a patient — name or phone number" autocomplete="off" style="flex:1;border:0;outline:none;font-size:19px;background:transparent"><span class="muted small kbd">F2</span></label>' + CD.region('search') + '</div>' +
       outBanners() + now +
       '<div class="tiles">' + tiles.join('') + '</div>' +
       '<div class="flex wrap" style="justify-content:center;gap:10px"><span class="muted">More:</span>' + [['patients', 'Patients'], ['bills', 'Bills and refunds'], ['inbox', 'WhatsApp inbox'], ['status', 'Doctor status'], ['more', 'Print and export']].map(([k, l]) => '<button class="link" data-a="nav" data-v="' + k + '">' + l + '</button>').join('') + '</div>' +
@@ -293,7 +293,7 @@
     const items = UI.f.items || []; const sub = items.reduce((s, x) => s + x.amt, 0); const disc = Math.min(sub, Number(UI.f.disc) || 0);
     return '<div style="font-size:54px;font-weight:700;line-height:1">' + rs(sub - disc) + '</div>' + (disc ? '<div class="muted small">' + rs(sub) + ' − ' + rs(disc) + ' discount</div>' : '');
   };
-  A.selPay = ds => { selectPay(ds.id); CD.render(); };
+  A.selPay = ds => { selectPay(ds.id); CD.render(); if (window.innerWidth < 700) { const b = document.querySelector('[data-a=markPaid]'); if (b) b.closest('.card').scrollIntoView({ behavior: 'smooth', block: 'start' }); } };
   A.rmItem = ds => { UI.f.items.splice(Number(ds.i), 1); CD.render(); };
   A.addItem = (ds, el) => { const t = C().treatments.find(x => x.id === el.value); if (!t) return; (UI.f.items = UI.f.items || []).push({ n: t.n, amt: t.p, cat: t.cat, gst: t.gst }); CD.render(); };
   A.otherBill = () => {
