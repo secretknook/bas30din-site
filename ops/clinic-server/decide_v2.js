@@ -124,6 +124,14 @@ function timingsText(lg) {
 // ---------- all patient-facing text ----------
 const C = S.clinicName, D = S.doctorName;
 const bookingId = r => (String(C).match(/\b[A-Za-z]/g) || ['C']).join('').slice(0, 3).toUpperCase() + '-' + String(r && r.row_number || 0).padStart(4, '0');
+function missedCallMsg(to) {
+  const lg = (mem.lang || {})[to] || S.defaultLang || 'hl'; const nm = (mem.pname || {})[to] ? (mem.pname[to].split(' ')[0]) : '';
+  const tm = timingsText(lg).split('\n').join('\n'); const where = `📍 ${C}${S.address ? ', ' + S.address : ''}`;
+  const body = lg === 'en'
+    ? `📞 *Hello${nm ? ' ' + nm : ''}! You just called ${C}*\n\nWe're so sorry we couldn't pick up. The doctor was probably with a patient, or our line was busy for a moment. 🙏\n\nYou don't need to call again. Everything can be done right here on WhatsApp:\n\n📅 *Book an appointment* in under a minute, at a time that suits you\n💬 *Ask anything*: fees, timings, treatments or reports\n📞 *Get a call back* from our team, at your convenience\n\n🕘 *Clinic timings*\n${tm}\n${where}\n\nJust tap an option below 👇`
+    : `📞 *Namaste${nm ? ' ' + nm + ' ji' : ''}! Aapne abhi ${C} ko call kiya tha*\n\nMaaf kijiye, hum us waqt aapka call nahi utha paaye. Shayad doctor patient ke saath the, ya line thodi der ke liye busy thi. 🙏\n\nAapko dobara call karne ki zaroorat nahi. Sab kuch yahin WhatsApp par ho jayega:\n\n📅 *Appointment book karein*, ek minute mein, apne samay par\n💬 *Kuch bhi poochhiye*: fees, timings, treatment ya report\n📞 *Call back paaiye*, humari team aapko khud call karegi\n\n🕘 *Clinic ka samay*\n${tm}\n${where}\n\nBas neeche se ek option chuniye 👇`;
+  return buttonsTo(to, body, [['MC_BOOK', lg === 'en' ? 'Book appointment' : 'Appointment book'], ['MC_Q', lg === 'en' ? 'Ask a question' : 'Sawaal poochhein'], ['MC_CALL', lg === 'en' ? 'Call me back' : 'Call back karein']], { type: 'image', image: { link: S.missedImage || IMG + 'missed.jpg' } });
+}
 const IMG = S.imgBase || 'https://raw.githubusercontent.com/secretknook/bas30din-site/clinic-server-setup/ops/clinic-server/img/';
 const T = {
   en: {
@@ -627,7 +635,7 @@ if (mode === 'desk') {
         note: Z.gstin ? (anyTax ? 'Healthcare services are exempt from GST (Notification 12/2017-Central Tax (Rate), Sl. No. 74). Cosmetic services are taxable at the rate shown.' : 'Healthcare services exempt from GST under Notification 12/2017-Central Tax (Rate), Sl. No. 74.') : '' };
     }
   } else if (b.action === 'mc_log') {
-    if (S.hookKey && b.key === S.hookKey && digits(b.phone || '')) { if (!mem.mcalls) mem.mcalls = []; mem.mcalls = mem.mcalls.filter(x => x.at > now.minus({ days: 3 }).toISO()).concat([{ ph: digits(b.phone), at: now.toISO() }]).slice(-200); bump('mcalls'); ev(b.phone, 'call', 'Called · nobody picked up'); if (b.sent !== false && b.sent !== 'false') ev(b.phone, 'bot', 'Bot sent a WhatsApp reply'); res = { ok: true }; }
+    if (S.hookKey && b.key === S.hookKey && digits(b.phone || '')) { if (!mem.mcalls) mem.mcalls = []; mem.mcalls = mem.mcalls.filter(x => x.at > now.minus({ days: 3 }).toISO()).concat([{ ph: digits(b.phone), at: now.toISO() }]).slice(-200); bump('mcalls'); ev(b.phone, 'call', 'Called · nobody picked up'); { const ph0 = digits(b.phone); if ((b.send === true || b.send === 'true') && inWindow(ph0)) { out.push(missedCallMsg(ph0)); res.handled = true; } } if (b.sent !== false && b.sent !== 'false') ev(b.phone, 'bot', 'Bot sent a WhatsApp reply'); res = { ok: true }; }
     else res = { ok: false };
   } else if (b.action === 'tv') {
     res = (b.k && b.k === S.tvKey) ? { ok: true, ...publicQ(qRead()), clinic, doc: docInfo(), cabin } : { ok: false };
