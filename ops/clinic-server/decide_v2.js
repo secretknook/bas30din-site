@@ -654,6 +654,8 @@ if (mode === 'desk') {
   } else if (!live) {
     res = { ok: false, auth: true, error: 'Please log in again.' };
   } else {
+    if (mem.docPend && mem.docPend.due <= now.toISO()) { const pd = mem.docPend; delete mem.docPend; mem.doc = pd.prev; res.flushed = setDoc(pd.status, pd.mins, out); }
+    if (!mem.docPend && mem.doc && (mem.doc.status === 'late' || mem.doc.status === 'away') && mem.doc.until && DateTime.fromISO(mem.doc.until) < now.minus({ minutes: 15 })) mem.doc = { status: 'in', setAt: now.toISO(), auto: true };
     const stNow = staffRec(sess.phone); const role = stNow.role || sess.role; const isDoc = role === 'doctor' || role === 'owner'; if (stNow.name && sess.name !== stNow.name) sess.name = stNow.name;
     const q0 = qRead();
     const callBy = S.callBy === 'reception' ? 'reception' : 'doctor';
@@ -665,6 +667,7 @@ if (mode === 'desk') {
       }
       if (b.action === 'call_now') { const tk = q.list.find(x => x.key === b.key && x.st === 'w');
         if (tk) { const rest = q.list.filter(x => x !== tk); const i = rest.findIndex(x => x.st === 'w'); rest.splice(i < 0 ? rest.length : i, 0, tk); q.list = rest; } }
+      if (!mem.docPend && ['late', 'away'].includes(docRead().status)) res.backIn = setDoc('in', 0, out) + 1;
       if (b.action === 'finish' || (b.action === 'call_next' && isDoc && callBy === 'reception')) finishCur(q, out); else callNext(q, out); }
     else if (b.action === 'not_here') { const q = qWrite(); notHere(q, out); }
     else if (b.action === 'add_token') { const q = qWrite(); const ph = digits(b.phone || ''); const full = ph.length === 10 ? '91' + ph : ph;
@@ -672,7 +675,12 @@ if (mode === 'desk') {
       if (b.srcOf && SRC[b.srcOf]) { if (!mem.src) mem.src = {}; mem.src[full || ('n' + String(b.name || '').toLowerCase())] = { s: b.srcOf, at: now.toISO() }; bump('src_' + b.srcOf); }
       if (full && inWindow(full)) out.push(tokenMsg(q, tk, full)); res.added = tk.tok; }
     else if (b.action === 'remove_token') { const q = qWrite(); const tk = q.list.find(x => x.key === b.key); if (tk) tk.st = 'x'; }
-    else if (b.action === 'set_status') { res.told = setDoc(String(b.status || 'in'), b.mins, out); }
+    else if (b.action === 'set_status') { const st0 = ['in', 'late', 'away', 'leave'].includes(b.status) ? b.status : 'in'; const m0 = Number(b.mins) || 0;
+      const prevDoc = mem.docPend ? mem.docPend.prev : docRead();
+      mem.docPend = { status: st0, mins: m0, due: now.plus({ seconds: 10 }).toISO(), prev: prevDoc, by: sess.name };
+      mem.doc = { status: st0, mins: m0, setAt: now.toISO(), until: (st0 === 'late' || st0 === 'away') && m0 ? now.plus({ minutes: m0 }).toISO() : null, told: [] };
+      res.pending = true; res.willTell = st0 === 'in' ? (prevDoc.told || []).length : waitingOf(qRead()).filter(x => x.phone && inWindow(x.phone)).length; }
+    else if (b.action === 'status_undo') { if (mem.docPend) { mem.doc = mem.docPend.prev; delete mem.docPend; res.undone = true; } }
     else if (b.action === 'chat_send' && !isDoc || (b.action === 'chat_send' && role === 'owner')) { const ph = digits(b.phone); if (ph && b.text) { out.push(textTo(ph, String(b.text).slice(0, 1000))); chatLog(ph, 'staff', b.text); if (mem.live[ph]) mem.live[ph].last = now.toISO(); } }
     else if (b.action === 'chat_end') { const ph = digits(b.phone); if (mem.live[ph]) { delete mem.live[ph]; const lg = langOf(ph, ''); out.push(textTo(ph, T[lg].liveOff)); chatLog(ph, 'bot', T[lg].liveOff); } }
     else if (b.action === 'set_pw') {
@@ -1024,7 +1032,22 @@ const pin = () => { const p = locationTo(msg.from); if (p) more.push(p); };
 
 // ---------- doctor / reception commands ----------
 const cmd = raw.toUpperCase().replace(/\s+/g, ' ').trim();
-const adminCmd = isAdmin && !id && /^(TODAY|AAJ|LATE\b|LEAVE\b|HELP|ADMIN)/.test(cmd);
+// the doctor (or owner) can change the clinic status in plain words from his own number
+const isDocPh = isAdmin || (S.staff || []).some(x => (x.role === 'doctor' || x.role === 'owner') && same(x.phone, me));
+let docIntent = null;
+if (isDocPh && String(id || '').startsWith('DS|')) { const [, k, v] = id.split('|'); docIntent = { k, m: Number(v) || 0, d: k === 'leave' ? v : null, sure: true }; }
+else if (isDocPh && !id && raw && raw.trim().split(/\s+/).length <= 9) {
+  const low = raw.toLowerCase(); const hr = low.match(/(\d+(?:\.5)?)\s*(hr|hrs|hour|hours|ghanta|ghante)/); const mn = low.match(/(\d{1,3})\s*(m|min|mins|minute|minutes|minat)?\b/);
+  const mins = hr ? Math.round(Number(hr[1]) * 60) : mn ? Number(mn[1]) : 0;
+  if (/\b(leave|chhutti|chutti|chhuti|holiday)\b|nahi aa ?(unga|ungi|paunga|paungi|raha|rahi|sakta|sakti)|clinic (band|closed?)\b|not coming/.test(low)) {
+    const d = /\b(kal|tomorrow)\b/.test(low) ? now.plus({ days: 1 }).toFormat('yyyy-MM-dd') : (parseLeaveDate('LEAVE ' + cmd.replace(/^LEAVE\s*/, '').replace(/\b(TODAY|AAJ|HAI|HOON|HU|I AM|ON|DOCTOR|DR)\b/g, '').trim()) || now.toFormat('yyyy-MM-dd'));
+    docIntent = { k: 'leave', d };
+  }
+  else if (/\b(late|let|der|deri|delay|delayed|traffic)\b/.test(low)) docIntent = { k: 'late', m: mins };
+  else if (/\b(away|bahar|break|surgery|ward|emergency|round|nikal)\b/.test(low)) docIntent = { k: 'away', m: mins };
+  else if (/^(in|back|aa gaya|aa gayi|aagaya|aagayi|pahunch gaya|pahunch gayi|reached|in clinic|i am in|i'm in|im in|start|started|wapas|wapas aa gaya|wapas aa gayi)\b/.test(low)) docIntent = { k: 'in' };
+}
+const adminCmd = (isAdmin && !id && /^(TODAY|AAJ|HELP|ADMIN)/.test(cmd)) || !!docIntent;
 function parseLeaveDate(s) {
   const x = s.replace(/^LEAVE\s*/, '').trim();
   if (!x || x === 'TODAY' || x === 'AAJ') return now.toFormat('yyyy-MM-dd');
@@ -1146,7 +1169,35 @@ else if (docAsk) {
 }
 else if (adminCmd) {
   const today = now.toFormat('yyyy-MM-dd');
-  if (/^(TODAY|AAJ)/.test(cmd)) {
+  const nWait = () => waitingOf(qRead()).filter(x => x.phone).length;
+  const sync = '\nReception app, TV screen and the WhatsApp bot now show this.';
+  if (docIntent && docIntent.k === 'cancel') payload = text('Okay, nothing changed.');
+  else if (docIntent && (docIntent.k === 'late' || docIntent.k === 'away') && !docIntent.m) {
+    payload = docIntent.k === 'late' ? buttons('How late will you be?', [['DS|late|15', '15 min'], ['DS|late|30', '30 min'], ['DS|late|60', '1 hour']]) : buttons('Back in about?', [['DS|away|30', '30 min'], ['DS|away|60', '1 hour'], ['DS|away|120', '2 hours']]);
+  }
+  else if (docIntent && (docIntent.k === 'late' || docIntent.k === 'away')) {
+    delete mem.docPend; const told = setDoc(docIntent.k, docIntent.m, more);
+    const appts = docIntent.k === 'late' ? rows.filter(r => r.date === today && active(r) && at(r.date, r.time) >= now.minus({ minutes: 15 })) : [];
+    appts.forEach(r => notifyPatient(r, lg => T[lg].lateMsg(docIntent.m, at(r.date, r.time).plus({ minutes: docIntent.m }).toFormat('h:mm a')), null, [[`UK|${r.row_number}`, 'okBtn'], [`RR|${r.row_number}`, 'changeBtn'], [`RX|${r.row_number}`, 'cancelBtn']]));
+    const lab = docIntent.k === 'late' ? `Running ${docIntent.m} min late` : `Away · back by ${now.plus({ minutes: docIntent.m }).toFormat('h:mm a')}`;
+    payload = buttons(`Done ✓ ${lab}.\n${told + appts.length ? `Told ${told ? told + ' waiting' : ''}${told && appts.length ? ' and ' : ''}${appts.length ? appts.length + ' booked' : ''} on WhatsApp.` : 'No WhatsApp needed to go out.'}${sync}\n\nWhen you reach, tap below or send "in".`, [['DS|in', "I'm in clinic"]]);
+  }
+  else if (docIntent && docIntent.k === 'in') {
+    delete mem.docPend; const told = setDoc('in', 0, more);
+    payload = text(`Done ✓ In clinic.${told ? `\n${told} patient${told > 1 ? 's' : ''} who were told you are late now know you are here.` : ''}${sync}`);
+  }
+  else if (docIntent && docIntent.k === 'leave' && !docIntent.sure) {
+    const d = docIntent.d; const n = rows.filter(r => r.date === d && active(r)).length + (d === today ? nWait() : 0);
+    payload = buttons(`Leave on ${DateTime.fromISO(d).toFormat('ccc, d LLL')}?\nNo new tokens or bookings that day.${n ? ` ${n} patient${n > 1 ? 's' : ''} will be told on WhatsApp.` : ''}`, [[`DS|leave|${d}`, 'Yes, leave'], ['DS|cancel', 'No']]);
+  }
+  else if (docIntent && docIntent.k === 'leave') {
+    const d = docIntent.d; const l = rows.filter(r => r.date === d && active(r));
+    l.forEach(r => notifyPatient(r, lg => T[lg].leaveMsg(dateLabel(d, lg)), null, [[`RR|${r.row_number}`, 'newTimeBtn'], [`RX|${r.row_number}`, 'cancelBtn']]));
+    if (!holidays.includes(d)) holiday = [[d, 'Doctor on leave (set by WhatsApp)']];
+    if (d === today) { delete mem.docPend; setDoc('leave', 0, more); }
+    payload = text(`Done ✓ ${DateTime.fromISO(d).toFormat('ccc, d LLL')} is marked as leave.\n${l.length ? `${l.length} booked patient${l.length > 1 ? 's were' : ' was'} asked to pick a new time.` : 'Nobody was booked that day.'}${sync}`);
+  }
+  else if (/^(TODAY|AAJ)/.test(cmd)) {
     const l = rows.filter(r => r.date === today && active(r)).sort((a, b) => a.time.localeCompare(b.time));
     payload = text(l.length ? `Today (${now.toFormat('ccc, d LLL')}): ${l.length} appointment${l.length > 1 ? 's' : ''}\n\n${l.map(r => `${at(r.date, r.time).toFormat('h:mm a')}  ${r.name || 'Patient'}  (+${r.phone})${r.status === 'confirmed' ? '  ✓' : ''}`).join('\n')}\n\n✓ = confirmed by patient`
       : `No appointments booked for today (${now.toFormat('ccc, d LLL')}).`);
@@ -1168,7 +1219,7 @@ else if (adminCmd) {
       payload = text(`Done. ${DateTime.fromISO(d).toFormat('ccc, d LLL')} is now closed for new bookings.\n${l.length ? `${l.length} patient${l.length > 1 ? 's' : ''} booked on that day ${l.length > 1 ? 'have' : 'has'} been asked to choose a new time.` : 'Nobody was booked on that day.'}`);
     }
   } else {
-    payload = text('Clinic commands (send from this number):\n\nTODAY - list of today\'s appointments\nLATE 30 - tell today\'s patients the doctor is 30 min late\nLEAVE TODAY / LEAVE TOMORROW / LEAVE 20 Nov - close that day and ask booked patients to choose a new time\n\nEvery morning at 8 AM you also get the day\'s list here.');
+    payload = text('You can tell the clinic bot in your own words, from this number:\n\n• "30 min late" / "aaj der hogi"\n• "away 1 hour" / "surgery hai"\n• "in" / "aa gaya"\n• "kal chutti" / "leave 25 Nov"\n• TODAY - today\'s bookings\n\nReception app, TV and waiting patients update by themselves.');
   }
 }
 // ---------- patients ----------

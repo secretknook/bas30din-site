@@ -358,6 +358,19 @@ button.irow:active,a.irow:active{background:#F9FAFB}
 .act-fbh{grid-column:1/3;display:flex;justify-content:space-between;font-size:14px}.act-fbh span{color:#667085}
 .act-fb a{align-self:center;color:#175CD3;font-weight:600;text-decoration:none;font-size:14px;grid-row:2;grid-column:2}
 .isheet>*{flex-shrink:0}
+
+.stwrap{padding:12px 20px 0}.stwrap.r{padding:10px 16px 0}
+.stbar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.stb{height:44px;border-radius:12px;border:1px solid #EAECF0;background:#FFF;font-family:inherit;font-size:15px;font-weight:600;color:#475467;padding:0 4px;white-space:nowrap;transition:background .15s,color .15s}
+.stb.on.st-in{background:#ECFDF3;border-color:#ABEFC6;color:#067647}
+.stb.on.st-late,.stb.on.st-away{background:#FFFAEB;border-color:#FEDF89;color:#B54708}
+.stb.on.st-leave{background:#F2F4F7;border-color:#D0D5DD;color:#344054}
+.stb.arm{background:#FEF3F2;border-color:#FDA29B;color:#B42318}
+.stmins{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px;font-size:14px;color:#475467}
+.stmins>span{flex-basis:100%;margin:0 0 2px 2px}.stm{flex:1;min-width:0}.dmain .stwrap{max-width:760px}
+.stm{height:36px;padding:0 12px;border-radius:10px;border:1px solid #EAECF0;background:#FFF;font-family:inherit;font-size:14px;font-weight:600;color:#344054}
+.stm.on{background:#175CD3;border-color:#175CD3;color:#FFF}
+.tundo{margin-left:12px;border:none;background:none;color:#84CAFF;font-weight:700;font-size:14px;font-family:inherit;padding:0}
 </style>
 </head>
 <body>
@@ -525,7 +538,7 @@ button.irow:active,a.irow:active{background:#F9FAFB}
       }).catch(function () { S.busy = false; S.err = 'No internet. Retrying…'; if (S.saving) { S.saving = false; toast('Not saved. Check the internet and press again.'); } draw(); });
     }
     function poll() { if (S.sid && !document.hidden && !S.sheet) call({}); }
-    function toast(t) { S.toast = t; S.toastT = Date.now(); setTimeout(function () { if (Date.now() - S.toastT >= 3400) { S.toast = ''; draw(); } }, 3500); }
+    function toast(t) { S.undo = 0; S.toast = t; S.toastT = Date.now(); setTimeout(function () { if (Date.now() - S.toastT >= 3400 && !S.undo) { S.toast = ''; draw(); } }, 3500); }
 
     // ---------- small builders ----------
     function hdr(small, title, right) {
@@ -542,6 +555,17 @@ button.irow:active,a.irow:active{background:#F9FAFB}
       var k = STAT[d.status] ? d.status : 'in'; var lab = 'Dr. ' + (S.d.clinic.doctor || '').replace(/^Dr\.?\s*/, '').split(' ')[0] + ' · ' + (k === 'late' ? 'Late ' + d.mins + 'm' : k === 'away' && d.until ? 'Back ' + d.until : STAT[k][0]);
       return '<button class="ipill" ' + (isDoc() ? 'data-sheet="status"' : 'disabled') + ' style="background:' + STAT[k][1] + ';color:' + STAT[k][2] + '"><span class="dot" style="width:7px;height:7px;background:' + STAT[k][3] + '"></span>' + esc(lab) + '</button>';
     }
+    function statusBar() {
+      var dc = S.d.doc || {}, k = DS[dc.status] ? dc.status : 'in', sel = S.stPick || k;
+      var O = [['in', 'In clinic'], ['late', 'Late'], ['away', 'Away'], ['leave', 'Leave']];
+      var h = '<div class="stbar" role="group" aria-label="Doctor status">' + O.map(function (o) { var arm = S.leaveArm && o[0] === 'leave', on = sel === o[0] && !arm;
+        return '<button class="stb' + (on ? ' on st-' + o[0] : '') + (arm ? ' arm' : '') + '" data-stb="' + o[0] + '" aria-pressed="' + on + '">' + (arm ? 'Tap again' : o[1]) + '</button>'; }).join('') + '</div>';
+      if (sel === 'late' || sel === 'away') { var M = sel === 'late' ? [15, 30, 45, 60] : [15, 30, 60, 120];
+        h += '<div class="stmins"><span>' + (S.stPick ? (sel === 'late' ? 'How late?' : 'Back in') : (sel === 'late' ? 'Late ' + dc.mins + ' min' : 'Away') + (dc.until ? ' · back ' + esc(dc.until) : '')) + '</span>' +
+          M.map(function (m) { var on = !S.stPick && dc.mins === m; return '<button class="stm' + (on ? ' on' : '') + '" data-stm="' + m + '">' + (m >= 60 ? (m / 60) + ' hr' : m + ' min') + '</button>'; }).join('') + '</div>'; }
+      else if (S.leaveArm) h += '<div class="stmins"><span style="color:#B42318">No new tokens today. Waiting patients get a WhatsApp.</span></div>';
+      return h;
+    }
     function bigTok(t) { var m = String(t || '').match(/^([A-Z]+)-?(\d+)$/); return m ? '<span class="tp">' + m[1] + '</span>' + m[2] : esc(t); }
     function rupee(n) { return '₹' + Number(n || 0).toLocaleString('en-IN'); }
     function srcLab(x) { return x.src === 'qr' ? 'Walk-in · QR' : x.src === 'desk' ? 'Walk-in · added here' : x.src === 'book' ? 'Booked' + (x.bookAt ? ' ' + x.bookAt : '') : 'Walk-in'; }
@@ -551,7 +575,7 @@ button.irow:active,a.irow:active{background:#F9FAFB}
       var d = S.d, q = d.queue, w = q.waiting, cur = q.now;
       var docCalls = d.callBy === 'doctor' && !isDoc();
       var main = docCalls ? (w.length ? 'Doctor calls next · ' + String(w[0].tok).replace('-', '') : 'No one waiting') : w.length ? 'Call next · ' + String(w[0].tok).replace('-', '') : cur ? 'Done with ' + String(cur.tok).replace('-', '') : 'No one waiting';
-      var h = hdr(d.clinic.name, 'OPD', pill(d.doc)) + '<div class="qgrid"><div class="qa-now">' +
+      var h = hdr(d.clinic.name, 'OPD') + '<div class="stwrap r">' + statusBar() + '</div><div class="qgrid"><div class="qa-now">' +
         '<div class="icard" style="margin:12px 16px 0;padding:18px;display:flex;flex-direction:column;gap:16px"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">' +
         '<div style="display:flex;flex-direction:column;min-width:0"><span style="font-size:13px;color:' + C.sec + '">With doctor</span>' +
         (cur ? '<span class="tok" style="font-size:60px;font-weight:700;letter-spacing:-1px;line-height:1.05">' + bigTok(cur.tok) + '</span><span style="font-size:17px;font-weight:600">' + esc(cur.name) + '</span><span style="font-size:13px;color:' + C.sec + ';margin-top:2px">' + esc(srcLab(cur)) + ' · called ' + esc(cur.since) + '</span>'
@@ -670,7 +694,7 @@ button.irow:active,a.irow:active{background:#F9FAFB}
       var dt = new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
       var PILL = { in: ['In clinic', '#12B76A', '#ECFDF3', '#067647'], late: ['Running ' + dc.mins + ' min late', '#F79009', '#FFFAEB', '#B54708'], away: ['Away' + (dc.until ? ' · back ' + dc.until : ''), '#F79009', '#FFFAEB', '#B54708'], leave: ['On leave', '#98A2B3', '#F2F4F7', '#344054'] }[k];
       var op = d.opd || { label: 'OPD', time: '' }; var h = '<div class="v11"><div class="v11-hd"><span class="v11-date"><b style="color:#101828;font-weight:600">' + esc(op.label) + '</b>' + (op.time ? ' · ' + esc(op.time) : '') + '</span>' +
-        '<button class="v11-pill" data-sheet="vstat" style="background:' + PILL[2] + ';color:' + PILL[3] + '"><span class="dot" style="width:8px;height:8px;background:' + PILL[1] + '"></span>' + esc(PILL[0]) + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></div>';
+        '</div><div class="stwrap">' + statusBar() + '</div>';
       var att = ((d.act || {}).attention || []).length; if (att) h += '<button class="v11-cbline" data-tab="after"><span class="dot" style="width:8px;height:8px;background:#F04438"></span>' + att + (att > 1 ? ' people are' : ' person is') + ' waiting for a call back<span style="margin-left:auto">See</span></button>';
       if (!q.open && !cur && !w.length) h += '<button class="v11-closed" data-tab="after">OPD is over · see Enquiries</button>';
       h += '<div class="v11-grid"><div class="v11-main"><div class="v11-card">';
@@ -912,7 +936,7 @@ button.irow:active,a.irow:active{background:#F9FAFB}
       if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA') && $app.contains(ae)) return;
       var docApp = isDoc() && S.viewAs !== 'reception';
       if (docApp && !S.d.setupDone && !S.setup && !S.setupSeen) { S.setupSeen = true; var c0 = S.d.cfg || {}; S.cfgDraft = { type: c0.type || 'skin', clinicName: c0.clinicName || '', doctorName: c0.doctorName || '', fee: c0.fee || 0, open: c0.open || '10:00', close: c0.close || '20:00', days: (c0.days || ['mon', 'tue', 'wed', 'thu', 'fri', 'sat']).slice(), upiId: c0.upiId || '' }; S.setup = 1; }
-      if (S.setup && docApp) { S.lastHtml = null; $app.innerHTML = '<div class="wrap i" style="background:#FFF">' + scrSetup() + (S.toast ? '<div class="itoast" role="status">' + esc(S.toast) + '</div>' : '') + sheetHtml() + '</div>'; bind(); return; }
+      if (S.setup && docApp) { S.lastHtml = null; $app.innerHTML = '<div class="wrap i" style="background:#FFF">' + scrSetup() + (S.toast ? '<div class="itoast" role="status">' + esc(S.toast) + (S.undo ? '<button class="tundo" id="stundo">Undo</button>' : '') + '</div>' : '') + sheetHtml() + '</div>'; bind(); return; }
       var scr = { queue: scrQueue, today: docApp ? scrDocToday : scrToday, register: scrRegister, inbox: scrInbox, patients: scrPatients, clinic: scrClinic, after: scrAfter }[S.tab]();
       var ib0 = S.d.inbox; var badge = ib0 ? ib0.calls.filter(function (x) { return !x.booked; }).length + ib0.callbacks.length : 0;
       var y = window.scrollY; var anim = S.sheet && S.sheet !== S.lastSheet; S.lastSheet = S.sheet;
@@ -921,13 +945,13 @@ button.irow:active,a.irow:active{background:#F9FAFB}
         var sideItems = tabs.map(function (t) { var bd = t === 'inbox' && badge ? badge : 0; return '<button data-tab="' + t + '" class="sitem' + (t === S.tab ? ' on' : '') + '"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[t] + '</svg><span>' + LAB[t] + '</span>' + (bd ? '<span class="sbadge">' + bd + '</span>' : '') + '</button>'; }).join('');
         var dsh = '<div class="dshell"><aside class="side"><div class="sclinic">' + esc(S.d.clinic.name) + '</div><div class="srole">' + esc(S.d.me.name) + ' · ' + esc(docApp ? (S.d.me.role === 'owner' ? 'Owner' : 'Doctor') : 'Reception') + '</div><nav class="snav">' + sideItems + '</nav><div style="flex:1"></div>' +
           (isDoc() && S.viewAs === 'reception' ? '<button class="sitem" data-asdoc="1"><span>Back to doctor app</span></button>' : '') + '<div class="skey">Press <b>N</b> for Call next</div><button class="sitem" id="logout"><span>Log out</span></button></aside>' +
-          '<main class="dmain t-' + S.tab + '">' + (S.err ? '<div class="errbar">' + esc(S.err) + '</div>' : '') + scr + '</main>' + (S.toast ? '<div class="itoast" role="status">' + esc(S.toast) + '</div>' : '') + sheetHtml() + '</div>';
+          '<main class="dmain t-' + S.tab + '">' + (S.err ? '<div class="errbar">' + esc(S.err) + '</div>' : '') + scr + '</main>' + (S.toast ? '<div class="itoast" role="status">' + esc(S.toast) + (S.undo ? '<button class="tundo" id="stundo">Undo</button>' : '') + '</div>' : '') + sheetHtml() + '</div>';
         dsh = dsh.replace('class="isheet"', 'class="isheet' + (anim ? ' up' : '') + '"');
         if (dsh === S.lastHtml) return; S.lastHtml = dsh; $app.innerHTML = dsh; window.scrollTo(0, y); bind(); return;
       }
       var html = '<div class="wrap i' + (docApp ? '' : ' recep') + (docApp && S.tab === 'clinic' ? ' dwhite' : '') + (docApp && (S.tab === 'today' || S.tab === 'after') ? ' v11bg' : '') + '">' + (isDoc() && S.viewAs === 'reception' ? '<div class="asbar">Reception view<button data-asdoc="1">Back to doctor app</button></div>' : '') + (S.err ? '<div style="position:sticky;top:0;z-index:4;background:#FEF3F2;color:' + C.bad + ';font-size:13px;text-align:center;padding:calc(env(safe-area-inset-top) + 6px) 8px 6px">' + esc(S.err) + '</div>' : '') +
         '<div class="content">' + scr + '</div>' +
-        (S.toast ? '<div class="itoast" role="status">' + esc(S.toast) + '</div>' : '') +
+        (S.toast ? '<div class="itoast" role="status">' + esc(S.toast) + (S.undo ? '<button class="tundo" id="stundo">Undo</button>' : '') + '</div>' : '') +
         '<nav class="itabs' + (docApp ? ' dtabs' : '') + '"><div class="in" style="grid-template-columns:repeat(' + tabs.length + ',minmax(0,1fr))">' + tabs.map(function (t) {
           var bd = t === 'inbox' && badge ? badge : t === 'register' && regBadge ? regBadge : 0;
           return '<button data-tab="' + t + '" class="' + (t === S.tab ? 'on' : '') + '"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[t] + '</svg>' + LAB[t] + (bd ? '<span class="badge">' + bd + '</span>' : '') + '</button>'; }).join('') + '</div></nav>' +
@@ -1006,6 +1030,15 @@ button.irow:active,a.irow:active{background:#F9FAFB}
       on('[data-callby]', function (el) { var v = el.getAttribute('data-callby'); call({ action: 'setup_save', cfg: { callBy: v } }, function (r) { if (r.saved) toast(v === 'doctor' ? 'Doctor calls the next patient' : 'Reception calls the next patient'); }); });
       on('#clearall', function () { S.sheet = { t: 'ask', text: 'Start fresh? This removes all patients, visits, bills, notes and the queue. Clinic settings and team stay.', ok: 'Remove everything', bad: true, body: { action: 'demo_clear' }, done: 'Clean start · ready for the clinic' }; draw(); });
       on('[data-cbtry]', function (el) { call({ action: 'cb_try', phone: el.getAttribute('data-cbtry') }, function () {}); }, 'click');
+      var stSend = function (st, m) { S.stPick = null; S.leaveArm = false; var LBL = { in: 'In clinic', late: 'Late ' + m + ' min', away: 'Away ' + (m >= 60 ? m / 60 + ' hr' : m + ' min'), leave: 'On leave today' };
+        call({ action: 'set_status', status: st, mins: m }, function (r) { S.undo = Date.now(); S.toast = LBL[st] + (r.willTell ? ' · ' + r.willTell + ' patient' + (r.willTell > 1 ? 's' : '') + ' will get a WhatsApp' : ' · updated everywhere'); S.toastT = Date.now(); draw();
+          setTimeout(function () { if (S.undo && Date.now() - S.undo >= 9900) { S.undo = 0; S.toast = ''; call({}); } }, 10000); }); };
+      on('[data-stb]', function (el) { var st = el.getAttribute('data-stb'), k = (S.d.doc || {}).status || 'in';
+        if (st === 'in') { if (k === 'in' && !S.stPick) return; stSend('in', 0); }
+        else if (st === 'leave') { if (S.leaveArm) stSend('leave', 0); else { S.stPick = null; S.leaveArm = true; draw(); setTimeout(function () { if (S.leaveArm) { S.leaveArm = false; draw(); } }, 5000); } }
+        else { S.leaveArm = false; S.stPick = S.stPick === st ? null : st; draw(); } });
+      on('[data-stm]', function (el) { var k = (S.d.doc || {}).status || 'in'; stSend(S.stPick || k, Number(el.getAttribute('data-stm'))); });
+      on('#stundo', function () { S.undo = 0; S.toast = ''; call({ action: 'status_undo' }, function () { toast('Undone · nothing was sent'); }); });
       on('[data-ev]', function (el) { var p = el.getAttribute('data-ev'); S.openEv[p] = !S.openEv[p]; draw(); });
       on('[data-vst]', function (el) { S.sheet.st = el.getAttribute('data-vst'); draw(); });
       on('[data-vmin]', function (el) { S.sheet.mins = Number(el.getAttribute('data-vmin')); draw(); });
