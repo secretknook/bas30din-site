@@ -371,6 +371,13 @@ button.irow:active,a.irow:active{background:#F9FAFB}
 .stm{height:36px;padding:0 12px;border-radius:10px;border:1px solid #EAECF0;background:#FFF;font-family:inherit;font-size:14px;font-weight:600;color:#344054}
 .stm.on{background:#175CD3;border-color:#175CD3;color:#FFF}
 .tundo{margin-left:12px;border:none;background:none;color:#84CAFF;font-weight:700;font-size:14px;font-family:inherit;padding:0}
+
+.stb{display:flex;align-items:center;justify-content:center;gap:7px}
+.stdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block}
+.stinfo{font-size:14px;color:#475467;margin:8px 0 0 2px}
+.stchg{border:none;background:none;padding:0;color:#175CD3;font-weight:600;font-size:14px;font-family:inherit}
+.stgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+.stgrid .stm{height:60px;border-radius:14px;font-size:18px;font-weight:700;flex:none}
 </style>
 </head>
 <body>
@@ -563,14 +570,12 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       return '<button class="ipill" ' + (isDoc() ? 'data-sheet="status"' : 'disabled') + ' style="background:' + STAT[k][1] + ';color:' + STAT[k][2] + '"><span class="dot" style="width:7px;height:7px;background:' + STAT[k][3] + '"></span>' + esc(lab) + '</button>';
     }
     function statusBar() {
-      var dc = S.d.doc || {}, k = DS[dc.status] ? dc.status : 'in', sel = S.stPick || k;
-      var O = [['in', 'In clinic'], ['late', 'Late'], ['away', 'Away'], ['leave', 'Leave']];
-      var h = '<div class="stbar" role="group" aria-label="Doctor status">' + O.map(function (o) { var arm = S.leaveArm && o[0] === 'leave', on = sel === o[0] && !arm;
-        return '<button class="stb' + (on ? ' on st-' + o[0] : '') + (arm ? ' arm' : '') + '" data-stb="' + o[0] + '" aria-pressed="' + on + '">' + (arm ? 'Tap again' : o[1]) + '</button>'; }).join('') + '</div>';
-      if (sel === 'late' || sel === 'away') { var M = sel === 'late' ? [15, 30, 45, 60] : [15, 30, 60, 120];
-        h += '<div class="stmins"><span>' + (S.stPick ? (sel === 'late' ? 'How late?' : 'Back in') : (sel === 'late' ? 'Late ' + dc.mins + ' min' : 'Away') + (dc.until ? ' · back ' + esc(dc.until) : '')) + '</span>' +
-          M.map(function (m) { var on = !S.stPick && dc.mins === m; return '<button class="stm' + (on ? ' on' : '') + '" data-stm="' + m + '">' + (m >= 60 ? (m / 60) + ' hr' : m + ' min') + '</button>'; }).join('') + '</div>'; }
-      else if (S.leaveArm) h += '<div class="stmins"><span style="color:#B42318">No new tokens today. Waiting patients get a WhatsApp.</span></div>';
+      var dc = S.d.doc || {}, k = DS[dc.status] ? dc.status : 'in';
+      var O = [['in', 'In clinic', '#12B76A'], ['late', 'Late', '#F79009'], ['away', 'Away', '#F04438'], ['leave', 'Leave', '#98A2B3']];
+      var h = '<div class="stbar" role="group" aria-label="Doctor status">' + O.map(function (o) { var arm = S.leaveArm && o[0] === 'leave', on = k === o[0] && !arm;
+        return '<button class="stb' + (on ? ' on st-' + o[0] : '') + (arm ? ' arm' : '') + '" data-stb="' + o[0] + '" aria-pressed="' + on + '"><span class="stdot" style="background:' + (arm ? '#F04438' : o[2]) + '"></span>' + (arm ? 'Tap again' : o[1]) + '</button>'; }).join('') + '</div>';
+      if (S.leaveArm) h += '<div class="stinfo" style="color:#B42318">No new tokens today. Waiting patients get a WhatsApp.</div>';
+      else if (k === 'late' || k === 'away') h += '<div class="stinfo">' + (k === 'late' ? 'Running ' + dc.mins + ' min late' : 'Away') + (dc.until ? ' · back ' + esc(dc.until) : '') + ' · <button class="stchg" data-stb="' + k + '">Change</button></div>';
       return h;
     }
     function bigTok(t) { var m = String(t || '').match(/^([A-Z]+)-?(\d+)$/); return m ? '<span class="tp">' + m[1] + '</span>' + m[2] : esc(t); }
@@ -917,6 +922,12 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
           '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px">' + OPT.map(function (o) { var on = sel === o[0]; return '<button data-vst="' + o[0] + '" aria-pressed="' + on + '" style="height:60px;border-radius:14px;border:' + (on ? '2px solid ' + o[2] : '1px solid #EAECF0') + ';background:' + (on ? o[3] : '#FFF') + ';display:flex;align-items:center;gap:10px;padding:0 14px;font-size:16px;font-weight:600;color:#101828"><span class="dot" style="width:10px;height:10px;background:' + o[2] + '"></span>' + o[1] + '</button>'; }).join('') + '</div>' +
           ((sel === 'late' || sel === 'away') ? '<div style="font-size:15px;color:#475467;margin-top:14px">' + (sel === 'late' ? 'How late?' : 'Back in about') + '</div><div class="v11-fu" style="margin-top:8px">' + [15, 30, 45, 60].map(function (m) { var on = (s.mins || 30) === m; return '<button data-vmin="' + m + '" class="' + (on ? 'on' : '') + '">' + (m === 60 ? '1 hour' : m + ' min') + '</button>'; }).join('') + '</div>' : '') +
           '<button class="v11-done" id="vstatgo" style="margin-top:16px">Update' + (nW && sel !== 'in' ? ' · tell ' + nW + ' waiting' : '') + '</button>';
+      } else if (s.t === 'stpick') {
+        var late = s.st === 'late', M = late ? [15, 30, 45, 60] : [15, 30, 60, 120], nW = S.d.queue.waiting.length;
+        inner = '<div style="display:flex;align-items:center;gap:8px;font-size:20px;font-weight:700;padding:14px 4px 0"><span class="stdot" style="width:10px;height:10px;background:' + (late ? '#F79009' : '#F04438') + '"></span>' + (late ? 'How late?' : 'Back in about?') + '</div>' +
+          '<div style="font-size:15px;color:#475467;padding:4px 4px 0">' + (nW ? nW + ' waiting patient' + (nW > 1 ? 's' : '') + ' will get a WhatsApp with the new time.' : 'Reception, TV and the WhatsApp bot will show this.') + '</div>' +
+          '<div class="stgrid">' + M.map(function (m) { return '<button class="stm" data-stm="' + m + '">' + (m >= 60 ? (m / 60) + (m === 60 ? ' hour' : ' hours') : m + ' min') + '</button>'; }).join('') + '</div>' +
+          '<button data-close="1" style="height:44px;border:none;background:none;font-size:15px;font-weight:600;color:#475467;margin-top:6px;font-family:inherit">Cancel</button>';
       } else if (s.t === 'tlrow') {
         inner = '<span class="v11-tok" style="align-self:flex-start;margin-top:12px">' + esc(s.tok) + '</span><div style="font-size:26px;font-weight:700;letter-spacing:-.3px;margin-top:6px">' + esc(s.name) + '</div><div style="font-size:17px;color:#344054;margin-top:2px">' + esc(s.prob) + '</div>' +
           '<button class="v11-done" id="callnow" style="margin-top:16px">Call now</button><div style="font-size:14px;color:#475467;text-align:center;margin-top:6px">For emergencies. Everyone else keeps their place.</div>' +
@@ -930,7 +941,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
           (L.tv ? '<a class="irow" href="' + esc(L.tv) + '" target="_blank" rel="noopener"><span class="icol"><span>Waiting-room TV screen</span></span>' + CHEV + '</a>' : '') +
           '<button class="irow" id="logout" style="color:' + C.bad + '"><span>Log out</span></button></div>';
       }
-      return '<div class="isheetbg" data-close="1"><div class="isheet" role="dialog" aria-modal="true"' + (s.t === 'dstat' || s.t === 'vstat' || s.t === 'tlrow' ? ' style="background:#FFF"' : '') + '><div class="grab"></div>' + inner + '</div></div>';
+      return '<div class="isheetbg" data-close="1"><div class="isheet" role="dialog" aria-modal="true"' + (s.t === 'dstat' || s.t === 'vstat' || s.t === 'tlrow' || s.t === 'stpick' ? ' style="background:#FFF"' : '') + '><div class="grab"></div>' + inner + '</div></div>';
     }
 
     // ---------- draw ----------
@@ -1043,8 +1054,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       on('[data-stb]', function (el) { var st = el.getAttribute('data-stb'), k = (S.d.doc || {}).status || 'in';
         if (st === 'in') { if (k === 'in' && !S.stPick) return; stSend('in', 0); }
         else if (st === 'leave') { if (S.leaveArm) stSend('leave', 0); else { S.stPick = null; S.leaveArm = true; draw(); setTimeout(function () { if (S.leaveArm) { S.leaveArm = false; draw(); } }, 5000); } }
-        else { S.leaveArm = false; S.stPick = S.stPick === st ? null : st; draw(); } });
-      on('[data-stm]', function (el) { var k = (S.d.doc || {}).status || 'in'; stSend(S.stPick || k, Number(el.getAttribute('data-stm'))); });
+        else { S.leaveArm = false; S.sheet = { t: 'stpick', st: st }; draw(); } });
+      on('[data-stm]', function (el) { var st = S.sheet && S.sheet.st; S.sheet = null; stSend(st, Number(el.getAttribute('data-stm'))); });
       on('#stundo', function () { S.undo = 0; S.toast = ''; call({ action: 'status_undo' }, function () { toast('Undone · nothing was sent'); }); });
       on('[data-ev]', function (el) { var p = el.getAttribute('data-ev'); S.openEv[p] = !S.openEv[p]; draw(); });
       on('[data-vst]', function (el) { S.sheet.st = el.getAttribute('data-vst'); draw(); });
