@@ -1448,7 +1448,7 @@ else if (id.startsWith('RX|')) {
 }
 else if (id === 'SVC' || (!id && has(['price', 'prices', 'fees', 'fee', 'charges', 'treatment', 'treatments', 'services', 'kitna']))) { payload = svcCarousel(); }
 else if (id === 'DOC' || (!id && has(['doctor', 'dr', 'qualification', 'experience']) && !has(['late', 'leave']))) { payload = doctorCard(); }
-else if (id === 'NEW' || id.startsWith('LANG|') || (!id && has(['book', 'booking', 'appointment']) && !has(['cancel']))) {
+else if (id === 'NEW' || id === 'MC_BOOK' || id.startsWith('LANG|') || (!id && has(['book', 'booking', 'appointment']) && !has(['cancel']))) {
   if (id.startsWith('LANG|') && upcoming.length) payload = buttons(L.yourAppts(msg.name, upcoming.map(r => `• ${r.name || 'Patient'}: ${W(r)}`).join('\n')), menuBtns());
   else if (id.startsWith('LANG|')) payload = welcomeCard();
   else payload = canBookMore ? svcList(L.pickSvc) : buttons(L.limit(upcoming.length), [['CANCEL', L.cancelBookingBtn]]);
