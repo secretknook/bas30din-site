@@ -45,9 +45,10 @@
   function busyUI() { return !!UI.modal || (document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && document.activeElement.type !== 'checkbox'); }
   function refresh(force) {
     if (!L.sid || L.busy || L.queue.length) return Promise.resolve();
-    L.busy++;
+    L.busy++; const sn = L.sends || 0;
     return post({ sid: L.sid, v8: true, v8h: L.h }, 15000).then(r => {
       L.busy--;
+      if ((L.sends || 0) !== sn) return; // a change was sent meanwhile: its reply is newer
       if (r && r.auth) return loggedOut(r.error);
       if (r.v8h) L.h = r.v8h;
       if (r.v8same) { L.lastOk = Date.now(); L.offline = false; const n = new Date(Date.now() + 330 * 60000); S().clock = n.getUTCHours() * 60 + n.getUTCMinutes(); paintBar(); return; }
@@ -60,7 +61,7 @@
   /* ---------- every tap that changes something ---------- */
   function send(payload) {
     if (!payload) return;
-    L.queue.push(payload); pump();
+    L.sends = (L.sends || 0) + 1; L.queue.push(payload); pump();
   }
   function pump() {
     if (L.busy || !L.queue.length) return;
