@@ -478,6 +478,13 @@ div.act-head{cursor:default}
 .ibx-h{width:100%;display:flex;flex-direction:column;align-items:stretch;gap:4px;border:none;background:none;padding:10px 0 8px;text-align:left;font-family:inherit;color:inherit}
 .ibx-s{white-space:normal;line-height:1.4;font-size:14.5px;color:#475467}
 .ibx .racts{padding:0 0 12px}.ibx .racts:empty{display:none}
+
+.slw{min-height:100vh;background:#F2F4F7;display:flex;flex-direction:column;align-items:center;padding:24px 12px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:#101828}
+.sl{width:300px;background:#FFF;border-radius:8px;padding:22px 18px;text-align:center;box-shadow:0 1px 3px rgba(16,24,40,.1);border-top:1px dashed #98A2B3;border-bottom:1px dashed #98A2B3}
+.slc{font-size:18px;font-weight:800}.sls{font-size:12.5px;color:#475467;line-height:1.5;margin-top:4px}
+.sll{margin-top:16px;font-size:12px;font-weight:800;letter-spacing:.3em;color:#475467}.slt{font-size:84px;font-weight:800;letter-spacing:-2px;line-height:1}
+.slq{display:flex;justify-content:center;margin:14px 0 6px}.slf{margin-top:12px;padding-top:10px;border-top:1px dashed #D0D5DD;font-size:12px;color:#667085}
+@media print{@page{size:80mm auto;margin:3mm}.slw{background:#FFF;padding:0}.sl{box-shadow:none;width:auto;border:none}.ivbtn{display:none}}
 </style>
 </head>
 <body>
@@ -598,6 +605,19 @@ div.act-head{cursor:default}
         '<table class="ivtb"><thead>' + th + '</thead><tbody>' + rows + '</tbody></table>' + tot + foot + '</div>' +
         (z.sample ? '<div class="ivsm" style="text-align:center;margin-top:10px">Sample GSTIN and registration shown for demo.</div>' : '') + '</div>';
     }).catch(function () { $app.innerHTML = '<div class="wrap white"><div class="empty">Could not load. Check your internet.</div></div>'; });
+  }
+  function slip(k) {
+    post({ action: 'track', k: k }).then(function (d) {
+      var e = function (x) { return String(x == null ? '' : x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+      if (!d.ok) { $app.innerHTML = '<div class="wrap white"><div class="empty">This token is no longer active.</div></div>'; return; }
+      var url = location.origin + location.pathname + '?v=t&k=' + encodeURIComponent(k), dt = new Date();
+      $app.innerHTML = '<div class="slw"><div class="sl"><div class="slc">' + e(d.clinic.name) + '</div><div class="sls">' + e(d.clinic.doctor) + (d.clinic.address ? '<br>' + e(d.clinic.address) : '') + '</div>' +
+        '<div class="sll">TOKEN</div><div class="slt">' + e(String(d.tok).replace('-', '')) + '</div>' +
+        '<div class="sls">' + dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) + ' · ' + dt.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }) + (d.ahead ? '<br>' + d.ahead + ' ahead of you · ' + e(d.eta) : '') + '</div>' +
+        '<div class="slq">' + (typeof qrSvg === 'function' ? qrSvg(url, 120) : '') + '</div><div class="sls">Scan to see your turn live<br>Apni baari live dekhne ke liye scan karein</div><div class="slf">Please keep this slip till your turn</div></div>' +
+        '<button class="ivbtn" onclick="window.print()" style="margin-top:14px">Print slip</button></div>';
+      setTimeout(function () { try { window.print(); } catch (x) {} }, 600);
+    });
   }
   // ---------------- staff app (v6) ----------------
   function staff() {
@@ -959,6 +979,7 @@ div.act-head{cursor:default}
       h += '<div class="dsec"><span>Payments</span><span></span></div><div style="padding:0 16px"><div class="drow"><span class="icol"><span style="font-size:15px;font-weight:600">Clinic UPI ID</span><span class="dsub">Shown as a QR when reception bills by UPI</span></span></div>' +
         '<div style="display:flex;gap:8px;margin-top:4px"><input id="upi" class="dinput" placeholder="name@okhdfc" value="' + esc(c.upiId || '') + '" autocomplete="off" style="flex:1"><button class="dmini" id="saveupi" style="height:44px">Save</button></div></div>';
       if (isDoc()) { var z = d.biz || {}; h += '<div class="dsec"><span>Billing details</span><span></span></div><div style="padding:0 16px"><button class="drow" data-sheet="biz"><span class="icol"><span style="font-size:15px;font-weight:600">' + esc(z.legal || 'Add your billing details') + '</span><span class="dsub">' + esc(z.gstin ? 'GSTIN ' + z.gstin : 'No GSTIN added') + ' · invoice ' + esc((z.prefix || '') + '/…') + '</span></span><span style="color:#175CD3;font-weight:600;font-size:15px">Edit</span></button></div>';
+        var dp0 = d.docp || {}; h += '<div class="dsec"><span>Doctor profile</span><span></span></div><div style="padding:0 16px"><button class="drow" data-sheet="docp"><span class="icol"><span style="font-size:15px;font-weight:600">' + esc(dp0.qual || 'Add qualification & languages') + '</span><span class="dsub">' + esc([dp0.yrs ? dp0.yrs + '+ years' : '', dp0.langs || ''].filter(Boolean).join(' · ') || 'Shown on WhatsApp under Meet the doctor') + '</span></span><span style="color:#175CD3;font-weight:600;font-size:15px">Edit</span></button></div>';
         h += '<div class="dsec"><span>Services & prices</span><span></span></div><div style="padding:0 16px"><button class="drow" data-sheet="prices"><span class="icol"><span style="font-size:15px;font-weight:600">' + (d.bill || []).length + ' services</span><span class="dsub">' + esc((d.bill || []).slice(0, 3).map(function (x) { return x.n + ' ' + rupee(x.p); }).join(' · ')) + '…</span></span><span style="color:#175CD3;font-weight:600;font-size:15px">Edit</span></button></div>';
         h += '<div class="dsec"><span>Google reviews</span><span></span></div><div style="padding:0 16px"><div class="dsub" style="margin:2px 0 8px">Patients get this link on WhatsApp after their visit, if they want to post a review. Copy it from your Google Business Profile → "Ask for reviews".</div><div style="display:flex;gap:8px"><input id="rvlink" class="dinput" placeholder="https://g.page/r/..." value="' + esc(d.review || '') + '" autocomplete="off" style="flex:1;min-width:0"><button class="dmini" id="saverv" style="height:44px">Save</button></div></div>'; }
       if (d.me.role === 'owner') h += '<div class="dsec"><span>Backup</span><span>' + (d.bkAt ? 'Last: ' + esc(d.bkAt) : 'Not yet') + '</span></div><div style="padding:0 16px"><div class="dsub" style="margin:2px 0 4px">Every night at 9 PM, the day\'s register is copied to your Google Sheet.</div><button class="drow" id="bknow"><span class="icol"><span style="font-size:15px;font-weight:600">Back up now</span><span class="dsub">Copies everything to the Google Sheet</span></span></button><button class="drow" id="bkdl"><span class="icol"><span style="font-size:15px;font-weight:600">Download backup</span><span class="dsub">A file with all patients and bills</span></span></button></div>';
@@ -1040,6 +1061,14 @@ div.act-head{cursor:default}
           '<div class="ilist" style="margin:14px 0 0">' + s.L.map(function (x, i) { return '<div class="irow" style="gap:8px"><input class="dinput pn" data-i="' + i + '" value="' + esc(x.n) + '" style="flex:1;min-width:0"><input class="dinput pp" data-i="' + i + '" inputmode="numeric" value="' + x.p + '" style="width:84px"><select class="dinput pg" data-i="' + i + '" style="width:84px;padding:0 6px" aria-label="GST">' + [0, 5, 12, 18].map(function (g) { return '<option value="' + g + '"' + ((x.g || 0) === g ? ' selected' : '') + '>' + (g ? 'GST ' + g + '%' : 'No GST') + '</option>'; }).join('') + '</select><button class="ilink" data-pdel="' + i + '" aria-label="Remove" style="color:#B42318">✕</button></div>'; }).join('') +
           '<button class="irow" id="padd" style="color:#175CD3;font-weight:600">+ Add service</button></div><div class="ifoot" style="padding-left:16px">Reception taps these while billing. Medical treatment is usually GST-exempt; cosmetic services (e.g. laser hair removal) usually carry 18%. Confirm rates with your CA.</div>' +
           '<button class="ib pri" id="psave" style="margin-top:14px">Save prices</button>';
+      } else if (s.t === 'tokdone') {
+        inner = '<div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:18px 4px 4px;gap:2px"><span style="font-size:14px;color:#475467">' + esc(s.name || '') + '</span><span class="tok" style="font-size:64px;font-weight:700;letter-spacing:-1px">' + esc(String(s.tok).replace('-', '')) + '</span><span style="font-size:15px;color:#475467">' + (s.sent ? 'Token and live status sent on WhatsApp.' : 'Hand them a printed slip with a QR for live status.') + '</span></div>' +
+          '<a class="v11-done" href="' + esc(s.slip) + '" target="_blank" rel="noopener" style="margin-top:16px;text-decoration:none;display:flex;align-items:center;justify-content:center">Print token slip</a><button data-close="1" style="height:44px;border:none;background:none;font-size:15px;font-weight:600;color:#475467;margin-top:4px;font-family:inherit">Done</button>';
+      } else if (s.t === 'docp') {
+        var z1 = s.z || {}, F1 = [['qual', 'Qualification', 'e.g. MBBS, MD (Dermatology)'], ['yrs', 'Years of experience', 'e.g. 9'], ['langs', 'Languages', 'e.g. Hindi, English'], ['about', 'One line about the doctor', 'What patients should know']];
+        inner = '<div class="ishead"><button class="ilink" data-close="1">Cancel</button><span style="font-size:17px;font-weight:600">Doctor profile</span><span style="width:56px"></span></div>' +
+          '<div class="ilist" style="margin:14px 0 0">' + F1.map(function (f) { return '<label class="ifield"><span>' + f[1] + '</span><input class="dp" data-k="' + f[0] + '" value="' + esc(z1[f[0]] || '') + '" placeholder="' + esc(f[2]) + '" autocomplete="off"></label>'; }).join('') + '</div>' +
+          '<div class="ifoot" style="padding-left:16px">Patients see this on WhatsApp when they tap "Meet the doctor", with the next free slot.</div><button class="ib pri" id="dpsave" style="margin-top:14px">Save profile</button>';
       } else if (s.t === 'add') {
         inner = '<div class="ishead"><button class="ilink" data-close="1">Cancel</button><span style="font-size:17px;font-weight:600">Walk-in</span><span style="width:56px"></span></div>' +
           '<div class="ilist" style="margin:18px 0 0"><label class="ifield"><span>Name</span><input id="wn" autocomplete="off" value="' + esc(s.name || '') + '"></label><label class="ifield" style="border:none"><span>Phone</span><input id="wp" inputmode="tel" placeholder="Optional" value="' + esc(s.phone || '') + '"></label></div>' +
@@ -1097,7 +1126,7 @@ div.act-head{cursor:default}
           (L.tv ? '<a class="irow" href="' + esc(L.tv) + '" target="_blank" rel="noopener"><span class="icol"><span>Waiting-room TV screen</span></span>' + CHEV + '</a>' : '') +
           '<button class="irow" id="logout" style="color:' + C.bad + '"><span>Log out</span></button></div>';
       }
-      return '<div class="isheetbg" data-close="1"><div class="isheet" role="dialog" aria-modal="true"' + (s.t === 'dstat' || s.t === 'vstat' || s.t === 'tlrow' || s.t === 'stpick' || s.t === 'billdone' ? ' style="background:#FFF"' : '') + '><div class="grab"></div>' + inner + '</div></div>';
+      return '<div class="isheetbg" data-close="1"><div class="isheet" role="dialog" aria-modal="true"' + (s.t === 'dstat' || s.t === 'vstat' || s.t === 'tlrow' || s.t === 'stpick' || s.t === 'billdone' || s.t === 'tokdone' ? ' style="background:#FFF"' : '') + '><div class="grab"></div>' + inner + '</div></div>';
     }
 
     // ---------- draw ----------
@@ -1148,6 +1177,8 @@ div.act-head{cursor:default}
       on('[data-wsrc]', function (el) { var w = document.getElementById('wn'), p = document.getElementById('wp'); S.sheet.name = w ? w.value : ''; S.sheet.phone = p ? p.value : ''; var v = el.getAttribute('data-wsrc'); S.sheet.src = S.sheet.src === v ? '' : v; draw(); });
       on('#closego', function (el) { var c = (document.getElementById('ccash').value || '').replace(/\D/g, ''), u = (document.getElementById('cupi').value || '').replace(/\D/g, ''); if (c === '') { document.getElementById('ccash').focus(); return; } el.disabled = true; call({ action: 'close_day', cash: Number(c), upi: Number(u) || 0 }, function () { S.sheet = null; toast('Day closed · the doctor can see it'); }); });
       var readP = function () { [].forEach.call(document.querySelectorAll('.pn'), function (e) { S.sheet.L[+e.getAttribute('data-i')].n = e.value; }); [].forEach.call(document.querySelectorAll('.pp'), function (e) { S.sheet.L[+e.getAttribute('data-i')].p = Number(e.value.replace(/\D/g, '')) || 0; }); [].forEach.call(document.querySelectorAll('.pg'), function (e) { S.sheet.L[+e.getAttribute('data-i')].g = Number(e.value) || 0; }); };
+      on('[data-sheet="docp"]', function () { S.sheet = { t: 'docp', z: Object.assign({}, S.d.docp || {}) }; draw(); });
+      on('#dpsave', function (el) { var z = {}; [].forEach.call(document.querySelectorAll('.dp'), function (i) { z[i.getAttribute('data-k')] = i.value.trim(); }); el.disabled = true; call({ action: 'set_docp', docp: z }, function (r) { el.disabled = false; if (r.saved) { S.sheet = null; toast('Doctor profile saved'); } }); });
       on('[data-sheet="biz"]', function () { S.sheet = { t: 'biz', z: Object.assign({}, S.d.biz || {}) }; draw(); });
       on('#bzsave', function (el) { var z = {}; [].forEach.call(document.querySelectorAll('.bz'), function (i) { z[i.getAttribute('data-k')] = i.value.trim(); }); el.disabled = true; call({ action: 'set_biz', biz: z }, function (r) { el.disabled = false; if (r.saved) { S.sheet = null; toast('Billing details saved'); } }); });
       on('#padd', function () { readP(); S.sheet.L.push({ n: '', p: 0 }); draw(); });
@@ -1160,7 +1191,7 @@ div.act-head{cursor:default}
       on('[data-fup]', function (el) { readFee(); S.sheet.fup = Number(el.getAttribute('data-fup')); draw(); });
       on('[data-upiqr]', function () { readFee(); S.sheet.qr = true; draw(); });
       on('#savebill', function (el) { readFee(); var s = S.sheet; el.disabled = true; call({ action: 'bill', k: s.b.k, fee: s.fee, m: s.m, fup: s.fup, items: s.items || [] }, function (r) { if (r.billed) { S.sheet = r.inv ? { t: 'billdone', inv: r.inv, name: s.b.name, fup: s.fup } : null; if (!r.inv) toast(r.billed + ' billed'); draw(); } }); });
-      on('#addtok', function (el) { var n = (document.getElementById('wn').value || '').trim(), p = (document.getElementById('wp').value || '').trim(); if (!n) { document.getElementById('wn').focus(); return; } el.disabled = true; call({ action: 'add_token', name: n, phone: p, srcOf: S.sheet.src || '' }, function (r) { S.sheet = null; if (r.added) toast('Token ' + r.added + (r.sent ? ' · sent on WhatsApp' : '')); }); });
+      on('#addtok', function (el) { var n = (document.getElementById('wn').value || '').trim(), p = (document.getElementById('wp').value || '').trim(); if (!n) { document.getElementById('wn').focus(); return; } el.disabled = true; call({ action: 'add_token', name: n, phone: p, srcOf: S.sheet.src || '' }, function (r) { if (r.added) { S.sheet = { t: 'tokdone', tok: r.added, slip: r.slip, sent: r.sent, name: n }; draw(); } else S.sheet = null; }); });
       on('[data-rm]', function (el) { S.sheet = { t: 'rm', key: el.getAttribute('data-rm'), name: el.getAttribute('data-rmname') }; draw(); });
       on('#rmtok', function () { var k = S.sheet.key; S.sheet = null; call({ action: 'remove_token', key: k }, function () { toast('Removed'); }); });
       on('[data-sst]', function (el) { S.sheet.st = el.getAttribute('data-sst'); draw(); });
@@ -1276,6 +1307,7 @@ div.act-head{cursor:default}
 
   var v = qs.get('v');
   if (qs.get('inv')) invoice(qs.get('inv'));
+  else if (v === 'slip') slip(qs.get('k'));
   else if (v === 't') tracker(qs.get('k'));
   else if (v === 'tv') tv(qs.get('k'));
   else if (v === 'qr') poster();

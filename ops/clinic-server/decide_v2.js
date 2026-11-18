@@ -123,10 +123,12 @@ function timingsText(lg) {
 
 // ---------- all patient-facing text ----------
 const C = S.clinicName, D = S.doctorName;
+const bookingId = r => (String(C).match(/\b[A-Za-z]/g) || ['C']).join('').slice(0, 3).toUpperCase() + '-' + String(r && r.row_number || 0).padStart(4, '0');
+const IMG = S.imgBase || 'https://raw.githubusercontent.com/secretknook/bas30din-site/clinic-server-setup/ops/clinic-server/img/';
 const T = {
   en: {
     pickLang: `🙏 *Welcome to ${C}*\n\nThank you for reaching out. We're here to help you book your visit, check your token and get answers, right here on WhatsApp.\n\nPlease choose the language you are most comfortable in.\nAap apni pasand ki bhasha chun sakte hain.`,
-    welcome: n => `Hello ${n} 👋\n\nWelcome to *${C}*. It's good to hear from you.\n\nYou can book your consultation with *${D}* here in under a minute, with no calls and no waiting on hold.\n\n👇 Please tell us what you would like to visit for, and we'll show you the next available times.`,
+    welcome: n => `Hello ${n} 👋\n\nWelcome to *${C}*. It's good to hear from you.\n\nYou can book your consultation with *${D}* here in under a minute, with no calls and no waiting on hold.\n\n👇 Tap below to book a visit, see our treatments and prices, or meet the doctor. You can also simply type your question here.`,
     pickDate: '📅 Which day would suit you best? Please pick a date below.',
     pickSvc: 'What would you like to visit for?', svcBtn: 'Choose', svcTitle: 'Treatments',
     svcChosen: n => `Great choice: *${n}* 👍\n\n📅 Now pick a day that works for you.`,
@@ -147,7 +149,7 @@ const T = {
     held: w => `⏳ *We're holding this slot for you*\n\n📅 ${w}\n\nIt stays reserved for the next ${S.holdMinutes} minutes.\n\nWho is this appointment for? Tap *Myself*, or type the patient's full name (for example: Riya Sharma).`,
     selfBtn: 'Myself',
     askName: "Please type the patient's full name (for example: Riya Sharma), or tap *Myself* if the appointment is for you.",
-    confirmed: (r, w) => `✅ *Your appointment is confirmed!*\n\nDear ${r.name}, thank you for choosing ${C}. We look forward to seeing you.\n\n👩‍⚕️ *Doctor:* ${D}\n📅 *When:* ${w}${r.service ? `\n🩺 *For:* ${r.service}` : ''}\n📍 *Where:* ${C}${S.address ? ', ' + S.address : ''}${S.fee ? T.en.feeLine(S.fee) : ''}\n\n*Before you come*\n• Please arrive 10 minutes early\n• Bring any previous prescriptions or reports\n\nWe'll send you a reminder before your visit. If your plans change, you can change or cancel below.`,
+    confirmed: (r, w) => `✅ *Your appointment is confirmed!*\n\nDear ${r.name}, thank you for choosing ${C}. We look forward to seeing you.\n\n🔖 *Booking ID:* ${bookingId(r)}\n👩‍⚕️ *Doctor:* ${D}\n📅 *When:* ${w}${r.service ? `\n🩺 *For:* ${r.service}` : ''}\n📍 *Where:* ${C}${S.address ? ', ' + S.address : ''}${S.fee ? T.en.feeLine(S.fee) : ''}\n\n*Before you come*\n• Please arrive 10 minutes early\n• Bring any previous prescriptions or reports\n\nWe'll send you a reminder before your visit. If your plans change, you can change or cancel below.`,
     changeBtn: 'Change time', cancelBtn: 'Cancel',
     holdCancelled: "No problem, we've released the slot. Whenever you're ready, just send *Hi* and we'll help you book again. 😊",
     limit: n => `You already have ${n} upcoming appointments with us, which is the maximum we can hold at a time.\n\nTo book a new time, please cancel one of them first.`,
@@ -173,7 +175,7 @@ const T = {
   },
   hl: {
     pickLang: `🙏 *${C} mein aapka swagat hai*\n\nMessage karne ke liye dhanyavaad. Yahin WhatsApp par aap appointment book kar sakte hain, apna token dekh sakte hain aur har sawaal ka jawab paa sakte hain.\n\nKripya apni pasand ki bhasha chunein.\nPlease choose your preferred language.`,
-    welcome: n => `Namaste ${n} ji 👋\n\n*${C}* mein aapka swagat hai.\n\nAap yahin ek minute mein *${D}* ke saath consultation book kar sakte hain. Na call karne ki zaroorat, na line mein rukne ki.\n\n👇 Bataiye, aap kis cheez ke liye milna chahte hain? Hum aapko agle khaali samay dikha denge.`,
+    welcome: n => `Namaste ${n} ji 👋\n\n*${C}* mein aapka swagat hai.\n\nAap yahin ek minute mein *${D}* ke saath consultation book kar sakte hain. Na call karne ki zaroorat, na line mein rukne ki.\n\n👇 Neeche dabakar appointment book kijiye, treatments aur fees dekhiye, ya doctor se miliye. Aap apna sawaal seedha yahan likh bhi sakte hain.`,
     pickDate: '📅 Aapke liye kaunsa din theek rahega? Kripya neeche se date chunein.',
     pickSvc: 'Aap kis cheez ke liye milna chahte hain?', svcBtn: 'Chunein', svcTitle: 'Treatments',
     svcChosen: n => `Bahut accha: *${n}* 👍\n\n📅 Ab apni suvidha ka din chunein.`,
@@ -194,7 +196,7 @@ const T = {
     held: w => `⏳ *Ye slot aapke liye rakh liya gaya hai*\n\n📅 ${w}\n\nAgle ${S.holdMinutes} minute tak ye sirf aapke liye hold hai.\n\nAppointment kiske liye hai? Apne liye ho toh *Mere liye* dabaiye, ya patient ka poora naam likhiye (jaise: Riya Sharma).`,
     selfBtn: 'Mere liye',
     askName: 'Kripya patient ka poora naam likhiye (jaise: Riya Sharma), ya agar appointment aapke liye hai toh *Mere liye* dabaiye.',
-    confirmed: (r, w) => `✅ *Aapka appointment confirm ho gaya hai!*\n\n${r.name} ji, ${C} chunne ke liye dhanyavaad. Hum aapse milne ka intezaar karenge.\n\n👩‍⚕️ *Doctor:* ${D}\n📅 *Kab:* ${w}${r.service ? `\n🩺 *Kis liye:* ${r.service}` : ''}\n📍 *Kahan:* ${C}${S.address ? ', ' + S.address : ''}${S.fee ? T.hl.feeLine(S.fee) : ''}\n\n*Aane se pehle*\n• Kripya 10 minute pehle pahunch jaiye\n• Purani prescription ya report saath laaiye\n\nVisit se pehle hum aapko reminder bhejenge. Plan badle toh neeche se samay badal ya cancel kar sakte hain.`,
+    confirmed: (r, w) => `✅ *Aapka appointment confirm ho gaya hai!*\n\n${r.name} ji, ${C} chunne ke liye dhanyavaad. Hum aapse milne ka intezaar karenge.\n\n🔖 *Booking ID:* ${bookingId(r)}\n👩‍⚕️ *Doctor:* ${D}\n📅 *Kab:* ${w}${r.service ? `\n🩺 *Kis liye:* ${r.service}` : ''}\n📍 *Kahan:* ${C}${S.address ? ', ' + S.address : ''}${S.fee ? T.hl.feeLine(S.fee) : ''}\n\n*Aane se pehle*\n• Kripya 10 minute pehle pahunch jaiye\n• Purani prescription ya report saath laaiye\n\nVisit se pehle hum aapko reminder bhejenge. Plan badle toh neeche se samay badal ya cancel kar sakte hain.`,
     changeBtn: 'Samay badlein', cancelBtn: 'Cancel karein',
     holdCancelled: 'Koi baat nahi, humne slot chhod diya hai. Jab bhi book karna ho, bas *Hi* bhej dijiye. 😊',
     limit: n => `Aapke ${n} appointments pehle se booked hain, jo ek samay mein sabse zyada hain.\n\nNaya samay book karne ke liye pehle ek appointment cancel kijiye.`,
@@ -533,7 +535,8 @@ function seedDemo() {
     if (e1) { mem.edits.push({ at: now.minus({ minutes: 50 }).toISO(), by: recName, day: todayStr, k: e1.k, inv: e1.inv, name: e1.name, from: { fee: 800, m: 'cash' }, to: { fee: e1.fee, m: e1.m } }); e1.edited = 1; }
     const yd = now.minus({ days: 2 }).toFormat('yyyy-MM-dd'); const e3 = (mem.vis[yd] || []).find(v => v.m === 'cash');
     if (e3) { mem.edits.push({ at: now.minus({ days: 2, hours: -3 }).toISO(), by: recName, day: yd, k: e3.k, inv: e3.inv, name: e3.name, from: { fee: e3.fee, m: 'cash' }, to: { fee: Math.max(0, e3.fee - 300), m: 'cash' } }); e3.fee = Math.max(0, e3.fee - 300); e3.edited = 1; } }
-  if (!mem.cfg) mem.cfg = {}; if (!mem.cfg.biz) mem.cfg.biz = { legal: 'Aarna Skin & Hair Clinic (Sample)', address: 'Shop 12, Knowledge Park II, Greater Noida, UP 201310', phone: '+91 98100 00000', email: 'care@aarnaclinic.example', gstin: '09ABCDE1234F1Z5', reg: 'UPMC Reg. No. 00000 (sample)', state: 'Uttar Pradesh', prefix: 'ASH', sample: true };
+  if (!mem.cfg) mem.cfg = {}; if (!mem.cfg.docp) mem.cfg.docp = { qual: 'MBBS, MD (Dermatology)', yrs: '9', langs: 'Hindi, English', about: 'Treats acne, hair fall, pigmentation and skin allergies. Known for explaining every step patiently.' };
+  if (!mem.cfg.biz) mem.cfg.biz = { legal: 'Aarna Skin & Hair Clinic (Sample)', address: 'Shop 12, Knowledge Park II, Greater Noida, UP 201310', phone: '+91 98100 00000', email: 'care@aarnaclinic.example', gstin: '09ABCDE1234F1Z5', reg: 'UPMC Reg. No. 00000 (sample)', state: 'Uttar Pradesh', prefix: 'ASH', sample: true };
   mem.cbLog = [{ ph: '910000055121', at: now.minus({ minutes: 140 }).toISO(), done: now.minus({ minutes: 60 }).toISO(), by: recName, reason: 'Bete ko chehre pe allergy ho gayi hai' }, { ph: '910000077412', at: now.minus({ minutes: 182 }).toISO() }, { ph: '910000055120', at: now.minus({ minutes: 69 }).toISO() },
     { ph: '910000063320', at: now.minus({ days: 3, hours: 2 }).toISO(), done: now.minus({ days: 3, hours: 1, minutes: 40 }).toISO(), by: recName, reason: 'Price / fees' }, { ph: '910000063321', at: now.minus({ days: 5, hours: 4 }).toISO(), done: now.minus({ days: 5, hours: 1 }).toISO(), by: recName, reason: 'Appointment' }];
   mem.pname['910000063320'] = 'Deepak Yadav'; mem.pname['910000063321'] = 'Sana Khan';
@@ -569,7 +572,7 @@ function addVisit(tk) {
   const l = mem.vis[todayStr] || (mem.vis[todayStr] = []);
   if (l.some(v => v.k === tk.key)) return;
   { const rc = (mem.rc || {})[tk.phone]; if (rc && rc.n > 0 && !rc.back) { rc.back = todayStr; bump('recallBack'); } }
-  l.push({ k: tk.key, tok: tk.tok, name: tk.name || 'Patient', ph: tk.phone || '', in: tk.calledAt || now.toISO(), out: now.toISO(), fee: null, m: null, fupSug: tk.fupDays || 0, prob: tk.prob || '' });
+  l.push({ k: tk.key, tok: tk.tok, name: tk.name || 'Patient', ph: tk.phone || '', tin: tk.at || '', in: tk.calledAt || now.toISO(), out: now.toISO(), fee: null, m: null, fupSug: tk.fupDays || 0, prob: tk.prob || '' });
   const cut = now.minus({ days: 400 }).toFormat('yyyy-MM-dd');
   for (const d of Object.keys(mem.vis)) if (d < cut) delete mem.vis[d];
 }
@@ -708,7 +711,7 @@ if (mode === 'desk') {
     else if (b.action === 'add_token') { const q = qWrite(); const ph = digits(b.phone || ''); const full = ph.length === 10 ? '91' + ph : ph;
       const tk = issueToken(q, full, String(b.name || 'Walk-in').slice(0, 40), b.src === 'book' ? 'book' : 'desk'); if (b.prob) tk.prob = String(b.prob).slice(0, 120); if (b.bookAt) tk.bookAt = String(b.bookAt).slice(0, 10);
       if (b.srcOf && SRC[b.srcOf]) { if (!mem.src) mem.src = {}; mem.src[full || ('n' + String(b.name || '').toLowerCase())] = { s: b.srcOf, at: now.toISO() }; bump('src_' + b.srcOf); }
-      if (full && inWindow(full)) out.push(tokenMsg(q, tk, full)); res.added = tk.tok; }
+      if (full && inWindow(full)) out.push(tokenMsg(q, tk, full)); res.added = tk.tok; res.slip = APP + '?v=slip&k=' + tk.key; res.sent = !!(full && inWindow(full)); }
     else if (b.action === 'remove_token') { const q = qWrite(); const tk = q.list.find(x => x.key === b.key); if (tk) tk.st = 'x'; }
     else if (b.action === 'set_status') { const st0 = ['in', 'late', 'away', 'leave'].includes(b.status) ? b.status : 'in'; const m0 = Number(b.mins) || 0;
       const prevDoc = mem.docPend ? mem.docPend.prev : docRead();
@@ -785,6 +788,7 @@ if (mode === 'desk') {
     else if (b.action === 'set_biz' && isDoc) { const z = b.biz || {}; const g = String(z.gstin || '').toUpperCase().replace(/\s/g, '');
       if (g && !/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(g)) res.error = 'GSTIN should be 15 characters, like 09ABCDE1234F1Z5.';
       else { if (!mem.cfg) mem.cfg = {}; mem.cfg.biz = { legal: String(z.legal || '').slice(0, 80), address: String(z.address || '').slice(0, 200), phone: String(z.phone || '').slice(0, 20), email: String(z.email || '').slice(0, 60), gstin: g, reg: String(z.reg || '').slice(0, 60), state: String(z.state || '').slice(0, 30), prefix: String(z.prefix || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5) || BIZ().prefix }; res.saved = true; } }
+    else if (b.action === 'set_docp' && isDoc) { const z = b.docp || {}; if (!mem.cfg) mem.cfg = {}; mem.cfg.docp = { qual: String(z.qual || '').slice(0, 80), yrs: String(z.yrs || '').replace(/\D/g, '').slice(0, 2), langs: String(z.langs || '').slice(0, 60), about: String(z.about || '').slice(0, 200) }; res.saved = true; }
     else if (b.action === 'set_review' && isDoc) { const u = String(b.url || '').trim(); if (u && !/^https:\/\/(g\.page|maps\.app\.goo\.gl|goo\.gl|www\.google\.|search\.google\.|g\.co)/.test(u)) res.error = 'Paste the review link from your Google Business Profile.'; else { if (!mem.cfg) mem.cfg = {}; mem.cfg.googleReview = u; } }
     else if (b.action === 'backup_now' && role === 'owner') { res.backup = true; mem.bkAt = now.toISO(); }
     else if (b.action === 'download' && role === 'owner') { res.dump = JSON.stringify(memSafe()); }
@@ -800,7 +804,7 @@ if (mode === 'desk') {
       waiting: waitingOf(q).slice(0, 25).map(x => ({ tok: x.tok, name: x.name, src: x.src, bookAt: x.bookAt || '', key: x.key, missed: x.missed || 0, ahead: aheadOf(q, x), told2: !!x.told2, phone: isDoc ? '' : mask(x.phone), here: !!x.here })),
       done: q.list.filter(x => x.st === 'd').length, avg: avgMin(q), open: isOpenNow() };
     res.links = { tv: S.tvKey ? `${APP}?v=tv&k=${S.tvKey}` : '', qr, poster: `${APP}?v=qr&n=${S.botNumber || ''}&c=${encodeURIComponent(C)}` };
-    res.fee = S.fee || 0; res.upi = S.upiId ? { id: S.upiId, name: S.upiName || C } : null; res.bill = billList(); if (isDoc) res.biz = BIZ(); res.dayClosed = !!(mem.close || {})[todayStr]; res.review = (mem.cfg || {}).googleReview || ''; res.bkAt = mem.bkAt ? DateTime.fromISO(mem.bkAt).setZone(TZ).toFormat('d LLL, h:mm a') : '';
+    res.fee = S.fee || 0; res.upi = S.upiId ? { id: S.upiId, name: S.upiName || C } : null; res.bill = billList(); if (isDoc) { res.biz = BIZ(); res.docp = (mem.cfg || {}).docp || {}; } res.dayClosed = !!(mem.close || {})[todayStr]; res.review = (mem.cfg || {}).googleReview || ''; res.bkAt = mem.bkAt ? DateTime.fromISO(mem.bkAt).setZone(TZ).toFormat('d LLL, h:mm a') : '';
     const todayV = visOf(todayStr);
     const freeDays = S.followFreeDays === undefined ? 7 : Number(S.followFreeDays) || 0;
     const lastPaid = (v) => { const key = patKey(v.ph, v.name); const days = Object.keys(mem.vis || {}).filter(d => d < todayStr && d >= now.minus({ days: freeDays }).toFormat('yyyy-MM-dd')).sort().reverse();
@@ -1016,7 +1020,7 @@ if (mode === 'summary' && (now.hour >= 20 || now.hour < 3)) {
   mem.regBk = dk; mem.bkAt = now.toISO(); backup.snap = backupSnap();
   const body = `*${C} · ${day.toFormat('ccc d LLL')}*\n\nEarned: *${rupees(R.money)}* from ${R.seen} patient${R.seen === 1 ? '' : 's'}\nCash ${rupees(R.cash)} · UPI ${rupees(R.upi)}\n${earn ? '\n' + earn + '\n' : ''}\n` + (growTxt.length ? growTxt.join('\n') + '\n\n' : '') +
     (look.length ? `*Needs a look*\n${look.join('\n')}\n\n` : 'Every visit is billed ✓\n\n') +
-    `Missed calls: ${calls.length}${calls.length ? ` · ${callsBooked} booked` : ''}\nFollow-ups tomorrow: ${fT}`;
+    `Missed calls: ${calls.length}${calls.length ? ` · ${callsBooked} booked` : ''}\nFollow-ups tomorrow: ${fT}` + (() => { const w = R.V.filter(v => v.tin && v.in).map(v => DateTime.fromISO(v.in).diff(DateTime.fromISO(v.tin), 'minutes').minutes).filter(m => m >= 0 && m < 300); return w.length ? `\nAverage wait: ${Math.round(w.reduce((a, c) => a + c, 0) / w.length)} min` : ''; })();
   const to = [...new Set((S.doctorNumbers || []).concat((S.staff || []).filter(x => x.role === 'owner' || x.role === 'doctor').map(x => x.phone)).map(digits))];
   if (!mem.nightSent) mem.nightSent = '';
   const bkOut = [{ json: { action: 'none', payload: null, more: [], backup, sheetId: S.sheetId, phoneNumberId: S.phoneNumberId, notify: false } }];
@@ -1030,6 +1034,27 @@ if (mode === 'summary' && (now.hour >= 20 || now.hour < 3)) {
   if (!more.length) return bkOut;
   payload = more.shift();
   return [{ json: { action: 'reply', payload, more, backup, holiday: null, values: null, range: null, sheetId: S.sheetId, phoneNumberId: S.phoneNumberId, notify: false } }];
+}
+if (mode === 'summary' && (now.hour < 12 || (now.hour >= 16 && now.hour < 20))) {
+  if (!mem.remSent) mem.remSent = {};
+  const stage = now.hour < 12 ? 'today' : 'tomorrow'; const dRem = now.plus({ days: stage === 'today' ? 0 : 1 }).toFormat('yyyy-MM-dd');
+  for (const r of rows.filter(x => x.date === dRem && active(x) && x.phone)) {
+    const key = `${r.row_number}|${r.date}|${stage}`; if (mem.remSent[key]) continue;
+    if (stage === 'today' && at(r.date, r.time) < now.plus({ minutes: 60 })) continue;
+    const lg = langOf(r.phone, r.lang); const nm = r.name || (lg === 'en' ? 'there' : 'ji');
+    const where = `📍 ${C}${S.address ? ', ' + S.address : ''}`;
+    const body = stage === 'tomorrow'
+      ? (lg === 'en' ? `⏰ *Reminder: your visit is tomorrow*\n\nDear ${nm}, this is a friendly reminder of your appointment.\n\n🔖 *Booking ID:* ${bookingId(r)}\n👩‍⚕️ *Doctor:* ${D}\n📅 *When:* ${whenText(r.date, r.time, 'en')}\n${where}\n\nPlease tap *Confirm* so we can keep your slot ready for you. If your plans have changed, you can reschedule in one tap. 😊`
+        : `⏰ *Yaad dilana: kal aapka visit hai*\n\n${nm} ji, aapke appointment ki ek chhoti si yaad.\n\n🔖 *Booking ID:* ${bookingId(r)}\n👩‍⚕️ *Doctor:* ${D}\n📅 *Kab:* ${whenText(r.date, r.time, 'hl')}\n${where}\n\nKripya *Confirm* dabaiye taaki hum aapka slot taiyaar rakhein. Plan badal gaya ho toh ek tap mein samay badal sakte hain. 😊`)
+      : (lg === 'en' ? `☀️ *Good morning! Your visit is today*\n\nDear ${nm}, we're looking forward to seeing you today.\n\n⏰ *Time:* ${timeLabel(r.date, r.time, 'en')}\n👩‍⚕️ *Doctor:* ${D}\n${where}\n\nPlease arrive 10 minutes early and bring any previous prescriptions or reports. Tap *Confirm* to let us know you're coming.`
+        : `☀️ *Suprabhat! Aaj aapka visit hai*\n\n${nm} ji, hum aaj aapse milne ka intezaar kar rahe hain.\n\n⏰ *Samay:* ${timeLabel(r.date, r.time, 'hl')}\n👩‍⚕️ *Doctor:* ${D}\n${where}\n\nKripya 10 minute pehle aaiye aur purani prescription ya report saath laaiye. Aa rahe hain toh *Confirm* dabaiye.`);
+    const btns = [[`RC|${r.row_number}`, lg === 'en' ? 'Confirm' : 'Confirm karein'], [`RR|${r.row_number}`, lg === 'en' ? 'Reschedule' : 'Samay badlein'], [`RX|${r.row_number}`, lg === 'en' ? 'Cancel' : 'Cancel karein']];
+    if (inWindow(r.phone)) more.push(buttonsTo(r.phone, body, btns));
+    else if (S.templates && S.templates.reminder) more.push(templateTo(r.phone, S.templates.reminder, [nm, C, DateTime.fromISO(r.date).toFormat('ccc, d LLL'), timeLabel(r.date, r.time, 'en')], btns.map(b => b[0])));
+    else continue;
+    mem.remSent[key] = now.toISO(); bump('reminders');
+  }
+  for (const k of Object.keys(mem.remSent)) if (mem.remSent[k] < now.minus({ days: 3 }).toISO()) delete mem.remSent[k];
 }
 if (mode === 'summary' && now.hour >= 16) {
   // ---- 6 PM: follow-up reminders for tomorrow ----
@@ -1142,6 +1167,29 @@ function timeList(d, after) {
 const svcBase = ($('Clinic Settings').first().json.services || []).filter(v => v && typeof v === 'object');
 const svcs = (S.services || []).map((v, i) => { if (v && typeof v === 'object' && v.name) return v; const n = String(v || '').trim(); const b0 = svcBase.find(x => x.name.toLowerCase() === n.toLowerCase()); return b0 || { id: 's' + i + '-' + n.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 12), name: n, en: '', hl: '' }; }).filter(v => v.name);
 const svcName = sid => { const x = svcs.find(v => v.id === sid); return x ? x.name : ''; };
+function welcomeCard() {
+  return buttonsTo(msg.from, L.welcome(msg.name), [['NEW', L.bookBtn], ['SVC', lang === 'en' ? 'Treatments & fees' : 'Treatments & fees'], ['DOC', lang === 'en' ? 'Meet the doctor' : 'Doctor se miliye']], { type: 'image', image: { link: S.welcomeImage || IMG + 'welcome.jpg' } });
+}
+const svcImg = n => { n = String(n).toLowerCase(); return IMG + (/acne|pimple/.test(n) ? 'svc_acne' : /hair|prp/.test(n) && !/laser/.test(n) ? 'svc_hair' : /pigment|tan|melasma/.test(n) ? 'svc_pigment' : /laser/.test(n) ? 'svc_laser' : /hydra|glow|facial|peel/.test(n) ? 'svc_glow' : 'svc_consult') + '.jpg'; };
+const svcPrice = n => { const BL = billList(); const w = String(n).toLowerCase().split(/[^a-z]+/).filter(x => x.length > 3); const hit = BL.find(x => x.n.toLowerCase() === String(n).toLowerCase()) || BL.find(x => w.some(k => x.n.toLowerCase().includes(k))); return hit ? hit.p : (S.fee || 0); };
+function svcCarousel() {
+  const L0 = svcs.slice(0, 10); if (L0.length < 2) return svcList(L.pickSvc);
+  return { messaging_product: 'whatsapp', to: msg.from, type: 'interactive', interactive: { type: 'carousel',
+    body: { text: lang === 'en' ? `🩺 *Our treatments*\n\nSwipe to see everything ${D} treats 👉\nPrices shown are starting fees. The doctor confirms your plan after seeing you, with no hidden charges.` : `🩺 *Humare treatments*\n\nSwipe karke dekhiye ${D} kin cheezon ka ilaaj karte hain 👉\nYe shuruaati fees hain. Doctor aapko dekhkar plan confirm karenge, koi chhupa charge nahi.` },
+    action: { cards: L0.map((v, i) => { const pr = svcPrice(v.name); const d0 = String((lang === 'hl' ? v.hl : v.en) || v.en || v.hl || '').slice(0, 80);
+      return { card_index: i, type: 'cta_url', header: { type: 'image', image: { link: svcImg(v.name) } }, body: { text: `*${String(v.name).slice(0, 40)}*${d0 ? '\n' + d0 : ''}${pr ? `\n${lang === 'en' ? 'From' : 'Shuru'} ₹${Number(pr).toLocaleString('en-IN')}` : ''}`.slice(0, 160) },
+        action: { buttons: [{ type: 'quick_reply', quick_reply: { id: `TR|${v.id}`, title: lang === 'en' ? 'Book this' : 'Ye book karein' } }] } }; }) } } };
+}
+function nextFree() { for (let i = 0; i <= (S.daysAhead || 7); i++) { const d = now.plus({ days: i }).toFormat('yyyy-MM-dd'); if (holidays.includes(d)) continue; const sl = slotsFor(d); if (sl && sl.length) return whenText(d, sl[0], lang); } return ''; }
+function doctorCard() {
+  const P = Object.assign({ qual: '', yrs: '', langs: '', about: '' }, (mem.cfg || {}).docp || {});
+  const nf = nextFree();
+  const body = lang === 'en'
+    ? `👩‍⚕️ *${D}*${P.qual ? '\n' + P.qual : ''}${P.yrs ? ` · ${P.yrs}+ years of experience` : ''}\n\n${P.about ? P.about + '\n\n' : ''}${P.langs ? `🗣️ *Speaks:* ${P.langs}\n` : ''}${S.fee ? `💳 *Consultation:* ₹${S.fee}\n` : ''}${nf ? `🗓️ *Next free slot:* ${nf}\n` : ''}📍 ${C}${S.address ? ', ' + S.address : ''}\n\nTap below to book your visit with ${D}.`
+    : `👩‍⚕️ *${D}*${P.qual ? '\n' + P.qual : ''}${P.yrs ? ` · ${P.yrs}+ saal ka anubhav` : ''}\n\n${P.about ? P.about + '\n\n' : ''}${P.langs ? `🗣️ *Bhasha:* ${P.langs}\n` : ''}${S.fee ? `💳 *Consultation:* ₹${S.fee}\n` : ''}${nf ? `🗓️ *Agla khaali slot:* ${nf}\n` : ''}📍 ${C}${S.address ? ', ' + S.address : ''}\n\n${D} ke saath visit book karne ke liye neeche dabaiye.`;
+  const first = String(D).replace(/^Dr\.?\s*/i, '').split(' ')[0];
+  return buttonsTo(msg.from, body, [['NEW', ('Book with Dr. ' + first).slice(0, 20)], ['SVC', 'Treatments & fees']], { type: 'image', image: { link: S.doctorImage || IMG + 'doctor.jpg' } });
+}
 function svcList(intro) {
   if (!svcs.length) return dateList(intro);
   return sectionsTo(msg.from, intro, L.svcBtn, [{ title: L.svcTitle, rows: svcs.slice(0, 9).map(v => ({ id: `TR|${v.id}`, title: String(v.name).slice(0, 24), description: String((lang === 'hl' ? v.hl : v.en) || v.en || v.hl || '').slice(0, 72) })) }, { title: L.liveRow, rows: [{ id: 'LIVE', title: L.liveRow, description: L.liveRowD }] }], lang);
@@ -1398,9 +1446,11 @@ else if (id.startsWith('RX|')) {
   const r = byRow(id.split('|')[1]);
   payload = (r && active(r)) ? buttons(L.cancelQ(r, W(r)), [[`CY|${r.row_number}`, L.yesCancel], ['KEEP', L.keepBtn]]) : text(L.gone);
 }
+else if (id === 'SVC' || (!id && has(['price', 'prices', 'fees', 'fee', 'charges', 'treatment', 'treatments', 'services', 'kitna']))) { payload = svcCarousel(); }
+else if (id === 'DOC' || (!id && has(['doctor', 'dr', 'qualification', 'experience']) && !has(['late', 'leave']))) { payload = doctorCard(); }
 else if (id === 'NEW' || id.startsWith('LANG|') || (!id && has(['book', 'booking', 'appointment']) && !has(['cancel']))) {
   if (id.startsWith('LANG|') && upcoming.length) payload = buttons(L.yourAppts(msg.name, upcoming.map(r => `• ${r.name || 'Patient'}: ${W(r)}`).join('\n')), menuBtns());
-  else if (id.startsWith('LANG|')) payload = svcList(L.welcome(msg.name));
+  else if (id.startsWith('LANG|')) payload = welcomeCard();
   else payload = canBookMore ? svcList(L.pickSvc) : buttons(L.limit(upcoming.length), [['CANCEL', L.cancelBookingBtn]]);
 }
 else if (id === 'CANCEL' || (!id && has(['cancel']))) {
@@ -1436,7 +1486,7 @@ else {
   } else if (upcoming.length) {
     payload = buttons(L.yourAppts(msg.name, upcoming.map(r => `• ${r.name || 'Patient'}: ${W(r)}`).join('\n')), menuBtns());
   } else {
-    payload = svcList(L.welcome(msg.name));
+    payload = welcomeCard();
   }
 }
 
