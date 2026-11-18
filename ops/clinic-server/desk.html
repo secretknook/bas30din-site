@@ -378,6 +378,8 @@ button.irow:active,a.irow:active{background:#F9FAFB}
 .stchg{border:none;background:none;padding:0;color:#175CD3;font-weight:600;font-size:14px;font-family:inherit}
 .stgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
 .stgrid .stm{height:60px;border-radius:14px;font-size:18px;font-weight:700;flex:none}
+
+.v11-greet{font-size:22px;font-weight:700;letter-spacing:-.3px;color:#101828}
 </style>
 </head>
 <body>
@@ -705,9 +707,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       var cur = bo.now, w = q.waiting, byRec = d.callBy === 'reception';
       var dt = new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
       var PILL = { in: ['In clinic', '#12B76A', '#ECFDF3', '#067647'], late: ['Running ' + dc.mins + ' min late', '#F79009', '#FFFAEB', '#B54708'], away: ['Away' + (dc.until ? ' · back ' + dc.until : ''), '#F79009', '#FFFAEB', '#B54708'], leave: ['On leave', '#98A2B3', '#F2F4F7', '#344054'] }[k];
-      var op = d.opd || { label: 'OPD', time: '' }; var h = '<div class="v11"><div class="v11-hd"><span class="v11-date"><b style="color:#101828;font-weight:600">' + esc(op.label) + '</b>' + (op.time ? ' · ' + esc(op.time) : '') + '</span>' +
+      var op = d.opd || { label: 'OPD', time: '' }, hr0 = new Date().getHours(), who0 = d.me.role === 'reception' ? (d.me.name || '').split(' ')[0] : docName();
+      var h = '<div class="v11"><div class="v11-hd" style="flex-direction:column;align-items:flex-start;gap:2px"><span class="v11-greet">' + (hr0 < 12 ? 'Good morning' : hr0 < 17 ? 'Good afternoon' : 'Good evening') + ', ' + esc(who0) + '</span><span class="v11-date">' + esc(op.label) + (op.time ? ' · ' + esc(op.time) : '') + '</span>' +
         '</div><div class="stwrap">' + statusBar() + '</div>';
-      var att = ((d.act || {}).attention || []).length; if (att) h += '<button class="v11-cbline" data-tab="after"><span class="dot" style="width:8px;height:8px;background:#F04438"></span>' + att + (att > 1 ? ' people are' : ' person is') + ' waiting for a call back<span style="margin-left:auto">See</span></button>';
       if (!q.open && !cur && !w.length) h += '<button class="v11-closed" data-tab="after">OPD is over · see Enquiries</button>';
       h += '<div class="v11-grid"><div class="v11-main"><div class="v11-card">';
       if (cur) {
@@ -960,7 +962,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       var y = window.scrollY; var anim = S.sheet && S.sheet !== S.lastSheet; S.lastSheet = S.sheet;
       var regBadge = 0;
       if (S.desk) {
-        var sideItems = tabs.map(function (t) { var bd = t === 'inbox' && badge ? badge : 0; return '<button data-tab="' + t + '" class="sitem' + (t === S.tab ? ' on' : '') + '"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[t] + '</svg><span>' + LAB[t] + '</span>' + (bd ? '<span class="sbadge">' + bd + '</span>' : '') + '</button>'; }).join('');
+        var sideItems = tabs.map(function (t) { var bd = t === 'inbox' && badge ? badge : t === 'after' ? (((S.d.act || {}).attention) || []).length : 0; return '<button data-tab="' + t + '" class="sitem' + (t === S.tab ? ' on' : '') + '"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[t] + '</svg><span>' + LAB[t] + '</span>' + (bd ? '<span class="sbadge">' + bd + '</span>' : '') + '</button>'; }).join('');
         var dsh = '<div class="dshell"><aside class="side"><div class="sclinic">' + esc(S.d.clinic.name) + '</div><div class="srole">' + esc(S.d.me.name) + ' · ' + esc(docApp ? (S.d.me.role === 'owner' ? 'Owner' : 'Doctor') : 'Reception') + '</div><nav class="snav">' + sideItems + '</nav><div style="flex:1"></div>' +
           (isDoc() && S.viewAs === 'reception' ? '<button class="sitem" data-asdoc="1"><span>Back to doctor app</span></button>' : '') + '<div class="skey">Press <b>N</b> for Call next</div><button class="sitem" id="logout"><span>Log out</span></button></aside>' +
           '<main class="dmain t-' + S.tab + '">' + (S.err ? '<div class="errbar">' + esc(S.err) + '</div>' : '') + scr + '</main>' + (S.toast ? '<div class="itoast" role="status">' + esc(S.toast) + (S.undo ? '<button class="tundo" id="stundo">Undo</button>' : '') + '</div>' : '') + sheetHtml() + '</div>';
@@ -971,7 +973,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         '<div class="content">' + scr + '</div>' +
         (S.toast ? '<div class="itoast" role="status">' + esc(S.toast) + (S.undo ? '<button class="tundo" id="stundo">Undo</button>' : '') + '</div>' : '') +
         '<nav class="itabs' + (docApp ? ' dtabs' : '') + '"><div class="in" style="grid-template-columns:repeat(' + tabs.length + ',minmax(0,1fr))">' + tabs.map(function (t) {
-          var bd = t === 'inbox' && badge ? badge : t === 'register' && regBadge ? regBadge : 0;
+          var bd = t === 'inbox' && badge ? badge : t === 'register' && regBadge ? regBadge : t === 'after' ? (((S.d.act || {}).attention) || []).length : 0;
           return '<button data-tab="' + t + '" class="' + (t === S.tab ? 'on' : '') + '"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[t] + '</svg>' + LAB[t] + (bd ? '<span class="badge">' + bd + '</span>' : '') + '</button>'; }).join('') + '</div></nav>' +
         sheetHtml() + '</div>';
       html = html.replace('class="isheet"', 'class="isheet' + (anim ? ' up' : '') + '"');
