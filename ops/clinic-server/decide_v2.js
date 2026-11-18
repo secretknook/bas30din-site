@@ -1193,20 +1193,13 @@ const svcs = (S.services || []).map((v, i) => { if (v && typeof v === 'object' &
 const svcName = sid => { const x = svcs.find(v => v.id === sid); return x ? x.name : ''; };
 function welcomeCard() {
   const fn = (cleanName(msg.name || '').split(' ')[0] || ''); const nm = fn.length >= 2 && !/^(dr|mr|mrs|ms)$/i.test(fn) ? fn : '';
-  const back = mine.length > 0 || seenBefore(me); const en = lang === 'en';
-  const P = Object.assign({ qual: '' }, (mem.cfg || {}).docp || {}); const dc = docRead(); const open = isOpenNow();
-  const q = qRead(); const wN = waitingOf(q).length;
-  let nf = ''; for (let i = 0; i <= (S.daysAhead || 7) && !nf; i++) { const d = now.plus({ days: i }).toFormat('yyyy-MM-dd'); if (holidays.includes(d)) continue; const sl = slotsFor(d); if (sl && sl.length) nf = whenText(d, sl[0], lang); }
-  const st = dc.status === 'leave' ? (en ? '🔴 On leave today' : '🔴 Aaj chhutti par hain')
-    : !open ? (en ? '⚪ Clinic closed right now' : '⚪ Clinic abhi band hai')
-    : dc.status === 'late' ? (en ? `🟠 Running about ${dc.mins} min late` : `🟠 Lagbhag ${dc.mins} min late`)
-    : dc.status === 'away' ? (en ? '🟠 Stepped out, back soon' : '🟠 Thodi der mein wapas')
-    : (en ? '🟢 In the clinic now' : '🟢 Abhi clinic mein hain');
-  const queue = open && dc.status !== 'leave' ? (en ? (wN ? ` · ${wN} waiting` : ' · no queue') : (wN ? ` · ${wN} log wait mein` : ' · koi line nahi')) : '';
+  const en = lang === 'en';
   const body = en
-    ? `${nm ? `Hello ${nm}` : 'Hello'} 👋\n\nWelcome to *${C}*. It's good to hear from you.\n\nYou can book your consultation with *${D}* here in under a minute, with no calls and no waiting on hold.\n\n👇 Tap below to book a visit, see our treatments and prices, or see more options. You can also simply type your question here.`
-    : `Namaste${nm ? ' ' + nm + ' ji' : ''} 👋\n\n*${C}* mein aapka swagat hai.\n\nAap yahin ek minute mein *${D}* ke saath consultation book kar sakte hain. Na call karne ki zaroorat, na line mein rukne ki.\n\n👇 Neeche dabakar appointment book kijiye, treatments aur fees dekhiye, ya aur options dekhiye. Aap apna sawaal seedha yahan likh bhi sakte hain.`;
-  return buttonsTo(msg.from, body, [['NEW', en ? 'Book a visit' : 'Time book karein'], ['SVC', en ? 'Treatments & fees' : 'Treatments & fees'], ['MENU', en ? 'More options' : 'Aur options']], { type: 'image', image: { link: S.welcomeImage || IMG + 'welcome_v3.jpg' } });
+    ? `${nm ? `Hello ${nm}` : 'Hello'} 👋\n\nWelcome to *${C}*.\n\n👇 What would you like to visit for? Choose below and we'll show you the next available times.`
+    : `Namaste${nm ? ' ' + nm + ' ji' : ''} 👋\n\n*${C}* mein aapka swagat hai.\n\n👇 Bataiye, aap kis cheez ke liye milna chahte hain? Hum aapko agle khaali samay dikha denge.`;
+  // photo first, then the treatments list (a list message can't carry a photo)
+  more.unshift(svcList(body));
+  return { messaging_product: 'whatsapp', to: msg.from, type: 'image', image: { link: S.welcomeImage || IMG + 'welcome_v3.jpg' } };
 }
 function mainMenu() {
   const en = lang === 'en'; const open = isOpenNow() && docRead().status !== 'leave';
