@@ -1207,7 +1207,7 @@ function welcomeCard() {
     ? `${nm ? `Hello ${nm}` : 'Hello'} 🙏\n${back ? `Good to see you again at *${C}*.` : `Welcome to *${C}*.`}\n\n*${D}*${P.qual ? `\n${P.qual}` : ''}\n${st}${queue}\n\n*Next available:* ${nf || 'please call us'}\n*Consultation:* ₹${S.fee}\n\nHow can we help you today?`
     : `Namaste${nm ? ' ' + nm + ' ji' : ''} 🙏\n${back ? `*${C}* mein phir se swagat hai.` : `*${C}* mein aapka swagat hai.`}\n\n*${D}*${P.qual ? `\n${P.qual}` : ''}\n${st}${queue}\n\n*Agla khali time:* ${nf || 'call kijiye'}\n*Consultation:* ₹${S.fee}\n\nBataiye, kaise madad karein?`;
   const foot = `${S.address ? S.address.split(',')[0] + ' · ' : ''}${timingsText('en').split('\n')[0].replace(': ', ' ')}`;
-  return buttonsTo(msg.from, body, [['NEW', en ? 'Book a visit' : 'Time book karein'], ['SVC', en ? 'Treatments & fees' : 'Treatments & fees'], ['DOC', en ? 'Meet the doctor' : 'Doctor se miliye']], { type: 'image', image: { link: S.welcomeImage || IMG + 'welcome.jpg?v=2' } }, foot);
+  return buttonsTo(msg.from, body, [['NEW', en ? 'Book a visit' : 'Time book karein'], ['SVC', en ? 'Treatments & fees' : 'Treatments & fees'], ['DOC', en ? 'Meet the doctor' : 'Doctor se miliye']], { type: 'image', image: { link: S.welcomeImage || IMG + 'welcome_v3.jpg' } }, foot);
 }
 const svcImg = n => { n = String(n).toLowerCase(); return IMG + (/acne|pimple/.test(n) ? 'svc_acne' : /hair|prp/.test(n) && !/laser/.test(n) ? 'svc_hair' : /pigment|tan|melasma/.test(n) ? 'svc_pigment' : /laser/.test(n) ? 'svc_laser' : /hydra|glow|facial|peel/.test(n) ? 'svc_glow' : 'svc_consult') + '.jpg'; };
 const svcPrice = n => { const BL = billList(); const w = String(n).toLowerCase().split(/[^a-z]+/).filter(x => x.length > 3); const hit = BL.find(x => x.n.toLowerCase() === String(n).toLowerCase()) || BL.find(x => w.some(k => x.n.toLowerCase().includes(k))); return hit ? hit.p : (S.fee || 0); };
@@ -1227,7 +1227,7 @@ function doctorCard() {
     ? `👩‍⚕️ *${D}*${P.qual ? '\n' + P.qual : ''}${P.yrs ? ` · ${P.yrs}+ years of experience` : ''}\n\n${P.about ? P.about + '\n\n' : ''}${P.langs ? `🗣️ *Speaks:* ${P.langs}\n` : ''}${S.fee ? `💳 *Consultation:* ₹${S.fee}\n` : ''}${nf ? `🗓️ *Next free slot:* ${nf}\n` : ''}📍 ${C}${S.address ? ', ' + S.address : ''}\n\nTap below to book your visit with ${D}.`
     : `👩‍⚕️ *${D}*${P.qual ? '\n' + P.qual : ''}${P.yrs ? ` · ${P.yrs}+ saal ka anubhav` : ''}\n\n${P.about ? P.about + '\n\n' : ''}${P.langs ? `🗣️ *Bhasha:* ${P.langs}\n` : ''}${S.fee ? `💳 *Consultation:* ₹${S.fee}\n` : ''}${nf ? `🗓️ *Agla khaali slot:* ${nf}\n` : ''}📍 ${C}${S.address ? ', ' + S.address : ''}\n\n${D} ke saath visit book karne ke liye neeche dabaiye.`;
   const first = String(D).replace(/^Dr\.?\s*/i, '').split(' ')[0];
-  return buttonsTo(msg.from, body, [['NEW', ('Book with Dr. ' + first).slice(0, 20)], ['SVC', 'Treatments & fees']], { type: 'image', image: { link: S.doctorImage || IMG + 'doctor.jpg' } });
+  return buttonsTo(msg.from, body, [['NEW', ('Book with Dr. ' + first).slice(0, 20)], ['SVC', 'Treatments & fees']], { type: 'image', image: { link: S.doctorImage || IMG + 'doctor_v2.jpg' } });
 }
 function svcList(intro) {
   if (!svcs.length) return dateList(intro);
