@@ -125,98 +125,98 @@ function timingsText(lg) {
 const C = S.clinicName, D = S.doctorName;
 const T = {
   en: {
-    pickLang: `*Welcome to ${C}*\n\nPlease choose your preferred language.\nKripya apni bhasha chunein.`,
-    welcome: n => `Hello ${n},\nwelcome to *${C}*.\n\nBook a visit with *${D}* in under a minute, right here on WhatsApp.\n\nPlease select what you need.`,
-    pickDate: 'Please choose a date for your appointment.',
-    pickSvc: 'What would you like to book?', svcBtn: 'Choose', svcTitle: 'Treatments',
-    svcChosen: n => `${n}. Please choose a date.`,
+    pickLang: `🙏 *Welcome to ${C}*\n\nThank you for reaching out. We're here to help you book your visit, check your token and get answers, right here on WhatsApp.\n\nPlease choose the language you are most comfortable in.\nAap apni pasand ki bhasha chun sakte hain.`,
+    welcome: n => `Hello ${n} 👋\n\nWelcome to *${C}*. It's good to hear from you.\n\nYou can book your consultation with *${D}* here in under a minute, with no calls and no waiting on hold.\n\n👇 Please tell us what you would like to visit for, and we'll show you the next available times.`,
+    pickDate: '📅 Which day would suit you best? Please pick a date below.',
+    pickSvc: 'What would you like to visit for?', svcBtn: 'Choose', svcTitle: 'Treatments',
+    svcChosen: n => `Great choice: *${n}* 👍\n\n📅 Now pick a day that works for you.`,
     earliest: 'Earliest free slot', waitRow: 'None of these work?', waitRowD: 'Join the waitlist for a day',
-    waitPick: 'Which day do you want? If a slot opens up that day, we will message you right away.',
-    waitDone: d => `Done. You are on the waitlist for ${d}. The moment a slot opens, we will message you here.`,
-    slotOpen: (d) => `Good news: a slot just opened on ${d}. Tap below to book it before someone else does.`, bookIt: 'Book this slot',
-    feeLine: f => `\n💳 Consultation: ₹${f}, payable at the clinic`,
+    waitPick: '📅 Which day would you prefer? If a slot opens up that day, we will message you right away, so you never miss it.',
+    waitDone: d => `✅ *You're on the waitlist for ${d}*\n\nThe moment a slot opens, you'll get a message here. You don't need to do anything else.`,
+    slotOpen: (d) => `🎉 *Good news, a slot just opened up*\n\nA slot is now available on *${d}*. Slots fill quickly, so tap below to book it before someone else does.`, bookIt: 'Book this slot',
+    feeLine: f => `\n💳 *Consultation fee:* ₹${f} (payable at the clinic, no booking charge)`,
     morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening',
-    liveRow: 'Live Chat', liveRowD: 'Chat with the clinic team',
-    liveOn: open => open ? 'You are now on live chat with the clinic team. They will reply here shortly.\n\nType *END* anytime to go back to booking.' : `You are now on live chat. The clinic is closed right now, so the team will reply when it opens.\n\nClinic timings:\n${timingsText('en')}\n\nType *END* anytime to go back to booking.`,
-    liveOff: 'Live chat ended. Thank you! Send *Hi* anytime to book an appointment.',
-    livePhoto: 'Photos can not be shared on live chat yet. Please describe it in text, or the team can call you.',
+    liveRow: 'Talk to clinic', liveRowD: 'Call us or request a call back',
+    liveOn: () => `📞 Please call us on ${S.clinicPhone}.`,
+    liveOff: 'Thank you. Send *Hi* anytime to book an appointment.',
+    livePhoto: 'Thank you for sharing. Our team will look at this when they call you.',
     dateBtn: 'Choose date', datesTitle: 'Available dates', slotsFree: n => `${n} slot${n > 1 ? 's' : ''} available`,
-    noSlots: `Sorry, there are no free slots in the next ${S.daysAhead} days. Please call us on ${S.clinicPhone}.`,
-    dayFull: 'That day is now full. Please choose another date.',
-    timesFor: d => `Available times on ${d}:`, timeBtn: 'Choose time', timesTitle: 'Available times', later: 'Later times',
-    held: w => `*Slot reserved* ⏳\n${w}\n\nWe are holding this slot for ${S.holdMinutes} minutes.\nWho is the appointment for? Tap *Myself* or type the patient's full name.`,
+    noSlots: `🙏 We're fully booked for the next ${S.daysAhead} days, and we're sorry about that.\n\nPlease call us on 📞 ${S.clinicPhone} and our team will do their best to fit you in, or join the waitlist below.`,
+    dayFull: 'That day just filled up 😕 Please choose another date below.',
+    timesFor: d => `⏰ Here are the available times on *${d}*.\nPick the one that suits you best.`, timeBtn: 'Choose time', timesTitle: 'Available times', later: 'Later times',
+    held: w => `⏳ *We're holding this slot for you*\n\n📅 ${w}\n\nIt stays reserved for the next ${S.holdMinutes} minutes.\n\nWho is this appointment for? Tap *Myself*, or type the patient's full name (for example: Riya Sharma).`,
     selfBtn: 'Myself',
-    askName: "Please type the patient's full name (for example: Riya Sharma), or tap *Myself*.",
-    confirmed: (r, w) => `✅ *Appointment confirmed*\n\nDear ${r.name},\nyour visit is booked.\n\n👩‍⚕️ ${D}\n📅 ${w}${r.service ? `\n🩺 ${r.service}` : ''}\n📍 ${C}${S.address ? ', ' + S.address : ''}${S.fee ? T.en.feeLine(S.fee) : ''}\n\nPlease arrive 10 minutes early and bring any previous prescriptions or reports.`,
+    askName: "Please type the patient's full name (for example: Riya Sharma), or tap *Myself* if the appointment is for you.",
+    confirmed: (r, w) => `✅ *Your appointment is confirmed!*\n\nDear ${r.name}, thank you for choosing ${C}. We look forward to seeing you.\n\n👩‍⚕️ *Doctor:* ${D}\n📅 *When:* ${w}${r.service ? `\n🩺 *For:* ${r.service}` : ''}\n📍 *Where:* ${C}${S.address ? ', ' + S.address : ''}${S.fee ? T.en.feeLine(S.fee) : ''}\n\n*Before you come*\n• Please arrive 10 minutes early\n• Bring any previous prescriptions or reports\n\nWe'll send you a reminder before your visit. If your plans change, you can change or cancel below.`,
     changeBtn: 'Change time', cancelBtn: 'Cancel',
-    holdCancelled: 'No problem, the slot has been released. Send *Hi* whenever you want to book again.',
-    limit: n => `You already have ${n} upcoming appointments, which is the maximum. Please cancel one to book a new time.`,
-    noUpcoming: "You don't have any upcoming appointments.",
-    cancelQ: (r, w) => `Do you want to cancel this appointment?\n\n👤 ${r.name || 'Patient'}\n📅 ${w}`,
+    holdCancelled: "No problem, we've released the slot. Whenever you're ready, just send *Hi* and we'll help you book again. 😊",
+    limit: n => `You already have ${n} upcoming appointments with us, which is the maximum we can hold at a time.\n\nTo book a new time, please cancel one of them first.`,
+    noUpcoming: "You don't have any upcoming appointments with us right now. Send *Hi* anytime to book one. 😊",
+    cancelQ: (r, w) => `Would you like to cancel this appointment?\n\n👤 ${r.name || 'Patient'}\n📅 ${w}`,
     yesCancel: 'Yes, cancel', keepBtn: 'No, keep it',
     whichCancel: 'Which appointment would you like to cancel?', chooseBtn: 'Choose', yourTitle: 'Your appointments',
-    cancelled: w => `*Appointment cancelled*\n\nYour appointment on ${w} has been cancelled.\nWhenever you are ready, send *Hi* to book again.`,
+    cancelled: w => `✅ *Your appointment has been cancelled*\n\nYour visit on ${w} is cancelled, and the slot has been released.\n\nWe hope everything is well. Whenever you'd like to see ${D}, just send *Hi* and we'll find you a time. 🙏`,
     gone: 'This appointment has already been cancelled or completed.',
-    kept: 'Okay, your appointment remains as scheduled.',
-    thanksConfirm: w => `✅ *Thank you for confirming*\n\n${D} will see you on ${w}.`,
-    reschedule: 'Sure. Your earlier slot has been released. Please choose a new date.',
-    talk: `*Talk to ${C}*\n\n📞 ${S.clinicPhone}\n\n*Clinic timings*\n${timingsText('en')}\n\nPrefer that we call you? Tap *Request a call*.`,
-    textOnly: 'Sorry, I can only read text messages. Please type your message or choose an option below.',
-    yourAppts: (n, l) => `Hello ${n}, here are your upcoming appointments at ${C}:\n\n${l}`,
+    kept: "👍 Perfect, your appointment stays exactly as it was. We'll see you then!",
+    thanksConfirm: w => `✅ *Thank you for confirming!*\n\n${D} will see you on *${w}*.\n\n📍 ${C}${S.address ? ', ' + S.address : ''}\nPlease arrive 10 minutes early. See you soon! 😊`,
+    reschedule: "Sure, no problem 👍 Your earlier slot has been released.\n\n📅 Please choose a new date that suits you.",
+    talk: `📞 *We're happy to help*\n\nYou can reach the ${C} team on *${S.clinicPhone}*.\n\n🕘 *Clinic timings*\n${timingsText('en')}\n\nBusy right now? Tap *Request a call* and our team will call you back.`,
+    textOnly: "Sorry, we can only read text messages here 🙏 Please type your message, or choose an option below.",
+    yourAppts: (n, l) => `📋 *Your upcoming appointments*\n\nHello ${n}, here are your visits booked at ${C}:\n\n${l}`,
     bookBtn: 'Book appointment', anotherBtn: 'Book another', cancelBookingBtn: 'Cancel booking', talkBtn: 'Talk to clinic',
-    mcQ: 'Sure, please type your question here and the clinic will reply shortly.',
-    mcCall: '✅ *Call back requested*\nOur team will call you shortly.',
+    mcQ: '✍️ Of course. Please type your question here, and our team will reply as soon as possible.',
+    mcCall: "✅ *Call back requested*\n\nThank you. Our team will call you back shortly. 📞",
     foot: C,
-    lateMsg: (m, t2) => `⏳ *Schedule update*\n\n${D} is running about ${m} minutes behind schedule today.\nRevised time: *${t2}* (approx.)\n\nWe apologise for the wait and thank you for your patience.`,
-    leaveMsg: d => `*Important: appointment update*\n\n${D} will be unavailable on ${d}. We sincerely apologise for the inconvenience.\n\nPlease choose a new time or cancel below.`,
+    lateMsg: (m, t2) => `⏳ *A quick update about your visit*\n\nWe're sorry, ${D} is running about *${m} minutes* behind schedule today because of a longer case.\n\n🕒 Your appointment should now begin around *${t2}*.\n\nThis gives you time to plan, so you don't have to wait at the clinic. Thank you for your patience. 🙏`,
+    leaveMsg: d => `📢 *Important update about your appointment*\n\nWe're sorry, ${D} will not be available on *${d}*. We apologise for the inconvenience.\n\nPlease choose a new time below, and we'll make sure you're seen at the earliest. 🙏`,
     okBtn: 'Okay', newTimeBtn: 'Choose new time',
   },
   hl: {
-    pickLang: `*${C} mein aapka swagat hai*\n\nKripya apni bhasha chunein.\nPlease choose your preferred language.`,
-    welcome: n => `Namaste ${n} ji,\n*${C}* mein aapka swagat hai.\n\n*${D}* ke saath appointment yahin WhatsApp par ek minute mein book ho jayega.\n\nBataiye, aapko kis cheez ke liye milna hai?`,
-    pickDate: 'Aap kis din aana chahenge?',
-    pickSvc: 'Bataiye, aapko kis cheez ke liye appointment chahiye?', svcBtn: 'Select karein', svcTitle: 'Treatments',
-    svcChosen: n => `${n} 👍\nAb bataiye, aap kis din aana chahenge?`,
-    earliest: 'Sabse pehla free slot', waitRow: 'Koi time suit nahi?', waitRowD: 'Waitlist mein naam daalein',
-    waitPick: 'Aapko kis din chahiye? Us din koi slot khulte hi hum aapko turant message karenge.',
-    waitDone: d => `Ho gaya. ${d} ki waitlist mein aapka naam add ho gaya hai. Slot khulte hi hum yahin message karenge.`,
-    slotOpen: (d) => `Good news: ${d} ka ek slot abhi khula hai. Kisi aur ke lene se pehle neeche dabakar book kar lijiye.`, bookIt: 'Ye slot book karein',
-    feeLine: f => `\n💳 Consultation: ₹${f}, clinic par dena hoga`,
+    pickLang: `🙏 *${C} mein aapka swagat hai*\n\nMessage karne ke liye dhanyavaad. Yahin WhatsApp par aap appointment book kar sakte hain, apna token dekh sakte hain aur har sawaal ka jawab paa sakte hain.\n\nKripya apni pasand ki bhasha chunein.\nPlease choose your preferred language.`,
+    welcome: n => `Namaste ${n} ji 👋\n\n*${C}* mein aapka swagat hai.\n\nAap yahin ek minute mein *${D}* ke saath consultation book kar sakte hain. Na call karne ki zaroorat, na line mein rukne ki.\n\n👇 Bataiye, aap kis cheez ke liye milna chahte hain? Hum aapko agle khaali samay dikha denge.`,
+    pickDate: '📅 Aapke liye kaunsa din theek rahega? Kripya neeche se date chunein.',
+    pickSvc: 'Aap kis cheez ke liye milna chahte hain?', svcBtn: 'Chunein', svcTitle: 'Treatments',
+    svcChosen: n => `Bahut accha: *${n}* 👍\n\n📅 Ab apni suvidha ka din chunein.`,
+    earliest: 'Sabse pehla khaali slot', waitRow: 'Koi samay theek nahi?', waitRowD: 'Waitlist mein naam daalein',
+    waitPick: '📅 Aapko kis din aana hai? Us din slot khulte hi hum aapko turant message karenge, taaki aapka mauka na chhoote.',
+    waitDone: d => `✅ *Aapka naam ${d} ki waitlist mein jud gaya hai*\n\nSlot khulte hi aapko yahin message aa jayega. Aapko aur kuch karne ki zaroorat nahi hai.`,
+    slotOpen: (d) => `🎉 *Khushkhabri, ek slot khul gaya hai*\n\n*${d}* ko ek slot ab available hai. Slots jaldi bhar jaate hain, isliye neeche dabakar abhi book kar lijiye.`, bookIt: 'Ye slot book karein',
+    feeLine: f => `\n💳 *Consultation fee:* ₹${f} (clinic par dena hoga, koi booking charge nahi)`,
     morning: 'Subah', afternoon: 'Dopahar', evening: 'Shaam',
-    liveRow: 'Live Chat', liveRowD: 'Clinic team se chat karein',
-    liveOn: open => open ? 'Aap live chat par clinic team se jud gaye hain. Team yahin jaldi reply karegi.\n\nBooking par wapas jaane ke liye kabhi bhi *END* likhein.' : `Aap live chat par jud gaye hain. Clinic abhi band hai, team clinic khulte hi reply karegi.\n\nClinic timings:\n${timingsText('hl')}\n\nBooking par wapas jaane ke liye kabhi bhi *END* likhein.`,
-    liveOff: 'Live chat band ho gayi. Thank you! Appointment ke liye kabhi bhi *Hi* bhej dijiye.',
-    livePhoto: 'Live chat par abhi photo share nahi ho sakti. Please text mein likh dijiye, ya team aapko call kar legi.',
-    dateBtn: 'Date select karein', datesTitle: 'Available dates', slotsFree: n => `${n} slot${n > 1 ? 's' : ''} available`,
-    noSlots: `Sorry, agle ${S.daysAhead} din ke saare slots full hain. Please clinic ko call kar lijiye: ${S.clinicPhone}`,
-    dayFull: 'Sorry, ye din full ho gaya hai. Please koi aur date select karein.',
-    timesFor: d => `${d} ke available slots 👇`, timeBtn: 'Time select karein', timesTitle: 'Available slots', later: 'Aur slots dekhein',
-    held: w => `*Slot hold kar diya hai* ⏳\n${w}\n\nYe slot ${S.holdMinutes} minute ke liye aapke liye rakha hai.\nAppointment kiske liye hai? *Mere liye* dabaiye, ya patient ka poora naam likhiye.`,
+    liveRow: 'Clinic se baat', liveRowD: 'Call karein ya call back maangein',
+    liveOn: () => `📞 Kripya humein ${S.clinicPhone} par call karein.`,
+    liveOff: 'Dhanyavaad. Appointment ke liye kabhi bhi *Hi* bhej dijiye.',
+    livePhoto: 'Bhejne ke liye dhanyavaad. Humari team call par ise dekh legi.',
+    dateBtn: 'Date chunein', datesTitle: 'Available dates', slotsFree: n => `${n} slot${n > 1 ? 's' : ''} khaali`,
+    noSlots: `🙏 Agle ${S.daysAhead} din ke saare slots bhar chuke hain, iske liye hum kshama chahte hain.\n\nKripya 📞 ${S.clinicPhone} par call kijiye, humari team aapko jaldi se jaldi samay dene ki poori koshish karegi. Ya neeche waitlist mein naam daal dijiye.`,
+    dayFull: 'Ye din abhi bhar gaya 😕 Kripya neeche se koi aur date chunein.',
+    timesFor: d => `⏰ *${d}* ke khaali samay ye hain.\nJo aapke liye theek ho, wo chun lijiye.`, timeBtn: 'Samay chunein', timesTitle: 'Available samay', later: 'Aur samay dekhein',
+    held: w => `⏳ *Ye slot aapke liye rakh liya gaya hai*\n\n📅 ${w}\n\nAgle ${S.holdMinutes} minute tak ye sirf aapke liye hold hai.\n\nAppointment kiske liye hai? Apne liye ho toh *Mere liye* dabaiye, ya patient ka poora naam likhiye (jaise: Riya Sharma).`,
     selfBtn: 'Mere liye',
-    askName: 'Please patient ka poora naam likh dijiye (jaise: Riya Sharma), ya *Mere liye* dabaiye.',
-    confirmed: (r, w) => `✅ *Appointment confirm ho gaya*\n\n${r.name} ji,\naapka appointment book ho gaya hai.\n\n👩‍⚕️ ${D}\n📅 ${w}${r.service ? `\n🩺 ${r.service}` : ''}\n📍 ${C}${S.address ? ', ' + S.address : ''}${S.fee ? T.hl.feeLine(S.fee) : ''}\n\nKripya 10 minute pehle aa jaiye aur purani prescription ya report saath laaiye.`,
-    changeBtn: 'Time change karein', cancelBtn: 'Cancel karein',
-    holdCancelled: 'Koi baat nahi, slot cancel kar diya hai. Jab bhi book karna ho, bas *Hi* bhej dijiye.',
-    limit: n => `Aapke already ${n} appointments booked hain. Naya book karne ke liye pehle ek cancel karna hoga.`,
-    noUpcoming: 'Abhi aapka koi appointment booked nahi hai.',
+    askName: 'Kripya patient ka poora naam likhiye (jaise: Riya Sharma), ya agar appointment aapke liye hai toh *Mere liye* dabaiye.',
+    confirmed: (r, w) => `✅ *Aapka appointment confirm ho gaya hai!*\n\n${r.name} ji, ${C} chunne ke liye dhanyavaad. Hum aapse milne ka intezaar karenge.\n\n👩‍⚕️ *Doctor:* ${D}\n📅 *Kab:* ${w}${r.service ? `\n🩺 *Kis liye:* ${r.service}` : ''}\n📍 *Kahan:* ${C}${S.address ? ', ' + S.address : ''}${S.fee ? T.hl.feeLine(S.fee) : ''}\n\n*Aane se pehle*\n• Kripya 10 minute pehle pahunch jaiye\n• Purani prescription ya report saath laaiye\n\nVisit se pehle hum aapko reminder bhejenge. Plan badle toh neeche se samay badal ya cancel kar sakte hain.`,
+    changeBtn: 'Samay badlein', cancelBtn: 'Cancel karein',
+    holdCancelled: 'Koi baat nahi, humne slot chhod diya hai. Jab bhi book karna ho, bas *Hi* bhej dijiye. 😊',
+    limit: n => `Aapke ${n} appointments pehle se booked hain, jo ek samay mein sabse zyada hain.\n\nNaya samay book karne ke liye pehle ek appointment cancel kijiye.`,
+    noUpcoming: 'Abhi aapka koi appointment booked nahi hai. Book karne ke liye kabhi bhi *Hi* bhej dijiye. 😊',
     cancelQ: (r, w) => `Kya aap ye appointment cancel karna chahte hain?\n\n👤 ${r.name || 'Patient'}\n📅 ${w}`,
     yesCancel: 'Haan, cancel karein', keepBtn: 'Nahi, rehne dein',
-    whichCancel: 'Kaunsa appointment cancel karna hai?', chooseBtn: 'Select karein', yourTitle: 'Aapke appointments',
-    cancelled: w => `*Appointment cancel ho gaya*\n\nAapka ${w} ka appointment cancel kar diya gaya hai.\nJab bhi dobara book karna ho, bas *Hi* bhej dijiye.`,
-    gone: 'Ye appointment pehle hi cancel ya complete ho chuka hai.',
-    kept: 'Theek hai, aapka appointment waise hi rahega 👍',
-    thanksConfirm: w => `✅ *Confirm karne ke liye dhanyavaad*\n\n${D} aapse ${w} milenge.`,
-    reschedule: 'Ho jayega. Aapka purana slot cancel kar diya hai, ab nayi date select kar lijiye.',
-    talk: `*${C} se baat karein*\n\n📞 ${S.clinicPhone}\n\n*Clinic timings*\n${timingsText('hl')}\n\nChahte hain ki clinic aapko call kare? *Call request karein* dabaiye.`,
-    textOnly: 'Sorry, abhi hum sirf text message hi padh paate hain. Please likh kar bhejiye ya neeche se option select karein.',
-    yourAppts: (n, l) => `*Aapke upcoming appointments*\n\n${n} ji, ${C} mein aapke appointments:\n\n${l}`,
+    whichCancel: 'Kaunsa appointment cancel karna hai?', chooseBtn: 'Chunein', yourTitle: 'Aapke appointments',
+    cancelled: w => `✅ *Aapka appointment cancel ho gaya hai*\n\n${w} ka appointment cancel kar diya gaya hai aur slot chhod diya gaya hai.\n\nUmmeed hai sab theek hai. Jab bhi ${D} se milna ho, bas *Hi* bhejiye, hum aapke liye samay nikal denge. 🙏`,
+    gone: 'Ye appointment pehle hi cancel ya poora ho chuka hai.',
+    kept: '👍 Bilkul, aapka appointment waise hi rahega. Milte hain!',
+    thanksConfirm: w => `✅ *Confirm karne ke liye dhanyavaad!*\n\n${D} aapse *${w}* milenge.\n\n📍 ${C}${S.address ? ', ' + S.address : ''}\nKripya 10 minute pehle aa jaiye. Jaldi milte hain! 😊`,
+    reschedule: 'Bilkul, koi baat nahi 👍 Aapka purana slot chhod diya gaya hai.\n\n📅 Ab apni suvidha ki nayi date chunein.',
+    talk: `📞 *Hum madad ke liye yahan hain*\n\n${C} ki team se *${S.clinicPhone}* par baat kar sakte hain.\n\n🕘 *Clinic ka samay*\n${timingsText('hl')}\n\nAbhi vyast hain? *Call request karein* dabaiye, humari team aapko call karegi.`,
+    textOnly: 'Maaf kijiye, hum yahan sirf text message padh paate hain 🙏 Kripya likh kar bhejiye ya neeche se option chunein.',
+    yourAppts: (n, l) => `📋 *Aapke upcoming appointments*\n\n${n} ji, ${C} mein aapke booked visits ye hain:\n\n${l}`,
     bookBtn: 'Book appointment', anotherBtn: 'Ek aur book karein', cancelBookingBtn: 'Cancel karein', talkBtn: 'Clinic se baat',
-    mcQ: 'Zaroor, apna sawaal yahin likh dijiye. Clinic jaldi reply karega.',
-    mcCall: '✅ *Call back request mil gayi*\nHumari team aapko jaldi call karegi.',
+    mcQ: '✍️ Zaroor. Apna sawaal yahin likh dijiye, humari team jaldi jawab degi.',
+    mcCall: '✅ *Call back request mil gayi hai*\n\nDhanyavaad. Humari team aapko jaldi call karegi. 📞',
     foot: C,
-    lateMsg: (m, t2) => `⏳ *Schedule update*\n\nAaj ${D} lagbhag ${m} minute late chal rahe hain.\nAapka naya samay: *${t2}* (lagbhag)\n\nIntezaar ke liye kshama chahte hain. Aapke dhairya ke liye dhanyavaad.`,
-    leaveMsg: d => `*Zaroori soochna: appointment update*\n\n${D} ${d} ko available nahi honge. Asuvidha ke liye hum kshama chahte hain.\n\nKripya neeche se naya samay chunein ya appointment cancel karein.`,
-    okBtn: 'Theek hai', newTimeBtn: 'Naya time chunein',
+    lateMsg: (m, t2) => `⏳ *Aapke visit ke baare mein ek zaroori update*\n\nKshama kijiye, ek lamba case hone ki wajah se aaj ${D} lagbhag *${m} minute* late chal rahe hain.\n\n🕒 Aapka appointment ab lagbhag *${t2}* tak shuru hoga.\n\nAap apna samay us hisaab se plan kar sakte hain, clinic mein intezaar nahi karna padega. Aapke dhairya ke liye dhanyavaad. 🙏`,
+    leaveMsg: d => `📢 *Aapke appointment ke baare mein zaroori soochna*\n\nKshama kijiye, ${D} *${d}* ko available nahi honge. Asuvidha ke liye hum maafi chahte hain.\n\nKripya neeche se naya samay chunein, hum dhyan rakhenge ki aapko jaldi se jaldi dekha jaye. 🙏`,
+    okBtn: 'Theek hai', newTimeBtn: 'Naya samay chunein',
   },
 };
 
@@ -270,35 +270,35 @@ const docRead = () => mem.doc || { status: 'in' };
 const docLine = (lg) => {
   const d = docRead(); const D2 = S.doctorName;
   const until = d.until ? DateTime.fromISO(d.until).setZone(TZ).toFormat('h:mm a') : '';
-  if (d.status === 'late') return lg === 'en' ? `${D2} is running about ${d.mins} min late today.` : `${D2} aaj lagbhag ${d.mins} min late hain.`;
-  if (d.status === 'away') return lg === 'en' ? `${D2} has stepped out and should be back by about ${until}.` : `${D2} thodi der ke liye clinic se bahar hain, lagbhag ${until} tak wapas aayenge.`;
+  if (d.status === 'late') return lg === 'en' ? `${D2} is running about ${d.mins} minutes behind schedule today.` : `Aaj ${D2} lagbhag ${d.mins} minute late chal rahe hain.`;
+  if (d.status === 'away') return lg === 'en' ? `${D2} has stepped out for an urgent case and should be back by about ${until}.` : `${D2} ek zaroori case ke liye thodi der bahar gaye hain, lagbhag ${until} tak wapas aa jayenge.`;
   if (d.status === 'leave') return lg === 'en' ? `${D2} is on leave today.` : `${D2} aaj chhutti par hain.`;
   return lg === 'en' ? `${D2} is in the clinic.` : `${D2} clinic mein hain.`;
 };
 const QT = {
   hl: {
-    token: (tk, n, eta) => `🎫 *Aapka token: ${String(tk.tok).replace('-', '')}*\n\n${n ? `👥 Aapse pehle: ${n} ${n > 1 ? 'patients' : 'patient'}\n⏳ Anumaanit samay: ${eta}` : '⏩ Agla number aapka hai.'}\n\nAap bahar intezaar kar sakte hain. Aapki baari se pehle hum yahin soochit karenge.`,
+    token: (tk, n, eta) => `🎫 *Aapka token number: ${String(tk.tok).replace('-', '')}*\n\n${n ? `👥 Aapse pehle *${n} ${n > 1 ? 'patients' : 'patient'}* hain\n⏳ Anumaanit intezaar: *${eta}*` : '⏩ *Agla number aapka hai!*'}\n\nAapko line mein khade rehne ki zaroorat nahi. Aap aaram se bahar ya gaadi mein intezaar kar sakte hain. Aapki baari se pehle hum yahin message kar denge. 😊`,
     live: 'Live status dekhein',
-    two: n => n <= 1 ? `🔔 *Agla number aapka hai*\nKripya waiting area mein aa jaiye.` : `🔔 *Aapki baari kareeb hai*\nAapse pehle ab ${n} patients hain. Kripya clinic ki taraf aa jaiye.`,
-    turn: c => `🟢 *Aapki baari aa gayi hai*\nKripya ${c} mein aaiye.`,
-    missed: `*Aapka number nikal gaya*\nAapka token bulaya gaya tha, par aap waiting area mein nahi the. Agle 2 patients ke baad aapko dobara bulaya jayega.`,
-    here: 'Main aa gaya', hereOk: '✅ *Dhanyavaad*\nAapko thodi der mein bulaya jayega.',
-    closed: `*Clinic abhi band hai*\nIs samay token nahi mil sakta. Kripya clinic ke samay mein *TOKEN* bhejiye.`,
-    leave: d => `*Aaj OPD band hai*\n${d} aaj chhutti par hain, isliye aaj token nahi mil sakta. Asuvidha ke liye kshama karein.`,
-    back: d => `✅ *${d} clinic mein wapas aa gaye hain*\nConsultation shuru ho gaye hain. Aapki baari jaldi aayegi.`,
-    moved: (line, eta) => `⏳ *Schedule update*\n${line}${eta ? `\nAapka naya anumaanit samay: ${eta}.` : ''}\n\nAapke dhairya ke liye dhanyavaad.`,
+    two: n => n <= 1 ? `🔔 *Agla number aapka hai!*\n\nKripya ab waiting area mein aa jaiye. Doctor aapko bas kuch hi der mein bulayenge. 🙏` : `🔔 *Aapki baari kareeb hai*\n\nAapse pehle ab sirf *${n} patients* hain. Kripya clinic ki taraf aana shuru kar dijiye. 🚶`,
+    turn: c => `🟢 *Aapki baari aa gayi hai!*\n\nKripya ab *${c}* mein aaiye. Doctor aapka intezaar kar rahe hain. 🙏`,
+    missed: `⏸️ *Aapka number nikal gaya*\n\nAapka token bulaya gaya tha, par aap waiting area mein nahi the. Chinta mat kijiye, aapka number gaya nahi hai. Agle 2 patients ke baad aapko dobara bulaya jayega.\n\nAa gaye hon toh neeche *Main aa gaya* dabaiye.`,
+    here: 'Main aa gaya', hereOk: '✅ *Dhanyavaad, humne note kar liya hai*\n\nAapko thodi hi der mein bulaya jayega. 🙏',
+    closed: `🕘 *Clinic abhi band hai*\n\nIs samay token nahi mil sakta.\n\n*Clinic ka samay*\n${timingsText('hl')}\n\nClinic khulne par *TOKEN* bhejiye, ya appointment book karne ke liye *Hi* bhejiye. 😊`,
+    leave: d => `📢 *Aaj OPD band hai*\n\n${d} aaj chhutti par hain, isliye aaj token nahi mil sakta. Asuvidha ke liye kshama chahte hain. 🙏\n\nAgle din ke liye appointment book karne ke liye *Hi* bhejiye.`,
+    back: d => `✅ *${d} clinic mein wapas aa gaye hain*\n\nConsultation dobara shuru ho gaye hain. Aapki baari jaldi aayegi, hum aapko yahin bata denge. 😊`,
+    moved: (line, eta) => `⏳ *Aapki baari ke baare mein update*\n\n${line}${eta ? `\n\n🕒 Aapka naya anumaanit samay: *${eta}*` : ''}\n\nAap apna samay us hisaab se plan kar sakte hain. Aapke dhairya ke liye dhanyavaad. 🙏`,
   },
   en: {
-    token: (tk, n, eta) => `🎫 *Your token: ${String(tk.tok).replace('-', '')}*\n\n${n ? `👥 Patients ahead: ${n}\n⏳ Estimated wait: ${eta}` : '⏩ You are next.'}\n\nYou may wait outside. We will notify you here before your turn.`,
+    token: (tk, n, eta) => `🎫 *Your token number: ${String(tk.tok).replace('-', '')}*\n\n${n ? `👥 *${n} ${n > 1 ? 'patients are' : 'patient is'}* ahead of you\n⏳ Estimated wait: *${eta}*` : '⏩ *You are next!*'}\n\nThere's no need to stand in line. You can wait comfortably outside or in your car, and we'll message you here before it's your turn. 😊`,
     live: 'Track live status',
-    two: n => n <= 1 ? `🔔 *You are next*\nPlease come to the waiting area now.` : `🔔 *Your turn is near*\n${n} patients are ahead of you. Please make your way to the clinic.`,
-    turn: c => `🟢 *It's your turn*\nPlease proceed to ${c}.`,
-    missed: `*We missed you*\nYour token was called but you were not in the waiting area. You will be called again after the next 2 patients.`,
-    here: "I'm here", hereOk: '✅ *Thank you*\nYou will be called shortly.',
-    closed: `*The clinic is closed right now*\nTokens are not available at this time. Please send *TOKEN* during clinic hours.`,
-    leave: d => `*OPD closed today*\n${d} is on leave today, so tokens are not available. We apologise for the inconvenience.`,
-    back: d => `✅ *${d} is back in the clinic*\nConsultations have resumed. Your turn will come shortly.`,
-    moved: (line, eta) => `⏳ *Schedule update*\n${line}${eta ? `\nYour revised wait: ${eta}.` : ''}\n\nThank you for your patience.`,
+    two: n => n <= 1 ? `🔔 *You're next!*\n\nPlease come to the waiting area now. The doctor will see you in just a few minutes. 🙏` : `🔔 *Your turn is coming up*\n\nOnly *${n} patients* are ahead of you now. Please start making your way to the clinic. 🚶`,
+    turn: c => `🟢 *It's your turn!*\n\nPlease come to *${c}* now. The doctor is ready to see you. 🙏`,
+    missed: `⏸️ *We missed you*\n\nYour token was called, but you weren't in the waiting area. Don't worry, you haven't lost your place. We'll call you again after the next 2 patients.\n\nIf you've arrived, tap *I'm here* below.`,
+    here: "I'm here", hereOk: "✅ *Thank you, we've noted that you're here*\n\nYou'll be called in just a little while. 🙏",
+    closed: `🕘 *The clinic is closed right now*\n\nTokens aren't available at this time.\n\n*Clinic timings*\n${timingsText('en')}\n\nSend *TOKEN* once the clinic opens, or send *Hi* to book an appointment. 😊`,
+    leave: d => `📢 *OPD is closed today*\n\n${d} is on leave today, so tokens aren't available. We're sorry for the inconvenience. 🙏\n\nSend *Hi* to book an appointment for another day.`,
+    back: d => `✅ *${d} is back in the clinic*\n\nConsultations have resumed. Your turn will come shortly, and we'll let you know right here. 😊`,
+    moved: (line, eta) => `⏳ *An update about your turn*\n\n${line}${eta ? `\n\n🕒 Your new estimated wait: *${eta}*` : ''}\n\nYou can plan your time accordingly. Thank you for your patience. 🙏`,
   },
 };
 const cabin = S.cabin || 'Cabin 1';
@@ -769,7 +769,7 @@ if (mode === 'desk') {
         if (!v.inv) { mem.invSeq = (mem.invSeq || 0) + 1; v.inv = mem.invSeq; v.ik = sha256(v.k + now.toISO() + Math.random()).slice(0, 12); }
         if (!was) { v.by = sess.name; v.at = now.toISO(); } else { v.eby = sess.name; v.eat = now.toISO(); }
         const invUrl = (S.appUrl || 'https://desk.bas30din.com/') + '?inv=' + day + '.' + v.k + '.' + v.ik; res.inv = { no: String(v.inv).padStart(4, '0'), url: invUrl };
-        if (v.ph && v.m !== 'free' && inWindow(v.ph)) { out.push(ctaTo(v.ph, `🧾 *Payment received${was ? ' (revised)' : ''}*\n\nDear ${v.name},\nthank you for visiting ${C}.\n\nInvoice no: ${invNo(v)}\nDate: ${now.toFormat('d LLL yyyy')}\nAmount paid: *₹${Number(v.fee).toLocaleString('en-IN')}* (${v.m === 'upi' ? 'UPI' : 'Cash'})\n\nYour invoice is ready to view and download.`, 'View invoice', invUrl)); v.sent = now.toISO(); res.inv.sent = true; }
+        if (v.ph && v.m !== 'free' && inWindow(v.ph)) { out.push(ctaTo(v.ph, (langOf(v.ph, '') === 'en' ? `🧾 *Payment received${was ? ' (revised bill)' : ''}, thank you!*\n\nDear ${v.name}, thank you for visiting ${C} today. We wish you a speedy recovery. 💙\n\n🧾 *Invoice no:* ${invNo(v)}\n📅 *Date:* ${now.toFormat('d LLL yyyy')}\n💳 *Amount paid:* ₹${Number(v.fee).toLocaleString('en-IN')} (${v.m === 'upi' ? 'UPI' : 'Cash'})\n\nYour invoice is ready. Tap below to view or download it anytime.` : `🧾 *Payment mil gaya hai${was ? ' (badla hua bill)' : ''}, dhanyavaad!*\n\n${v.name} ji, aaj ${C} aane ke liye dhanyavaad. Aap jaldi swasth ho jaayein. 💙\n\n🧾 *Invoice no:* ${invNo(v)}\n📅 *Date:* ${now.toFormat('d LLL yyyy')}\n💳 *Amount:* ₹${Number(v.fee).toLocaleString('en-IN')} (${v.m === 'upi' ? 'UPI' : 'Cash'})\n\nAapka invoice taiyaar hai. Neeche dabakar kabhi bhi dekh ya download kar sakte hain.`), langOf(v.ph, '') === 'en' ? 'View invoice' : 'Invoice dekhein', invUrl)); v.sent = now.toISO(); res.inv.sent = true; }
         const days = Math.max(0, Math.min(400, Number(b.fup) || 0));
         v.fup = days ? now.plus({ days }).toFormat('yyyy-MM-dd') : null;
         mem.fup = (mem.fup || []).filter(f => f.k !== v.k && f.date >= todayStr);
@@ -940,6 +940,8 @@ if (mode === 'desk') {
         calls: (mem.mcalls || []).filter(x => x.at >= DateTime.fromISO(from, { zone: TZ }).toISO()).length };
       { const E = {}; for (const v of R.V) { if (!v.fee || v.m === 'free') continue; if (v.items && v.items.length) { const tot = v.items.reduce((a, x) => a + x.p, 0) || 1; for (const it of v.items) { const e = E[it.n] || (E[it.n] = { n: it.n, money: 0, count: 0 }); e.money += Math.round(v.fee * it.p / tot); e.count++; } } else { const e = E['Consultation'] || (E['Consultation'] = { n: 'Consultation', money: 0, count: 0 }); e.money += v.fee; e.count++; } }
         res.register.earn = Object.values(E).sort((a, c) => c.money - a.money); }
+      res.register.invoices = R.V.filter(v => v.m).slice().reverse().slice(0, 300).map(v => ({ no: invNo(v), at: DateTime.fromISO(v.at || v.in).setZone(TZ).toFormat(per === 'today' ? 'h:mm a' : 'd LLL, h:mm a'), name: v.name, items: v.items && v.items.length ? v.items.map(i => i.n).join(', ') : 'Consultation', m: v.m, fee: v.fee || 0, by: v.by || '', revised: !!v.edited, url: v.ik ? APP + '?inv=' + DateTime.fromISO(v.in || v.at).setZone(TZ).toFormat('yyyy-MM-dd') + '.' + v.k + '.' + v.ik : '' }));
+      res.register.edits = (mem.edits || []).filter(x => x.at >= DateTime.fromISO(from, { zone: TZ }).toISO()).reverse().map(x => ({ name: x.name, by: x.by, at: DateTime.fromISO(x.at).setZone(TZ).toFormat('d LLL, h:mm a'), from: x.from, to: x.to }));
       if (per === 'today') { const cl = (mem.close || {})[todayStr]; res.register.close = cl ? { cash: cl.cash, upi: cl.upi, by: cl.by, at: hm(cl.at), cashDiff: cl.cash - R.cash, upiDiff: cl.upi - R.upi } : null; }
     }
     if (b.view === 'patients') {
@@ -966,16 +968,27 @@ if (mode === 'desk') {
       const inQueue = ph => q.list.some(x => x.phone === ph && x.st !== 'x');
       res.appts = mineToday.map(r => ({ here: inQueue(r.phone), ph: isDoc ? '' : r.phone, time: at(r.date, r.time).toFormat('h:mm a'), name: r.name || 'Patient', treat: r.service || 'Appointment', status: r.status, isNew: !seenBefore(r.phone), visits: rows.filter(x => x.phone === r.phone && x.date <= todayStr && ['booked', 'confirmed', 'sent'].includes(x.status)).length, phone: isDoc ? '' : mask(r.phone) }));
     }
-    if (!isDoc || role === 'owner') {
-      const lv = Object.keys(mem.live || {}).filter(p => DateTime.fromISO(mem.live[p].last) > now.minus({ hours: 2 }));
+    {
+      const showPh = x => isDoc ? '+' + x.slice(0, 2) + ' ' + x.slice(2, 7) + ' ' + x.slice(7) : mask(x);
+      const nmOf = x => (mem.pname || {})[x] || '';
       const bookedAfter = (ph, iso) => rows.some(r => r.phone === ph && active(r) && r.date >= todayStr);
+      const tm = iso => { const d = DateTime.fromISO(iso).setZone(TZ); return d.toFormat(d >= now.startOf('day') ? 'h:mm a' : 'd LLL, h:mm a'); };
+      const story = ph => (mem.ev[ph] || []).filter(e => e.at >= now.minus({ days: 2 }).startOf('day').toISO()).map(e => ({ t: tm(e.at), k: e.k, txt: e.t }));
+      // WhatsApp: everyone who wrote to the clinic number in the last 2 days
+      const wa = Object.keys(mem.ev || {}).map(ph => { const l = (mem.ev[ph] || []).filter(e => e.at >= now.minus({ days: 1 }).startOf('day').toISO()); return { ph, l }; })
+        .filter(x => x.l.some(e => ['msg', 'token', 'booked', 'talk', 'cb', 'why', 'recall'].includes(e.k))).map(x => {
+          const ks = x.l.map(e => e.k), first = x.l.find(e => e.k === 'msg' || e.k === 'why') || x.l[0], last = x.l[x.l.length - 1];
+          const cbw = (mem.callbacks || []).find(c => c.phone === x.ph);
+          const out = cbw ? ['Wants a call back', 'bad'] : ks.includes('booked') ? [(x.l.filter(e => e.k === 'booked').pop().t || 'Booked'), 'ok'] : ks.includes('token') ? ['Came · ' + (x.l.filter(e => e.k === 'token').pop().t.split('token ')[1] || 'token'), 'ok'] : ks.includes('done') ? ['Called back', 'ok'] : ['Only asked', 'mid'];
+          return { phone: x.ph, name: nmOf(x.ph) || showPh(x.ph), shown: showPh(x.ph), call: '+' + x.ph, at: tm(last.at), day: DateTime.fromISO(last.at).setZone(TZ).toFormat('yyyy-MM-dd') === todayStr ? 'today' : 'yday', said: first.t.replace(/^Messaged: |^Reason: /, ''), out, story: story(x.ph), last: last.at };
+        }).sort((x, y) => y.last.localeCompare(x.last)).slice(0, 60);
       res.inbox = {
-        calls: (mem.mcalls || []).slice(-40).reverse().map(x => ({ phone: x.ph, shown: mask(x.ph), call: '+' + x.ph, at: DateTime.fromISO(x.at).setZone(TZ).toFormat(DateTime.fromISO(x.at) > now.startOf('day') ? 'h:mm a' : 'd LLL'), booked: bookedAfter(x.ph, x.at) })),
-        live: lv.map(p => { const l = (mem.chat || {})[p] || []; const last = l[l.length - 1]; return { phone: p, shown: mask(p), name: mem.live[p].name || 'Patient', last: last ? last.t : '', at: last ? DateTime.fromISO(last.at).setZone(TZ).toFormat('h:mm a') : '' }; }),
-        callbacks: (mem.callbacks || []).slice(-20).map(x => ({ phone: x.phone, shown: mask(x.phone), call: '+' + x.phone, name: (mem.pname || {})[x.phone] || x.name, reason: x.reason || '', tried: !!x.tryAt, noans: x.noans || 0, at: DateTime.fromISO(x.at).setZone(TZ).toFormat('h:mm a') })),
-        wait: Object.keys(mem.wait || {}).filter(d => d >= todayStr).flatMap(d => (mem.wait[d] || []).map(w => ({ phone: w.phone, shown: mask(w.phone), call: '+' + w.phone, day: DateTime.fromISO(d).toFormat('ccc d LLL') }))),
+        wa,
+        calls: (mem.mcalls || []).slice(-40).reverse().map(x => ({ phone: x.ph, shown: showPh(x.ph), name: nmOf(x.ph), call: '+' + x.ph, at: tm(x.at), booked: bookedAfter(x.ph, x.at), story: story(x.ph) })),
+        live: [],
+        callbacks: (mem.callbacks || []).slice(-20).map(x => ({ phone: x.phone, shown: showPh(x.phone), call: '+' + x.phone, name: nmOf(x.phone) || x.name, reason: x.reason || '', tried: !!x.tryAt, noans: x.noans || 0, at: tm(x.at), wait: (m => m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + (m % 60) + ' min')(Math.max(0, Math.round(now.diff(DateTime.fromISO(x.at), 'minutes').minutes))) })),
+        wait: Object.keys(mem.wait || {}).filter(d => d >= todayStr).flatMap(d => (mem.wait[d] || []).map(w => ({ phone: w.phone, shown: showPh(w.phone), call: '+' + w.phone, day: DateTime.fromISO(d).toFormat('ccc d LLL') }))),
       };
-      if (b.chat) { const ph = digits(b.chat); res.chat = { phone: ph, shown: mask(ph), name: (mem.live[ph] || {}).name || 'Patient', open: !!mem.live[ph], msgs: ((mem.chat || {})[ph] || []).map(m => ({ who: m.who, t: m.t, at: DateTime.fromISO(m.at).setZone(TZ).toFormat('h:mm a') })) }; }
     }
   }
   res.sent = out.length;
@@ -1007,7 +1020,7 @@ if (mode === 'summary' && (now.hour >= 20 || now.hour < 3)) {
   const to = [...new Set((S.doctorNumbers || []).concat((S.staff || []).filter(x => x.role === 'owner' || x.role === 'doctor').map(x => x.phone)).map(digits))];
   if (!mem.nightSent) mem.nightSent = '';
   const bkOut = [{ json: { action: 'none', payload: null, more: [], backup, sheetId: S.sheetId, phoneNumberId: S.phoneNumberId, notify: false } }];
-  for (const v of reviewAsks()) { if (!inWindow(v.ph)) continue; const lg = langOf(v.ph, ''); mem.rv[v.ph] = { at: now.toISO(), r: 0 }; bump('rvAsk'); more.push(buttonsTo(v.ph, lg === 'en' ? `*How was your visit today?*\n\nDear ${v.name}, thank you for choosing ${C}.\nYour feedback helps us care for you better. It takes one tap.` : `*Aaj aapka anubhav kaisa raha?*\n\n${v.name} ji, ${C} chunne ke liye dhanyavaad.\nAapka feedback humein behtar sewa dene mein madad karta hai. Bas ek tap.`, reviewBtns(lg))); }
+  for (const v of reviewAsks()) { if (!inWindow(v.ph)) continue; const lg = langOf(v.ph, ''); mem.rv[v.ph] = { at: now.toISO(), r: 0 }; bump('rvAsk'); more.push(buttonsTo(v.ph, lg === 'en' ? `🌟 *How was your visit today?*\n\nDear ${v.name}, thank you for trusting ${C} with your care. We hope you are feeling better already.\n\nWould you tell us how your visit went? It takes just one tap, and it helps us look after you and every patient better. 🙏` : `🌟 *Aaj aapka anubhav kaisa raha?*\n\n${v.name} ji, apne ilaaj ke liye ${C} par bharosa karne ke liye dhanyavaad. Ummeed hai aap behtar mehsoos kar rahe hain.\n\nKya aap bata sakte hain ki aapka visit kaisa raha? Bas ek tap, aur isse hum aapki aur har patient ki behtar dekhbhaal kar paate hain. 🙏`, reviewBtns(lg))); }
   if (mem.nightSent === dk) { if (!more.length) return bkOut; payload = more.shift(); return [{ json: { action: 'reply', payload, more, backup, holiday: null, values: null, range: null, sheetId: S.sheetId, phoneNumberId: S.phoneNumberId, notify: false } }]; }
   for (const ph of to) {
     if (inWindow(ph)) more.push(ctaTo(ph, body, 'Open register', `${APP}`));
@@ -1027,20 +1040,20 @@ if (mode === 'summary' && now.hour >= 16) {
     const lg = langOf(f.ph, '');
     const hasBooking = rows.some(r => r.phone === f.ph && active(r) && r.date === tomorrow);
     if (hasBooking) { f.sent = true; continue; }
-    const msgTxt = lg === 'en' ? `🗓️ *Follow-up due tomorrow*\n\nDear ${f.name},\n${D} has advised your follow-up visit for ${whenTxt}.\n\nBook a time below, or simply visit the clinic and send *TOKEN*.`
-      : `🗓️ *Kal aapka follow-up hai*\n\n${f.name} ji,\n${D} ne aapko ${whenTxt} follow-up ke liye bulaya hai.\n\nNeeche se time book karein, ya seedha clinic aakar *TOKEN* bhejiye.`;
+    const msgTxt = lg === 'en' ? `🗓️ *Your follow-up visit is tomorrow*\n\nDear ${f.name},\nthis is a gentle reminder that ${D} would like to see you for your follow-up on *${whenTxt}*. Coming on time helps us check your progress and adjust your treatment if needed. 👩‍⚕️\n\nTap below to book a convenient time, or simply visit the clinic and send *TOKEN*.`
+      : `🗓️ *Kal aapka follow-up visit hai*\n\n${f.name} ji,\nyaad dilana chahte hain ki ${D} aapko *${whenTxt}* follow-up ke liye dekhna chahte hain. Samay par aane se doctor aapki progress dekh kar zaroorat ho toh treatment badal sakte hain. 👩‍⚕️\n\nNeeche dabakar apni suvidha ka samay book kijiye, ya seedha clinic aakar *TOKEN* bhejiye.`;
     if (inWindow(f.ph)) { more.push(buttonsTo(f.ph, msgTxt, [['NEW', lg === 'en' ? 'Book a time' : 'Time book karein']])); f.sent = true; bump('reminders'); }
     else if (S.templates && S.templates.followup) { more.push(templateTo(f.ph, S.templates.followup, [f.name, D, whenTxt], ['NEW'])); f.sent = true; }
   }
   for (const x of recallsDue()) { const lg = langOf(x.ph, '');
-    const t = lg === 'en' ? [`🗓️ *Follow-up reminder*\n\nDear ${x.name},\n${D} had advised a follow-up visit, which is now due.\nCompleting your follow-up helps your treatment work as planned.`, `🗓️ *Your follow-up is overdue*\n\nDear ${x.name},\nit has been a week since your follow-up date with ${D}. Stopping treatment early can bring the problem back.`, `🗓️ *We'd like to check in*\n\nDear ${x.name},\nit has been a month since your follow-up was due. If the problem continues, ${D} can see you this week.`][x.st - 1]
-      : [`🗓️ *Follow-up reminder*\n\n${x.name} ji,\n${D} ne aapko follow-up ke liye bulaya tha, jo ab due hai.\nFollow-up poora karne se aapka treatment sahi tarah kaam karta hai.`, `🗓️ *Aapka follow-up baaki hai*\n\n${x.name} ji,\nfollow-up ki date ko ek hafta ho gaya hai. Treatment beech mein chhodne se problem wapas aa sakti hai.`, `🗓️ *Aapka haal jaanna chahte hain*\n\n${x.name} ji,\nfollow-up ki date ko ek mahina ho gaya hai. Agar problem abhi bhi hai, toh ${D} aapko is hafte dekh sakte hain.`][x.st - 1];
+    const t = lg === 'en' ? [`🗓️ *Your follow-up is due*\n\nDear ${x.name},\n${D} had advised a follow-up visit, and it is now due. Completing your follow-up helps your treatment work the way it was planned. 👩‍⚕️\n\nTap below to book a time that suits you.`, `🗓️ *We missed you at your follow-up*\n\nDear ${x.name},\nit has been a week since your follow-up date with ${D}. Stopping treatment midway can sometimes bring the problem back, so a quick check-up is worth it. 💙\n\nTap below to book a time that suits you.`, `💙 *Checking in on you*\n\nDear ${x.name},\nit has been a month since your follow-up was due, and we wanted to know how you are doing. If the problem is still there, ${D} can see you this week.\n\nTap below to book a time that suits you.`][x.st - 1]
+      : [`🗓️ *Aapka follow-up due hai*\n\n${x.name} ji,\n${D} ne aapko follow-up ke liye bulaya tha, aur ab uska samay ho gaya hai. Follow-up poora karne se aapka treatment waise hi kaam karta hai jaise plan kiya gaya tha. 👩‍⚕️\n\nNeeche dabakar apni suvidha ka samay book kijiye.`, `🗓️ *Aap follow-up par nahi aa paaye*\n\n${x.name} ji,\n${D} ke saath follow-up ki date ko ek hafta ho gaya hai. Treatment beech mein chhodne se kabhi kabhi problem wapas aa jaati hai, isliye ek chhota check-up zaroori hai. 💙\n\nNeeche dabakar apni suvidha ka samay book kijiye.`, `💙 *Aapka haal jaanna chahte the*\n\n${x.name} ji,\nfollow-up ki date ko ek mahina ho gaya hai, aur hum jaanna chahte the ki aap kaise hain. Agar problem abhi bhi hai, toh ${D} aapko is hafte dekh sakte hain.\n\nNeeche dabakar apni suvidha ka samay book kijiye.`][x.st - 1];
     if (inWindow(x.ph)) more.push(buttonsTo(x.ph, t, [['NEW', lg === 'en' ? 'Book a time' : 'Time book karein']]));
     else if (S.templates && S.templates.followup) more.push(templateTo(x.ph, S.templates.followup, [x.name, D, lg === 'en' ? 'this week' : 'is hafte'], ['NEW']));
     else continue;
     x.r.n = x.st; x.r.at = now.toISO(); bump('recalls'); ev(x.ph, 'recall', 'Reminded about missed follow-up' + (x.st > 1 ? ' (' + (x.st === 2 ? '1 week' : '1 month') + ' late)' : '')); }
   for (const v of reviewAsks()) { if (!inWindow(v.ph)) continue; const lg = langOf(v.ph, ''); mem.rv[v.ph] = { at: now.toISO(), r: 0 }; bump('rvAsk');
-    more.push(buttonsTo(v.ph, lg === 'en' ? `*How was your visit today?*\n\nDear ${v.name}, thank you for choosing ${C}.\nYour feedback helps us care for you better. It takes one tap.` : `*Aaj aapka anubhav kaisa raha?*\n\n${v.name} ji, ${C} chunne ke liye dhanyavaad.\nAapka feedback humein behtar sewa dene mein madad karta hai. Bas ek tap.`, reviewBtns(lg))); }
+    more.push(buttonsTo(v.ph, lg === 'en' ? `🌟 *How was your visit today?*\n\nDear ${v.name}, thank you for trusting ${C} with your care. We hope you are feeling better already.\n\nWould you tell us how your visit went? It takes just one tap, and it helps us look after you and every patient better. 🙏` : `🌟 *Aaj aapka anubhav kaisa raha?*\n\n${v.name} ji, apne ilaaj ke liye ${C} par bharosa karne ke liye dhanyavaad. Ummeed hai aap behtar mehsoos kar rahe hain.\n\nKya aap bata sakte hain ki aapka visit kaisa raha? Bas ek tap, aur isse hum aapki aur har patient ki behtar dekhbhaal kar paate hain. 🙏`, reviewBtns(lg))); }
   if (!more.length) return [];
   payload = more.shift();
   return [{ json: { action: 'reply', payload, more, holiday: null, values: null, range: null, sheetId: S.sheetId, phoneNumberId: S.phoneNumberId, notify: false } }];
@@ -1067,7 +1080,7 @@ if (mode === 'summary') {
 // ================= a message from WhatsApp =================
 const me = digits(msg.from);
 for (const k of Object.keys(mem.wait)) if (k < now.toFormat('yyyy-MM-dd')) delete mem.wait[k];
-if (!mem.seen[me] || DateTime.fromISO(mem.seen[me]) < now.minus({ hours: 24 })) { if (!staffOf2(me)) { bump('chats'); if (msg.type === 'text' && msg.text) ev(me, 'msg', 'Messaged: "' + String(msg.text).slice(0, 90) + '"'); else if (msg.type !== 'interactive' && msg.type !== 'button') ev(me, 'msg', 'Started a WhatsApp chat'); } }
+if (!mem.seen[me] || DateTime.fromISO(mem.seen[me]) < now.minus({ hours: 24 })) { { if (!staffOf2(me)) bump('chats'); if (msg.type === 'text' && msg.text) ev(me, 'msg', 'Messaged: "' + String(msg.text).slice(0, 90) + '"'); else if (msg.type !== 'interactive' && msg.type !== 'button') ev(me, 'msg', 'Started a WhatsApp chat'); } }
 if (!mem.seen[me] || DateTime.fromISO(mem.seen[me]) < now.minus({ minutes: 20 })) mem.seen[me] = now.toISO();
 let id = String(msg.replyId || '').trim();
 const raw = String(msg.text || '').trim();
@@ -1143,7 +1156,7 @@ const cmd = raw.toUpperCase().replace(/\s+/g, ' ').trim();
 const isDocPh = isAdmin || (S.staff || []).some(x => (x.role === 'doctor' || x.role === 'owner') && same(x.phone, me));
 let docIntent = null;
 if (isDocPh && String(id || '').startsWith('DS|')) { const [, k, v] = id.split('|'); docIntent = { k, m: Number(v) || 0, d: k === 'leave' ? v : null, sure: true }; }
-else if (isDocPh && !id && raw && raw.trim().split(/\s+/).length <= 9) {
+else if (isDocPh && !id && raw && raw.trim().split(/\s+/).length <= 6) {
   const low = raw.toLowerCase(); const hr = low.match(/(\d+(?:\.5)?)\s*(hr|hrs|hour|hours|ghanta|ghante)/); const mn = low.match(/(\d{1,3})\s*(m|min|mins|minute|minutes|minat)?\b/);
   const mins = hr ? Math.round(Number(hr[1]) * 60) : mn ? Number(mn[1]) : 0;
   if (/\b(leave|chhutti|chutti|chhuti|holiday)\b|nahi aa ?(unga|ungi|paunga|paungi|raha|rahi|sakta|sakti)|clinic (band|closed?)\b|not coming/.test(low)) {
@@ -1151,7 +1164,7 @@ else if (isDocPh && !id && raw && raw.trim().split(/\s+/).length <= 9) {
     docIntent = { k: 'leave', d };
   }
   else if (/\b(late|let|der|deri|delay|delayed|traffic)\b/.test(low)) docIntent = { k: 'late', m: mins };
-  else if (/\b(away|bahar|break|surgery|ward|emergency|round|nikal)\b/.test(low)) docIntent = { k: 'away', m: mins };
+  else if (/\b(away|bahar|surgery|ward|ot mein|nikal raha|nikal rahi)\b/.test(low)) docIntent = { k: 'away', m: mins };
   else if (/^(in|back|aa gaya|aa gayi|aagaya|aagayi|pahunch gaya|pahunch gayi|reached|in clinic|i am in|i'm in|im in|start|started|wapas|wapas aa gaya|wapas aa gayi)\b/.test(low)) docIntent = { k: 'in' };
 }
 const adminCmd = (isAdmin && !id && /^(TODAY|AAJ|HELP|ADMIN)/.test(cmd)) || !!docIntent;
@@ -1176,7 +1189,8 @@ function notifyPatient(r, bodyByLang, tplParams, btns) {
 }
 
 const liveOpen = p => { const l = mem.live[p]; return l && DateTime.fromISO(l.last) > now.minus({ hours: 2 }); };
-const adminTarget = isAdmin ? mem.liveAdmin[me] : null;
+// live chat is switched off: everyone who messages the clinic number (staff included) gets the normal patient flow
+const adminTarget = null; if (mem.live && Object.keys(mem.live).length) mem.live = {};
 let liveHandled = false;
 const sysWord = /^(login|reset|code|token)$/i.test((raw || '').trim());
 if (!adminCmd && !sysWord && isAdmin && adminTarget && liveOpen(adminTarget) && !id) {
@@ -1239,14 +1253,14 @@ else if ((!id && /^token\b/i.test(raw)) || id === 'TQ|NEW') {
 else if (id.startsWith('PB|') || (!id && raw.split(/\s+/).length >= 3 && !has(['hi', 'hello', 'cancel', 'book', 'menu', 'token', 'doctor', 'dr', 'help', 'talk', 'chat']) && (() => { const q0 = qRead(); const tk = q0.list.find(x => x.phone === me && x.st === 'w'); return tk && !tk.prob; })())) {
   const q = qWrite(); const tk = q.list.find(x => x.phone === me && ['w', 's'].includes(x.st));
   if (tk) { tk.prob = id.startsWith('PB|') ? id.slice(3) : '"' + raw.slice(0, 120) + '"'; }
-  payload = (!seenBefore(me) && !(mem.src || {})[me]) ? buttons((lang === 'en' ? '✅ *Noted*\nThe doctor will see this before your consultation.\n\nOne quick question: how did you hear about us?' : '✅ *Note kar liya gaya hai*\nDoctor consultation se pehle ise dekh lenge.\n\nEk chhota sawaal: aapko humare baare mein kaise pata chala?'), [['SRC|google', 'Google / Instagram'], ['SRC|friend', lang === 'en' ? 'Someone told me' : 'Kisi ne bataya'], ['SRC|board', lang === 'en' ? 'Board / other' : 'Board / kuch aur']])
-    : text(lang === 'en' ? '✅ *Noted*\nThe doctor will see this before your consultation.' : '✅ *Note kar liya gaya hai*\nDoctor consultation se pehle ise dekh lenge.');
+  payload = (!seenBefore(me) && !(mem.src || {})[me]) ? buttons((lang === 'en' ? '✅ *Thank you, noted*\nThe doctor will read this before your consultation, so you will not need to repeat it. 👩‍⚕️\n\nOne quick question, it helps us a lot: how did you hear about us?' : '✅ *Dhanyavaad, note kar liya*\nDoctor consultation se pehle ise padh lenge, aapko dobara batana nahi padega. 👩‍⚕️\n\nEk chhota sawaal, isse humein bahut madad milti hai: aapko humare baare mein kaise pata chala?'), [['SRC|google', 'Google / Instagram'], ['SRC|friend', lang === 'en' ? 'Someone told me' : 'Kisi ne bataya'], ['SRC|board', lang === 'en' ? 'Board / other' : 'Board / kuch aur']])
+    : text(lang === 'en' ? '✅ *Thank you, noted*\nThe doctor will read this before your consultation, so you will not need to repeat it. 👩‍⚕️' : '✅ *Dhanyavaad, note kar liya*\nDoctor consultation se pehle ise padh lenge, aapko dobara batana nahi padega. 👩‍⚕️');
 }
 else if (String(id || '').startsWith('RV|')) {
   if (!mem.rv) mem.rv = {}; const r = Number(id.slice(3)) || 3; mem.rv[me] = { at: now.toISO(), r, wait: r < 5 ? now.toISO() : null }; const link = (mem.cfg || {}).googleReview || S.googleReview || '';
   bump(r >= 5 ? 'rvGood' : r >= 3 ? 'rvMid' : 'rvLow'); ev(me, 'review', r >= 5 ? 'Rated the visit: very good' : r >= 3 ? 'Rated the visit: okay' : 'Rated the visit: not good');
-  if (r >= 5) payload = link ? ctaTo(msg.from, lang === 'en' ? '*Thank you for your kind feedback*\n\nIf you have a minute, a Google review helps other patients find the right care.' : '*Aapke feedback ke liye dhanyavaad*\n\nAgar ek minute ho, toh Google review dijiye. Isse doosre patients ko sahi ilaaj dhoondhne mein madad milti hai.', lang === 'en' ? 'Write a review' : 'Review likhein', link) : text(lang === 'en' ? '*Thank you for your kind feedback*\nWe look forward to seeing you again.' : '*Aapke feedback ke liye dhanyavaad*\nAapse dobara milne ka intezaar rahega.');
-  else payload = text(lang === 'en' ? '*We are sorry we fell short*\n\nWhat could we have done better? Reply with one line. Only the doctor reads it.' : '*Humein khed hai*\n\nHum kya behtar kar sakte the? Ek line mein bataiye. Ise sirf doctor padhenge.');
+  if (r >= 5) payload = link ? ctaTo(msg.from, lang === 'en' ? '💙 *Thank you, that means a lot to us!*\n\nIf you have one minute, would you share your experience on Google? Your review helps other patients find the right care with confidence. ⭐' : '💙 *Dhanyavaad, ye humare liye bahut maayne rakhta hai!*\n\nAgar ek minute ho, toh kya aap Google par apna anubhav share karenge? Aapka review doosre patients ko bharose ke saath sahi ilaaj dhoondhne mein madad karta hai. ⭐', lang === 'en' ? 'Write a review' : 'Review likhein', link) : text(lang === 'en' ? '💙 *Thank you for your kind words!*\nWe look forward to seeing you again. Take care. 🙏' : '💙 *Aapke pyaare shabdon ke liye dhanyavaad!*\nAapse dobara milne ka intezaar rahega. Apna khayal rakhiye. 🙏');
+  else payload = text(lang === 'en' ? '🙏 *We are truly sorry we did not meet your expectations*\n\nYour experience matters to us. Could you tell us in one line what we could have done better? This goes directly and privately to the doctor, and we will work on it.' : '🙏 *Humein sach mein khed hai ki aapka anubhav accha nahi raha*\n\nAapka anubhav humare liye bahut maayne rakhta hai. Kya aap ek line mein bata sakte hain ki hum kya behtar kar sakte the? Ye seedha aur privately doctor tak jayega, aur hum ispar kaam karenge.');
 }
 else if (!id && msg.type === 'text' && raw.length >= 3 && mem.rv && mem.rv[me] && mem.rv[me].wait && mem.rv[me].wait > now.minus({ minutes: 60 }).toISO()) {
   const r = mem.rv[me]; r.wait = null; if (!mem.fb) mem.fb = []; mem.fb = mem.fb.concat([{ ph: me, name: (mem.pname || {})[me] || msg.name || '', r: r.r, t: raw.slice(0, 300), at: now.toISO() }]).slice(-50); ev(me, 'review', 'Feedback: "' + raw.slice(0, 140) + '"');
@@ -1255,15 +1269,15 @@ else if (!id && msg.type === 'text' && raw.length >= 3 && mem.rv && mem.rv[me] &
 }
 else if (String(id || '').startsWith('SRC|')) {
   const k = id.slice(4); if (SRC[k]) { if (!mem.src) mem.src = {}; if (!mem.src[me]) { mem.src[me] = { s: k, at: now.toISO() }; bump('src_' + k); ev(me, 'src', 'Found us through: ' + SRC[k]); } }
-  payload = text(lang === 'en' ? '✅ *Thank you*\nYour feedback has reached the doctor.' : '✅ *Dhanyavaad*\nAapka feedback doctor tak pahunch gaya hai.');
+  payload = text(lang === 'en' ? '✅ *Thank you for telling us*\n\nYour feedback has reached the doctor personally. We are sorry again, and we will do better. 🙏' : '✅ *Batane ke liye dhanyavaad*\n\nAapka feedback seedha doctor tak pahunch gaya hai. Hum dobara kshama chahte hain, aur behtar karenge. 🙏');
 }
 else if ((String(id || '').startsWith('CBR|') || (!id && ['audio', 'voice'].includes(msg.type))) && (mem.callbacks || []).some(x => x.phone === me && !x.reason)) {
   const cb = mem.callbacks.find(x => x.phone === me && !x.reason); const isV = !id; cb.reason = isV ? 'Sent a voice note (ask on the call)' : id.slice(4); ev(me, 'why', isV ? 'Sent a voice note about it' : 'Reason: ' + id.slice(4));
-  payload = text(lang === 'en' ? '✅ *Noted*\nOur team will call you shortly about this.' : '✅ *Note kar liya gaya hai*\nHumari team is baare mein aapko jaldi call karegi.');
+  payload = text(lang === 'en' ? '✅ *Thank you, we have noted it*\n\nOur team will call you shortly with the right information. 📞\n\nIf it is urgent, you can also call us on ' + S.clinicPhone + '.' : '✅ *Dhanyavaad, humne note kar liya hai*\n\nHumari team sahi jaankari ke saath aapko jaldi call karegi. 📞\n\nZaroori ho toh aap humein ' + S.clinicPhone + ' par call bhi kar sakte hain.');
 }
 else if (!id && msg.type === 'text' && raw.length >= 3 && !/^(hi|hello|hey|ok|okay|thanks|thank you|haan|ha|yes|no|nahi|menu|token|login|code)$/i.test(raw.trim()) && (mem.callbacks || []).some(x => x.phone === me && !x.reason && x.at > now.minus({ minutes: 10 }).toISO())) {
   const cb = mem.callbacks.find(x => x.phone === me && !x.reason); cb.reason = raw.slice(0, 220); ev(me, 'why', 'Reason: "' + raw.slice(0, 160) + '"');
-  payload = text(lang === 'en' ? '✅ *Noted*\nOur team will call you shortly about this.' : '✅ *Note kar liya gaya hai*\nHumari team is baare mein aapko jaldi call karegi.');
+  payload = text(lang === 'en' ? '✅ *Thank you, we have noted it*\n\nOur team will call you shortly with the right information. 📞\n\nIf it is urgent, you can also call us on ' + S.clinicPhone + '.' : '✅ *Dhanyavaad, humne note kar liya hai*\n\nHumari team sahi jaankari ke saath aapko jaldi call karegi. 📞\n\nZaroori ho toh aap humein ' + S.clinicPhone + ' par call bhi kar sakte hain.');
 }
 else if (id === 'TQ|HERE') {
   const q0 = qRead(); const tk = q0.list.find(x => x.phone === me && x.st === 'w');
@@ -1331,7 +1345,7 @@ else if (adminCmd) {
 }
 // ---------- patients ----------
 else if (id === 'MC_Q') { payload = text(L.mcQ); }
-else if (id === 'MC_CALL') { notify = true; payload = buttons(L.mcCall + (lang === 'en' ? '\n\nSo the right person calls you, what is it about?\nTap an option, or type a line / send a voice note.' : '\n\nTaaki sahi vyakti aapko call kare, bataiye kis baare mein hai?\nOption dabaiye, ya ek line likhiye / voice note bhejiye.'), lang === 'en' ? [['CBR|Price / fees', 'Price / fees'], ['CBR|Appointment', 'Appointment'], ['CBR|Show report', 'Show report']] : [['CBR|Price / fees', 'Price / fees'], ['CBR|Appointment', 'Appointment'], ['CBR|Report dikhani hai', 'Report dikhani hai']]); if (!mem.callbacks) mem.callbacks = []; mem.callbacks = mem.callbacks.filter(x => x.phone !== me).concat([{ phone: me, name: msg.name || '', at: now.toISO(), reason: '' }]).slice(-50); mem.cbLog = (mem.cbLog || []).concat([{ ph: me, at: now.toISO() }]).slice(-500); ev(me, 'cb', 'Asked for a call back'); }
+else if (id === 'MC_CALL') { notify = true; payload = buttons(L.mcCall + (lang === 'en' ? '\n\n💬 So the right person can help you on the call, what is it about?\nTap an option below, or type a line / send a voice note.' : '\n\n💬 Taaki call par sahi vyakti aapki madad kar sake, bataiye kis baare mein baat karni hai?\nNeeche option dabaiye, ya ek line likhiye / voice note bhejiye.'), lang === 'en' ? [['CBR|Price / fees', 'Price / fees'], ['CBR|Appointment', 'Appointment'], ['CBR|Show report', 'Show report']] : [['CBR|Price / fees', 'Price / fees'], ['CBR|Appointment', 'Appointment'], ['CBR|Report dikhani hai', 'Report dikhani hai']]); if (!mem.callbacks) mem.callbacks = []; mem.callbacks = mem.callbacks.filter(x => x.phone !== me).concat([{ phone: me, name: msg.name || '', at: now.toISO(), reason: '' }]).slice(-50); mem.cbLog = (mem.cbLog || []).concat([{ ph: me, at: now.toISO() }]).slice(-500); ev(me, 'cb', 'Asked for a call back'); }
 else if (!['text', 'interactive', 'button'].includes(msg.type)) { payload = buttons(L.textOnly, menuBtns()); }
 else if (!mem.lang[me] && !id && !upcoming.length && !holding) {
   payload = buttons(T.en.pickLang, [['LANG|en', 'English'], ['LANG|hl', 'Hinglish']]);

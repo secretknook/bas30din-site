@@ -472,6 +472,12 @@ div.act-head{cursor:default}
 .dmain.t-after .v11-card{margin-left:12px;margin-right:12px}
 .dmain.t-after .rpw .rgbar{padding-left:12px}.dmain.t-after .rpw .rkpi{margin:0 12px}.dmain.t-after .rpw .rsplit{margin-left:14px}
 .dmain.t-after .v11-lh{padding-left:16px}
+
+.ibl{padding-top:2px !important;padding-bottom:2px !important}
+.ibx{padding:4px 16px 0;border-bottom:1px solid #F2F4F7}.ibx:last-child{border-bottom:none}
+.ibx-h{width:100%;display:flex;flex-direction:column;align-items:stretch;gap:4px;border:none;background:none;padding:10px 0 8px;text-align:left;font-family:inherit;color:inherit}
+.ibx-s{white-space:normal;line-height:1.4;font-size:14.5px;color:#475467}
+.ibx .racts{padding:0 0 12px}.ibx .racts:empty{display:none}
 </style>
 </head>
 <body>
@@ -603,7 +609,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   // ---------------- staff app (v6) ----------------
   function staff() {
     var S = { sid: load('cd_sid'), role: load('cd_role'), d: null, appts: null, apptsAt: 0, tab: null, sheet: null, toast: '', toastT: 0,
-      seg: 'calls', per: 'today', q: '', pk: null, busy: false, err: '' };
+      seg: null, per: 'today', q: '', pk: null, busy: false, err: '' };
     var C = { blue: '#175CD3', sec: '#667085', ok: '#067647', warn: '#B54708', bad: '#B42318' };
     function logout() { store('cd_sid', null); store('cd_role', null); S.sid = null; S.d = null; drawLogin(); }
     function uaShort() { var u = navigator.userAgent; var os = /Android/.test(u) ? 'Android' : /iPhone|iPad/.test(u) ? 'iPhone' : /Windows/.test(u) ? 'Windows' : /Mac/.test(u) ? 'Mac' : 'Phone';
@@ -645,7 +651,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       }
     }
     var isDoc = function () { return S.role === 'doctor' || S.role === 'owner'; };
-    function tabsFor(role) { return (role === 'doctor' || role === 'owner') && S.viewAs !== 'reception' ? ['today', 'patients', 'register', 'after', 'clinic'] : ['queue', 'inbox', 'patients']; }
+    function tabsFor(role) { return (role === 'doctor' || role === 'owner') && S.viewAs !== 'reception' ? ['today', 'patients', 'register', 'inbox', 'clinic'] : ['queue', 'inbox', 'patients']; }
     var ICON = {
       queue: '<path d="M4 6h16M4 12h16M4 18h10"/>',
       today: '<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/>',
@@ -783,21 +789,41 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       h += sec('Needs a look', r.flags.length || '') + (r.flags.length ? '<div class="ilist">' + r.flags.map(function (f) {
         return '<div class="irow"><span class="dot" style="width:8px;height:8px;background:' + (f.bad ? '#F79009' : '#98A2B3') + '"></span><span class="icol"><span>' + esc(f.name) + '</span><span class="isub">' + esc(f.sub) + '</span></span><span style="font-size:15px;color:' + (f.bad ? C.warn : C.sec) + ';white-space:nowrap">' + esc(f.tag) + '</span></div>'; }).join('') + '</div>'
         : '<div class="ilist"><div class="irow"><span style="color:' + C.ok + '">Every visit is billed</span></div></div>');
-      h += sec('Patients who reached out') + '<div class="ilist"><div class="irow"><span class="icol"><span>Missed calls</span></span><span style="color:' + C.sec + '">' + r.calls + '</span></div></div>';
-      h += '<div class="ifoot">Reception can bill, but only the doctor sees these totals. The same summary comes on WhatsApp at 9 PM.</div>';
+      if ((r.edits || []).length) h += sec('Bills changed after saving', r.edits.length) + '<div class="ilist">' + r.edits.map(function (x) { return '<div class="irow"><span class="dot" style="width:8px;height:8px;background:#F04438"></span><span class="icol"><span>' + esc(x.name) + '</span><span class="isub">Changed by ' + esc(x.by) + ' · ' + esc(x.at) + '</span></span><span style="font-size:14px;font-weight:600;color:#B42318;white-space:nowrap">' + rupee(x.from.fee) + ' → ' + rupee(x.to.fee) + '</span></div>'; }).join('') + '</div>';
+      var IV = r.invoices || [];
+      h += '<div class="isec" style="display:flex;justify-content:space-between;align-items:center"><span>Invoices · ' + IV.length + '</span>' + (IV.length ? '<button class="rtool" data-regcsv="1">Download Excel</button>' : '') + '</div>' +
+        (IV.length ? '<div class="ilist">' + IV.slice(0, S.allInv ? 300 : 8).map(function (x) { return '<a class="irow" href="' + esc(x.url) + '" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="icol"><span>' + esc(x.name) + (x.revised ? ' <span style="font-size:12px;font-weight:700;color:#B54708">· Revised</span>' : '') + '</span><span class="isub">' + esc(x.no + ' · ' + x.at + ' · ' + x.items) + '</span></span><span class="icol" style="align-items:flex-end;flex-grow:0"><span style="font-weight:600">' + (x.m === 'free' ? 'Free' : rupee(x.fee)) + '</span><span class="isub">' + (x.m === 'upi' ? 'UPI' : x.m === 'cash' ? 'Cash' : '') + '</span></span></a>'; }).join('') +
+          (IV.length > 8 && !S.allInv ? '<button class="irow" data-allinv="1" style="color:#175CD3;font-weight:600;justify-content:center">See all ' + IV.length + ' invoices</button>' : '') + '</div>' : '<div class="ilist"><div class="irow"><span style="color:' + C.sec + '">No invoices yet</span></div></div>');
+      h += '<div class="ifoot">Every bill has a fixed number and can\'t be deleted. Changes are shown above with who made them. Download Excel gives your accountant every invoice for this period.</div>';
       return h;
     }
     function scrInbox() {
-      var ib = S.d.inbox || { calls: [], callbacks: [], wait: [] };
-      var h = hdr('', 'Inbox') + '<div style="margin:12px 16px 0">' + seg([['calls', 'Missed calls · ' + ib.calls.length], ['cb', 'Call back · ' + ib.callbacks.length], ['wl', 'Waitlist · ' + ib.wait.length]], S.seg, 'data-seg') + '</div>';
-      var L, head, foot, act;
-      if (S.seg === 'calls') { L = ib.calls.map(function (x) { return [x.shown, x.at, x.booked ? 'WhatsApp sent · booked' : 'WhatsApp sent · not booked yet', x.booked ? C.ok : C.warn, x.call, x.phone, 'mc_done']; }); head = 'Missed calls'; foot = 'Each caller already got a WhatsApp with booking options.'; }
-      else if (S.seg === 'cb') { L = ib.callbacks.map(function (x) { return [x.name || x.shown, x.at, x.reason ? '"' + x.reason + '"' : (x.name ? x.shown + ' · no reason given yet' : 'Asked for a call back'), x.reason ? '#344054' : C.sec, x.call, x.phone, 'cb', x.tried, x.noans]; }); head = 'Asked for a call'; foot = 'Tap the phone to call. Then tap Talked or No answer. The doctor sees both.'; }
-      else { L = ib.wait.map(function (x) { return [x.shown, x.day, 'Wants a slot if one opens', C.sec, x.call, x.phone, 'wl_done']; }); head = 'Waiting for a free slot'; foot = 'They get a WhatsApp the moment a slot opens.'; }
-      h += sec(head) + (L.length ? '<div class="ilist">' + L.map(function (r) {
-        return '<div class="irow"><span class="icol"><span style="display:flex;justify-content:space-between;gap:8px"><span>' + esc(r[0]) + '</span><span style="font-size:15px;color:' + C.sec + '">' + esc(r[1]) + '</span></span><span class="isub" style="color:' + r[3] + '">' + esc(r[2]) + '</span></span>' +
-          (r[6] === 'cb' ? (r[7] ? '<span class="cbres"><button class="ilink" data-done="cb_done" data-ph="' + esc(r[5]) + '">Talked</button><button class="ilink" style="color:#B42318" data-done="cb_noans" data-ph="' + esc(r[5]) + '">No answer</button></span>' : '<a class="iround" href="tel:' + esc(r[4]) + '" data-cbtry="' + esc(r[5]) + '" aria-label="Call">' + PHONE + '</a>' + (r[8] ? '<span class="isub" style="color:#B42318;margin-left:4px">' + r[8] + '× no answer</span>' : '')) : '<a class="iround" href="tel:' + esc(r[4]) + '" aria-label="Call">' + PHONE + '</a><button class="ilink" data-done="' + esc(r[6]) + '" data-ph="' + esc(r[5]) + '">Done</button>') + '</div>'; }).join('') + '</div>' : '<div class="ilist"><div class="irow"><span style="color:' + C.sec + '">Nothing here</span></div></div>');
-      return h + '<div class="ifoot">' + foot + '</div>';
+      var ib = S.d.inbox || { wa: [], calls: [], callbacks: [], wait: [] }; if (!S.openEv) S.openEv = {};
+      if (!S.seg || ['wa', 'calls', 'cb', 'wl'].indexOf(S.seg) < 0) S.seg = ib.callbacks.length ? 'cb' : 'wa';
+      var SG = [['wa', 'WhatsApp · ' + ib.wa.length], ['calls', 'Missed · ' + ib.calls.length], ['cb', 'Call back · ' + ib.callbacks.length]]; if (S.seg === 'wl') S.seg = 'wa';
+      var h = hdr('', 'Inbox') + '<div style="margin:12px 16px 0">' + seg(SG, S.seg, 'data-seg') + '</div>';
+      var TN = { bad: ['#FEF3F2', '#B42318'], ok: ['#ECFDF3', '#067647'], mid: ['#F2F4F7', '#475467'] };
+      var steps = function (st) { return '<div class="act-steps" style="padding:0 0 10px">' + st.map(function (e) { return '<div class="act-step k-' + e.k + '"><span class="act-t">' + esc(e.t) + '</span><span class="act-dot"></span><span class="act-tx">' + esc(e.txt) + '</span></div>'; }).join('') + '</div>'; };
+      var row = function (key, name, time, sub, chip, tone, call, st, extra) { var open = !!S.openEv[key], tn = TN[tone] || TN.mid;
+        return '<div class="ibx"><button class="ibx-h" data-ev="' + esc(key) + '"><span class="act-l1"><span class="act-name">' + esc(name) + '</span><span class="act-t">' + esc(time) + '</span></span><span class="tl-sub ibx-s">' + esc(sub) + '</span>' + (chip ? '<span class="act-chip" style="align-self:flex-start;background:' + tn[0] + ';color:' + tn[1] + '">' + esc(chip) + '</span>' : '') + '</button>' +
+          (open && st && st.length ? steps(st) : '') + '<div class="racts">' + (call ? '<a class="ract" href="tel:' + esc(call) + '"' + (extra === 'try' ? ' data-cbtry="' + esc(key.slice(2)) + '"' : '') + '>Call</a>' : '') + (extra === 'res' ? '<button class="ract" data-done="cb_done" data-ph="' + esc(key.slice(2)) + '" style="color:#067647">Talked ✓</button><button class="ract" data-done="cb_noans" data-ph="' + esc(key.slice(2)) + '" style="color:#B42318">No answer</button>' : '') + (st && st.length ? '<button class="ract" data-ev="' + esc(key) + '">' + (open ? 'Hide' : 'What happened') + '</button>' : '') + '</div></div>'; };
+      var body = '', foot = '';
+      if (S.seg === 'wa') {
+        var T0 = ib.wa.filter(function (x) { return x.day === 'today'; }), Y0 = ib.wa.filter(function (x) { return x.day !== 'today'; });
+        var grp = function (t, L) { return L.length ? sec(t) + '<div class="ilist ibl">' + L.map(function (x) { return row('w:' + x.phone, x.name, x.at, x.said, x.out[0], x.out[1], x.call, x.story); }).join('') + '</div>' : ''; };
+        body = grp('Today', T0) + grp('Yesterday', Y0); if (!ib.wa.length) body = sec('Today') + '<div class="ilist"><div class="irow"><span style="color:' + C.sec + '">No WhatsApp messages yet</span></div></div>';
+        if (ib.wait.length) body += sec('Waiting for a free slot') + '<div class="ilist ibl">' + ib.wait.map(function (x) { return row('l:' + x.phone, x.shown, x.day, 'Gets a WhatsApp the moment a slot opens', '', 'mid', x.call); }).join('') + '</div>';
+        foot = 'Everyone who messaged the clinic number, what they asked, and what happened.';
+      } else if (S.seg === 'calls') {
+        body = sec('Missed calls') + (ib.calls.length ? '<div class="ilist ibl">' + ib.calls.map(function (x) { return row('m:' + x.phone, x.name || x.shown, x.at, x.name ? x.shown : 'Bot sent them a WhatsApp', x.booked ? 'Booked ✓' : 'Not booked yet', x.booked ? 'ok' : 'mid', x.call, x.story); }).join('') + '</div>' : '<div class="ilist"><div class="irow"><span style="color:' + C.sec + '">No missed calls</span></div></div>');
+        foot = 'Every missed caller gets a WhatsApp from the clinic straight away.';
+      } else if (S.seg === 'cb') {
+        body = sec('Waiting for a call') + (ib.callbacks.length ? '<div class="ilist ibl">' + ib.callbacks.map(function (x) { return row('c:' + x.phone, x.name || x.shown, x.at, x.reason ? '"' + x.reason + '"' : 'Didn\'t say why yet', (x.noans ? 'No answer ×' + x.noans + ' · ' : 'Waiting ') + x.wait, 'bad', x.tried ? '' : x.call, null, x.tried ? 'res' : 'try'); }).join('') + '</div>' : '<div class="ilist"><div class="irow"><span style="color:' + C.ok + '">Everyone has been called back</span></div></div>');
+        foot = 'Tap Call, then Talked or No answer. The doctor sees both.';
+      } else {
+        body = sec('Waiting for a free slot') + '<div class="ilist ibl">' + ib.wait.map(function (x) { return row('l:' + x.phone, x.shown, x.day, 'Gets a WhatsApp the moment a slot opens', '', 'mid', x.call); }).join('') + '</div>';
+      }
+      return h + body + '<div class="ifoot">' + foot + '</div>';
     }
     function scrPatients() {
       if (S.desk) { var P0 = S.d.patients;
@@ -1093,7 +1119,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       if (docApp && !S.d.setupDone && !S.setup && !S.setupSeen) { S.setupSeen = true; var c0 = S.d.cfg || {}; S.cfgDraft = { type: c0.type || 'skin', clinicName: c0.clinicName || '', doctorName: c0.doctorName || '', fee: c0.fee || 0, open: c0.open || '10:00', close: c0.close || '20:00', days: (c0.days || ['mon', 'tue', 'wed', 'thu', 'fri', 'sat']).slice(), upiId: c0.upiId || '' }; S.setup = 1; }
       if (S.setup && docApp) { S.lastHtml = null; $app.innerHTML = '<div class="wrap i" style="background:#FFF">' + scrSetup() + (S.toast ? '<div class="itoast" role="status">' + esc(S.toast) + (S.undo ? '<button class="tundo" id="stundo">Undo</button>' : '') + '</div>' : '') + sheetHtml() + '</div>'; bind(); return; }
       var scr = { queue: scrQueue, today: docApp ? scrDocToday : scrToday, register: scrRegister, inbox: scrInbox, patients: scrPatients, clinic: scrClinic, after: scrAfter }[S.tab]();
-      var ib0 = S.d.inbox; var badge = ib0 ? ib0.calls.filter(function (x) { return !x.booked; }).length + ib0.callbacks.length : 0;
+      var ib0 = S.d.inbox; var badge = ib0 ? ib0.callbacks.length : 0;
       var y = window.scrollY; var anim = S.sheet && S.sheet !== S.lastSheet; S.lastSheet = S.sheet;
       var regBadge = 0;
       if (S.desk) {
@@ -1200,6 +1226,10 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       on('[data-rid]', function (el, e) { if (e.metaKey || e.ctrlKey || e.shiftKey) return; e.preventDefault(); S.rid = el.getAttribute('data-rid'); if (S.d.report) S.d.report.rep = null; draw(); window.scrollTo(0, 0); call({}); });
       on('[data-rback]', function () { S.rid = null; if (location.hash) history.replaceState(null, '', location.pathname + location.search); draw(); call({}); });
       on('[data-rcsv]', function () { reportCsv(); });
+      on('[data-allinv]', function () { S.allInv = true; draw(); });
+      on('[data-regcsv]', function () { var r = S.d.register; if (!r) return; var q = function (v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+        var L = [['Invoice no.', 'Date', 'Patient', 'Items', 'Mode', 'Amount', 'Received by', 'Status'].join(',')].concat((r.invoices || []).map(function (x) { return [x.no, x.at, x.name, x.items, x.m, x.fee, x.by, x.revised ? 'Revised' : 'Issued'].map(q).join(','); }));
+        var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + L.join('\r\n')], { type: 'text/csv;charset=utf-8' })); a.download = 'Invoices ' + ({ today: 'today', week: 'last 7 days', month: 'this month' }[r.period] || '') + '.csv'; document.body.appendChild(a); a.click(); setTimeout(function () { a.remove(); }, 500); });
       on('[data-rprint]', function () { window.print(); });
       on('[data-ev]', function (el) { var p = el.getAttribute('data-ev'); S.openEv[p] = !S.openEv[p]; draw(); });
       on('[data-vst]', function (el) { S.sheet.st = el.getAttribute('data-vst'); draw(); });
