@@ -1204,8 +1204,8 @@ function welcomeCard() {
     : (en ? '🟢 In the clinic now' : '🟢 Abhi clinic mein hain');
   const queue = open && dc.status !== 'leave' ? (en ? (wN ? ` · ${wN} waiting` : ' · no queue') : (wN ? ` · ${wN} log wait mein` : ' · koi line nahi')) : '';
   const body = en
-    ? `${nm ? `Hello ${nm}` : 'Hello'} 🙏\n${back ? `Good to see you again at *${C}*.` : `Welcome to *${C}*.`}\n\nWhat would you like to do today?`
-    : `Namaste${nm ? ' ' + nm + ' ji' : ''} 🙏\n${back ? `*${C}* mein phir se swagat hai.` : `*${C}* mein aapka swagat hai.`}\n\nAaj aap kya karna chahenge?`;
+    ? `${nm ? `Hello ${nm}` : 'Hello'} 👋\n\nWelcome to *${C}*. It's good to hear from you.\n\nYou can book your consultation with *${D}* here in under a minute, with no calls and no waiting on hold.\n\n👇 Tap below to book a visit, see our treatments and prices, or see more options. You can also simply type your question here.`
+    : `Namaste${nm ? ' ' + nm + ' ji' : ''} 👋\n\n*${C}* mein aapka swagat hai.\n\nAap yahin ek minute mein *${D}* ke saath consultation book kar sakte hain. Na call karne ki zaroorat, na line mein rukne ki.\n\n👇 Neeche dabakar appointment book kijiye, treatments aur fees dekhiye, ya aur options dekhiye. Aap apna sawaal seedha yahan likh bhi sakte hain.`;
   return buttonsTo(msg.from, body, [['NEW', en ? 'Book a visit' : 'Time book karein'], ['SVC', en ? 'Treatments & fees' : 'Treatments & fees'], ['MENU', en ? 'More options' : 'Aur options']], { type: 'image', image: { link: S.welcomeImage || IMG + 'welcome_v3.jpg' } });
 }
 function mainMenu() {
