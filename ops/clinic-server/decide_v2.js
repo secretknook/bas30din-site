@@ -519,6 +519,15 @@ function seedDemo() {
   evAt('910000055120', 40, 'try', 'Called by ' + recName); evAt('910000055120', 39, 'noans', 'No answer · ' + recName + ' will try again');
   evAt('910000063311', 60 * 26, 'msg', 'Messaged: "Sunday ko clinic khula hai?"'); evAt('910000063311', 60 * 26 - 2, 'bot', 'Bot sent clinic timings'); mem.pname['910000063311'] = 'Kavita Rao';
   evAt('910000063312', 60 * 28, 'call', 'Called · nobody picked up'); evAt('910000063312', 60 * 28, 'bot', 'Bot sent a WhatsApp reply'); evAt('910000063312', 60 * 27, 'booked', 'Booked Wed 18 Nov, 11:00 AM');
+  { mem.invSeq = 0; for (const d of Object.keys(mem.vis).sort()) for (const v of mem.vis[d]) if (v.m) { mem.invSeq++; v.inv = mem.invSeq; v.ik = sha256(v.k + d).slice(0, 12); if (!v.at) v.at = v.out || v.in; } }
+  { const tv = (mem.vis[todayStr] || []).filter(v => v.m && v.m !== 'free'); const e1 = tv[1], e2 = tv[4]; mem.edits = [];
+    if (e1) { mem.edits.push({ at: now.minus({ minutes: 50 }).toISO(), by: recName, day: todayStr, k: e1.k, inv: e1.inv, name: e1.name, from: { fee: 800, m: 'cash' }, to: { fee: e1.fee, m: e1.m } }); e1.edited = 1; }
+    const yd = now.minus({ days: 2 }).toFormat('yyyy-MM-dd'); const e3 = (mem.vis[yd] || []).find(v => v.m === 'cash');
+    if (e3) { mem.edits.push({ at: now.minus({ days: 2, hours: -3 }).toISO(), by: recName, day: yd, k: e3.k, inv: e3.inv, name: e3.name, from: { fee: e3.fee, m: 'cash' }, to: { fee: Math.max(0, e3.fee - 300), m: 'cash' } }); e3.fee = Math.max(0, e3.fee - 300); e3.edited = 1; } }
+  mem.cbLog = [{ ph: '910000055121', at: now.minus({ minutes: 140 }).toISO(), done: now.minus({ minutes: 60 }).toISO(), by: recName, reason: 'Bete ko chehre pe allergy ho gayi hai' }, { ph: '910000077412', at: now.minus({ minutes: 182 }).toISO() }, { ph: '910000055120', at: now.minus({ minutes: 69 }).toISO() },
+    { ph: '910000063320', at: now.minus({ days: 3, hours: 2 }).toISO(), done: now.minus({ days: 3, hours: 1, minutes: 40 }).toISO(), by: recName, reason: 'Price / fees' }, { ph: '910000063321', at: now.minus({ days: 5, hours: 4 }).toISO(), done: now.minus({ days: 5, hours: 1 }).toISO(), by: recName, reason: 'Appointment' }];
+  mem.pname['910000063320'] = 'Deepak Yadav'; mem.pname['910000063321'] = 'Sana Khan';
+  mem.rv = {}; (mem.fb || []).forEach(f => { mem.rv[f.ph] = { at: f.at, r: f.r }; }); mem.rv['910000063311'] = { at: now.minus({ days: 1 }).toISO(), r: 5 };
   mem.callbacks = [{ phone: '910000077412', name: '', at: now.minus({ minutes: 182 }).toISO(), reason: 'Laser hair removal ka price kya hai, aur kitne session lagenge?', pinged: now.toISO() }, { phone: '910000055120', name: 'Ramesh Gupta', at: now.minus({ minutes: 69 }).toISO(), reason: 'Report dikhani hai, kal subah aa sakta hoon?', noans: 1, pinged: now.toISO() }];
   mem.st = {}; for (let i = 6; i >= 0; i--) { const d = now.minus({ days: i }); if (d.weekday === 7) continue; mem.st[d.toFormat('yyyy-MM-dd')] = { chats: 8 + Math.floor(rnd() * 8), booked: 2 + Math.floor(rnd() * 4), qr: 10 + Math.floor(rnd() * 9), mcalls: 3 + Math.floor(rnd() * 4), reminders: 2 + Math.floor(rnd() * 4) }; }
   // money by service, cash check, reminders that worked, reviews, sources
@@ -588,6 +597,10 @@ if (mode === 'desk') {
     if (!tk) res = { ok: false, gone: true, clinic };
     else { if (b.cancel && tk.st === 'w') { qWrite(); tk.st = 'x'; }
       const n = aheadOf(q, tk); res = { ok: true, tok: tk.tok, st: tk.st, ahead: tk.st === 'w' ? n : 0, eta: tk.st === 'w' ? etaText(q, n, 'hl') : '', now: (servingOf(q) || {}).tok || null, missed: tk.missed || 0, clinic, doc: Object.assign(docInfo(), { line: docLine(langOf(tk.phone, '')) }), lang: langOf(tk.phone, '') }; }
+  } else if (b.action === 'inv') {
+    const [d0, k0, ik0] = String(b.id || '').split('.'); const v = /^\d{4}-\d{2}-\d{2}$/.test(d0 || '') ? ((mem.vis || {})[d0] || []).find(x => x.k === k0) : null;
+    if (!v || !v.ik || v.ik !== ik0 || !v.m) res = { ok: false, clinic };
+    else res = { ok: true, clinic, no: String(v.inv || 0).padStart(4, '0'), date: DateTime.fromISO(d0).toFormat('d LLL yyyy'), time: v.at ? DateTime.fromISO(v.at).setZone(TZ).toFormat('h:mm a') : '', name: v.name || 'Patient', phone: v.ph ? mask(v.ph) : '', items: (v.items && v.items.length ? v.items : [{ n: 'Consultation', p: v.fee }]).map(x => ({ n: x.n, p: x.p })), total: v.fee || 0, m: v.m, by: v.by || '', edited: !!v.edited };
   } else if (b.action === 'mc_log') {
     if (S.hookKey && b.key === S.hookKey && digits(b.phone || '')) { if (!mem.mcalls) mem.mcalls = []; mem.mcalls = mem.mcalls.filter(x => x.at > now.minus({ days: 3 }).toISO()).concat([{ ph: digits(b.phone), at: now.toISO() }]).slice(-200); bump('mcalls'); ev(b.phone, 'call', 'Called · nobody picked up'); if (b.sent !== false && b.sent !== 'false') ev(b.phone, 'bot', 'Bot sent a WhatsApp reply'); res = { ok: true }; }
     else res = { ok: false };
@@ -725,11 +738,16 @@ if (mode === 'desk') {
       const v = visOf(day).find(x => x.k === b.k);
       if (!v) res.error = 'This visit was not found.';
       else {
+        const was = v.m ? { fee: v.fee || 0, m: v.m } : null;
         v.m = ['cash', 'upi', 'free'].includes(b.m) ? b.m : 'cash';
         v.fee = v.m === 'free' ? 0 : Math.max(0, Math.min(500000, Math.round(Number(b.fee) || 0)));
         if (Array.isArray(b.items)) { const BL = billList(); v.items = b.items.map(n => BL.find(x => x.n === n)).filter(Boolean).map(x => ({ n: x.n, p: x.p })).slice(0, 8); }
         { const rc = (mem.rc || {})[v.ph]; if (rc && rc.back === day && !rc.paid && v.fee) { rc.paid = v.fee; bump('recallMoney', v.fee); } }
-        v.by = sess.name; v.at = now.toISO();
+        if (was && (was.fee !== v.fee || was.m !== v.m)) { v.edited = (v.edited || 0) + 1; mem.edits = (mem.edits || []).concat([{ at: now.toISO(), by: sess.name, day, k: v.k, inv: v.inv || 0, name: v.name, from: was, to: { fee: v.fee, m: v.m } }]).slice(-400); }
+        if (!v.inv) { mem.invSeq = (mem.invSeq || 0) + 1; v.inv = mem.invSeq; v.ik = sha256(v.k + now.toISO() + Math.random()).slice(0, 12); }
+        if (!was) { v.by = sess.name; v.at = now.toISO(); } else { v.eby = sess.name; v.eat = now.toISO(); }
+        const invUrl = (S.appUrl || 'https://desk.bas30din.com/') + '?inv=' + day + '.' + v.k + '.' + v.ik; res.inv = { no: String(v.inv).padStart(4, '0'), url: invUrl };
+        if (v.ph && v.m !== 'free' && inWindow(v.ph)) { out.push(textTo(v.ph, `🧾 ${C}\nBill #${String(v.inv).padStart(4, '0')} · ${v.name}\n${(v.items && v.items.length ? v.items : [{ n: 'Consultation', p: v.fee }]).map(x => `${x.n}  ₹${x.p}`).join('\n')}\nTotal paid: ₹${v.fee} (${v.m === 'upi' ? 'UPI' : 'Cash'})${was ? '\n(Updated bill)' : ''}\n\nInvoice: ${invUrl}`)); v.sent = now.toISO(); res.inv.sent = true; }
         const days = Math.max(0, Math.min(400, Number(b.fup) || 0));
         v.fup = days ? now.plus({ days }).toFormat('yyyy-MM-dd') : null;
         mem.fup = (mem.fup || []).filter(f => f.k !== v.k && f.date >= todayStr);
@@ -747,7 +765,7 @@ if (mode === 'desk') {
     else if (b.action === 'download' && role === 'owner') { res.dump = JSON.stringify(memSafe()); }
     else if (b.action === 'cb_try') { const ph = digits(b.phone); const cb = (mem.callbacks || []).find(x => x.phone === ph); if (cb) { cb.tries = (cb.tries || 0) + 1; cb.tryAt = now.toISO(); cb.by = sess.name; ev(ph, 'try', 'Called by ' + sess.name); } }
     else if (b.action === 'cb_noans') { const ph = digits(b.phone); const cb = (mem.callbacks || []).find(x => x.phone === ph); if (cb) { cb.noans = (cb.noans || 0) + 1; cb.tryAt = null; ev(ph, 'noans', 'No answer · ' + sess.name + ' will try again'); } }
-    else if (b.action === 'cb_done') { const ph = digits(b.phone); if ((mem.callbacks || []).some(x => x.phone === ph)) ev(ph, 'done', 'Talked · called back by ' + sess.name); mem.callbacks = (mem.callbacks || []).filter(x => x.phone !== ph); }
+    else if (b.action === 'cb_done') { const ph = digits(b.phone); if ((mem.callbacks || []).some(x => x.phone === ph)) { ev(ph, 'done', 'Talked · called back by ' + sess.name); const lg0 = (mem.cbLog || []).filter(x => x.ph === ph && !x.done).pop(); if (lg0) { lg0.done = now.toISO(); lg0.by = sess.name; lg0.reason = ((mem.callbacks || []).find(x => x.phone === ph) || {}).reason || ''; } } mem.callbacks = (mem.callbacks || []).filter(x => x.phone !== ph); }
     // the state every screen needs
     const q = qRead();
     const cur = servingOf(q);
@@ -823,6 +841,69 @@ if (mode === 'desk') {
       const fmt2 = r => r.split('-').map(f).join(' – '); const over = rg.length && hm >= rg[rg.length - 1].split('-')[1].trim();
       res.opd = !rg.length ? { label: 'No OPD today', time: '' } : over ? { label: 'OPD over for today', time: '' } : rg.length === 1 ? { label: 'OPD today', time: fmt2(cur) } : { label: (+cur.split('-')[0].slice(0, 2) < 14 ? 'Morning OPD' : 'Evening OPD'), time: fmt2(cur) }; }      // tell reception on WhatsApp once if a call back waits 30+ min (only reaches staff who messaged the bot in the last 24 h)
       for (const cb of (mem.callbacks || [])) if (!cb.pinged && cb.at < now.minus({ minutes: 30 }).toISO() && isOpenNow()) { cb.pinged = now.toISO(); for (const st of (S.staff || []).filter(x => x.role === 'reception' && inWindow(x.phone))) out.push(textTo(st.phone, '⏰ Call back pending 30+ min: ' + ((mem.pname || {})[cb.phone] || cb.name || '+' + cb.phone) + (cb.reason ? ' — "' + cb.reason + '"' : '') + '\nCall: +' + cb.phone)); }
+    if (b.view === 'report' && isDoc) {
+      const per = ['today', '7', '30'].includes(b.per) ? b.per : 'today'; const nd = per === 'today' ? 1 : Number(per);
+      const from = now.minus({ days: nd - 1 }).toFormat('yyyy-MM-dd'), fromIso = now.minus({ days: nd - 1 }).startOf('day').toISO();
+      const T = {}; for (const d of Object.keys(mem.st || {})) if (d >= from) for (const [k, n] of Object.entries(mem.st[d])) T[k] = (T[k] || 0) + n;
+      const R = regSum(from, todayStr), V = R.V; const hm2 = iso => DateTime.fromISO(iso).setZone(TZ).toFormat(per === 'today' ? 'h:mm a' : 'd LLL, h:mm a');
+      const pkOf = v => patKey(v.ph, v.name);
+      const dayOfV = v => DateTime.fromISO(v.in || v.at || now.toISO()).setZone(TZ).toFormat('d LLL');
+      const nm = ph => (mem.pname || {})[ph] || '+' + ph.slice(0, 2) + ' ' + ph.slice(2, 7) + ' ' + ph.slice(7);
+      const mins = (a, c) => Math.max(0, Math.round(DateTime.fromISO(c).diff(DateTime.fromISO(a), 'minutes').minutes));
+      const dur = m => m < 60 ? m + ' min' : Math.floor(m / 60) + ' h' + (m % 60 ? ' ' + (m % 60) + ' min' : '');
+      const C2 = [], D2 = {};
+      const add = (id, title, value, sub, tone, rows) => { C2.push({ id, title, value: String(value), sub, tone, n: rows.length }); D2[id] = rows.slice(0, 150); };
+      // 1. seen but not billed
+      const nob = V.filter(v => !v.m && v.out);
+      add('nobill', 'Seen but not billed', nob.length, nob.length ? 'Money may be missing from the register' : 'Every patient seen has a bill', nob.length ? 'bad' : 'ok',
+        nob.map(v => ({ t: v.name, s: dayOfV(v) + ' · token ' + String(v.tok || '').replace('-', '') + ' · seen, no bill', r: 'No bill', tone: 'bad', pk: pkOf(v) })));
+      // 2. bills changed after saving
+      const ed = (mem.edits || []).filter(e => e.at >= fromIso);
+      add('edits', 'Bills changed after saving', ed.length, ed.length ? ed.reduce((a, e) => a + (e.from.fee - e.to.fee), 0) > 0 ? rupees(ed.reduce((a, e) => a + (e.from.fee - e.to.fee), 0)) + ' less than first written' : 'Check who changed them' : 'No bill was changed', ed.length ? 'bad' : 'ok',
+        ed.slice().reverse().map(e => ({ t: e.name + (e.inv ? ' · #' + String(e.inv).padStart(4, '0') : ''), s: 'Changed by ' + e.by + ' · ' + hm2(e.at), r: rupees(e.from.fee) + ' ' + e.from.m + ' → ' + rupees(e.to.fee) + ' ' + e.to.m, tone: e.to.fee < e.from.fee ? 'bad' : 'mid' })));
+      // 3. cash count at closing
+      const cl = Object.entries(mem.close || {}).filter(([d]) => d >= from).map(([d, c]) => { const r0 = regSum(d, d); return { d, c, cd: c.cash - r0.cash, ud: c.upi - r0.upi }; });
+      const short = cl.filter(x => x.cd < 0 || x.ud < 0);
+      add('cash', 'Cash count at closing', short.length ? rupees(-short.reduce((a, x) => a + Math.min(0, x.cd) + Math.min(0, x.ud), 0)) + ' short' : cl.length ? 'Matched' : 'Not done', short.length ? short.length + ' day' + (short.length > 1 ? 's' : '') + ' did not match the register' : cl.length ? 'Cash and UPI matched the register' : 'Reception has not counted the cash yet', short.length ? 'bad' : cl.length ? 'ok' : 'mid',
+        cl.sort((a, c) => c.d.localeCompare(a.d)).map(x => ({ t: DateTime.fromISO(x.d).toFormat('ccc d LLL'), s: 'Counted by ' + x.c.by + ' · cash ' + rupees(x.c.cash) + ' · UPI ' + rupees(x.c.upi), r: x.cd < 0 || x.ud < 0 ? rupees(-(Math.min(0, x.cd) + Math.min(0, x.ud))) + ' short' : 'Matched', tone: x.cd < 0 || x.ud < 0 ? 'bad' : 'ok' })));
+      // 4. call backs
+      const cbs = (mem.cbLog || []).filter(x => x.at >= fromIso); const pend = (mem.callbacks || []).filter(x => x.at >= fromIso || per !== 'today');
+      const doneW = cbs.filter(x => x.done).map(x => mins(x.at, x.done)); const avg = doneW.length ? Math.round(doneW.reduce((a, c) => a + c, 0) / doneW.length) : 0;
+      add('cb', 'Call backs', pend.length ? pend.length + ' waiting' : cbs.length ? 'All done' : 'None', cbs.length ? cbs.length + ' asked · ' + (cbs.length - pend.length) + ' called' + (avg ? ' · avg wait ' + dur(avg) : '') : 'Nobody asked for a call back', pend.length || avg > 60 ? 'bad' : cbs.length ? 'ok' : 'mid',
+        pend.map(x => ({ t: nm(x.phone), s: (x.reason ? '"' + x.reason + '" · ' : '') + 'asked ' + hm2(x.at) + (x.noans ? ' · no answer ×' + x.noans : ''), r: 'Waiting ' + dur(mins(x.at, now.toISO())), tone: 'bad', call: '+' + x.phone })).concat(
+        cbs.filter(x => x.done).reverse().map(x => ({ t: nm(x.ph), s: (x.reason ? '"' + x.reason + '" · ' : '') + 'called by ' + x.by, r: 'after ' + dur(mins(x.at, x.done)), tone: mins(x.at, x.done) > 60 ? 'mid' : 'ok', call: '+' + x.ph }))));
+      // 5. people who reached out (missed calls + WhatsApp)
+      const evs = Object.keys(mem.ev || {}).map(ph => ({ ph, l: (mem.ev[ph] || []).filter(e => e.at >= fromIso) })).filter(x => x.l.length);
+      const outc = x => { const ks = x.l.map(e => e.k); return ks.includes('booked') ? ['Booked', 'ok'] : ks.includes('token') ? ['Came', 'ok'] : (mem.callbacks || []).some(c => c.phone === x.ph) ? ['Waiting for call', 'bad'] : ks.includes('done') ? ['Called back', 'ok'] : ['No reply', 'mid']; };
+      const lostN = evs.filter(x => outc(x)[1] !== 'ok').length;
+      add('reach', 'People who reached out', evs.length, (T.mcalls || 0) + ' missed calls · ' + (T.chats || 0) + ' WhatsApp chats · ' + evs.filter(x => outc(x)[1] === 'ok').length + ' booked, came or were called', lostN ? 'mid' : 'ok',
+        evs.sort((a, c) => c.l[c.l.length - 1].at.localeCompare(a.l[a.l.length - 1].at)).map(x => { const o = outc(x); return { t: nm(x.ph), s: hm2(x.l[0].at) + ' · ' + x.l[x.l.length - 1].t, r: o[0], tone: o[1], ph: x.ph, story: x.l.map(e => ({ t: hm2(e.at), k: e.k, txt: e.t })), call: '+' + x.ph }; }));
+      // 6. patients seen + money
+      const firstSeen = {}; for (const d of Object.keys(mem.vis || {}).sort()) for (const v of mem.vis[d]) { const k = pkOf(v); if (!firstSeen[k]) firstSeen[k] = d; }
+      const newP = V.filter(v => firstSeen[pkOf(v)] >= from).length;
+      add('seen', 'Patients seen', R.seen, rupees(R.money) + ' · ' + newP + ' new · ' + (R.seen - newP) + ' returning', 'ok',
+        V.slice().reverse().map(v => ({ t: v.name, s: dayOfV(v) + (v.inv ? ' · #' + String(v.inv).padStart(4, '0') : '') + (v.items && v.items.length ? ' · ' + v.items.map(i => i.n).join(', ') : ''), r: v.m === 'free' ? 'Free' : v.m ? rupees(v.fee) + ' ' + v.m : 'No bill', tone: v.m ? 'ok' : 'bad', pk: pkOf(v), inv: v.ik ? (S.appUrl || 'https://desk.bas30din.com/') + '?inv=' + DateTime.fromISO(v.in || v.at).setZone(TZ).toFormat('yyyy-MM-dd') + '.' + v.k + '.' + v.ik : '' })));
+      // 7. free visits
+      const fr = V.filter(v => v.m === 'free');
+      add('free', 'Free visits', fr.length, fr.length ? 'Marked free by ' + [...new Set(fr.map(v => v.by || '?'))].join(', ') : 'No free visits', 'mid',
+        fr.map(v => ({ t: v.name, s: dayOfV(v) + ' · marked free by ' + (v.by || '?'), r: 'Free', tone: 'mid', pk: pkOf(v) })));
+      // 8. follow-ups
+      const VA = []; for (const d of Object.keys(mem.vis || {}).sort()) for (const v of mem.vis[d]) VA.push({ d, v });
+      const due = VA.filter(x => x.v.fup && x.v.fup >= from && x.v.fup <= todayStr).map(x => ({ v: x.v, cameOn: (VA.find(y => y.d > x.d && y.d >= DateTime.fromISO(x.v.fup).minus({ days: 3 }).toFormat('yyyy-MM-dd') && pkOf(y.v) === pkOf(x.v)) || {}).d }));
+      const came = due.filter(x => x.cameOn);
+      add('fup', 'Follow-ups due', due.length ? came.length + ' of ' + due.length + ' came' : 'None', due.length ? (due.length - came.length) + ' did not come back yet · ' + (T.recalls || 0) + ' reminders sent · ' + (T.recallBack || 0) + ' came after a reminder' + (T.recallMoney ? ' (' + rupees(T.recallMoney) + ')' : '') : 'No follow-ups were due', due.length - came.length > 0 ? 'mid' : 'ok',
+        due.map(x => ({ t: x.v.name, s: 'Due ' + DateTime.fromISO(x.v.fup).toFormat('d LLL') + (x.cameOn ? ' · came ' + DateTime.fromISO(x.cameOn).toFormat('d LLL') : ''), r: x.cameOn ? 'Came' : 'Not yet', tone: x.cameOn ? 'ok' : 'mid', pk: pkOf(x.v), call: x.v.ph ? '+' + x.v.ph : '' })));
+      // 9. reviews
+      const fb = Object.entries(mem.rv || {}).filter(([, r]) => r.at >= fromIso && r.r);
+      add('rv', 'Patient happiness', (T.rvGood || 0) + ' happy', (T.rvMid || 0) + ' okay · ' + (T.rvLow || 0) + ' not happy' + ((mem.cfg || {}).googleReview ? '' : ' · add your Google review link in Clinic'), T.rvLow ? 'mid' : 'ok',
+        fb.map(([ph, r]) => { const f = (mem.fb || []).filter(x => x.ph === ph).pop(); return { t: nm(ph), s: (f ? '"' + f.t + '" · ' : '') + hm2(r.at), r: r.r >= 4 ? 'Happy' : r.r >= 3 ? 'Okay' : 'Not happy', tone: r.r >= 4 ? 'ok' : r.r >= 3 ? 'mid' : 'bad', call: '+' + ph }; }));
+      // 10. how new patients found you
+      const srcs = Object.entries(T).filter(([k]) => k.startsWith('src_')).sort((a, c) => c[1] - a[1]); const sTot = srcs.reduce((a, x) => a + x[1], 0);
+      add('src', 'How new patients found you', sTot ? (SRC[srcs[0][0].slice(4)] || srcs[0][0].slice(4)) : '—', sTot ? sTot + ' new patients answered' : 'Nobody answered yet', 'mid',
+        srcs.map(([k, n]) => ({ t: SRC[k.slice(4)] || k.slice(4), s: Math.round(n / sTot * 100) + '% of new patients', r: String(n), tone: 'mid' })));
+      const order = { bad: 0, mid: 1, ok: 2 }; C2.sort((a, c) => order[a.tone] - order[c.tone]);
+      res.report = { per, cards: C2, rows: D2, problems: C2.filter(c => c.tone === 'bad').length, inv: mem.invSeq || 0 };
+    }
     if (b.view === 'register' && isDoc) {
       const per = ['today', 'week', 'month'].includes(b.period) ? b.period : 'today';
       const from = per === 'today' ? todayStr : per === 'week' ? now.minus({ days: 6 }).toFormat('yyyy-MM-dd') : now.startOf('month').toFormat('yyyy-MM-dd');
@@ -1224,7 +1305,7 @@ else if (adminCmd) {
 }
 // ---------- patients ----------
 else if (id === 'MC_Q') { payload = text(L.mcQ); }
-else if (id === 'MC_CALL') { notify = true; payload = buttons(L.mcCall + (lang === 'en' ? '\n\nWhat is it about? Tap one, or type it / send a voice note.' : '\n\nKis baare mein baat karni hai? Ek button dabaiye, ya likh kar / voice note bhej dijiye.'), lang === 'en' ? [['CBR|Price / fees', 'Price / fees'], ['CBR|Appointment', 'Appointment'], ['CBR|Show report', 'Show report']] : [['CBR|Price / fees', 'Price / fees'], ['CBR|Appointment', 'Appointment'], ['CBR|Report dikhani hai', 'Report dikhani hai']]); if (!mem.callbacks) mem.callbacks = []; mem.callbacks = mem.callbacks.filter(x => x.phone !== me).concat([{ phone: me, name: msg.name || '', at: now.toISO(), reason: '' }]).slice(-50); ev(me, 'cb', 'Asked for a call back'); }
+else if (id === 'MC_CALL') { notify = true; payload = buttons(L.mcCall + (lang === 'en' ? '\n\nWhat is it about? Tap one, or type it / send a voice note.' : '\n\nKis baare mein baat karni hai? Ek button dabaiye, ya likh kar / voice note bhej dijiye.'), lang === 'en' ? [['CBR|Price / fees', 'Price / fees'], ['CBR|Appointment', 'Appointment'], ['CBR|Show report', 'Show report']] : [['CBR|Price / fees', 'Price / fees'], ['CBR|Appointment', 'Appointment'], ['CBR|Report dikhani hai', 'Report dikhani hai']]); if (!mem.callbacks) mem.callbacks = []; mem.callbacks = mem.callbacks.filter(x => x.phone !== me).concat([{ phone: me, name: msg.name || '', at: now.toISO(), reason: '' }]).slice(-50); mem.cbLog = (mem.cbLog || []).concat([{ ph: me, at: now.toISO() }]).slice(-500); ev(me, 'cb', 'Asked for a call back'); }
 else if (!['text', 'interactive', 'button'].includes(msg.type)) { payload = buttons(L.textOnly, menuBtns()); }
 else if (!mem.lang[me] && !id && !upcoming.length && !holding) {
   payload = buttons(T.en.pickLang, [['LANG|en', 'English'], ['LANG|hl', 'Hinglish'], ['LIVE', 'Live Chat']]);

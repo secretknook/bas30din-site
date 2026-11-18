@@ -380,6 +380,36 @@ button.irow:active,a.irow:active{background:#F9FAFB}
 .stgrid .stm{height:60px;border-radius:14px;font-size:18px;font-weight:700;flex:none}
 
 .v11-greet{font-size:26px;line-height:1.15;font-weight:700;letter-spacing:-.3px;color:#101828}
+
+.invw{min-height:100vh;background:#F2F4F7;padding:24px 14px 40px;display:flex;flex-direction:column;align-items:center;gap:16px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:#101828}
+.inv{width:100%;max-width:560px;background:#FFF;border-radius:14px;padding:28px 26px;box-shadow:0 1px 3px rgba(16,24,40,.08)}
+.invh{display:flex;justify-content:space-between;gap:16px;padding-bottom:18px;border-bottom:1px solid #EAECF0}
+.invc{font-size:20px;font-weight:700}.invt{font-size:13px;font-weight:700;letter-spacing:.12em;color:#175CD3}
+.invs{font-size:14px;color:#475467;line-height:1.5}
+.invp{display:flex;flex-direction:column;gap:2px;padding:16px 0}
+.invtb{width:100%;border-collapse:collapse;font-size:15px}.invtb th{font-size:13px;color:#667085;font-weight:600;text-align:left;padding:8px 0;border-bottom:1px solid #EAECF0}
+.invtb td{padding:10px 0;border-bottom:1px solid #F2F4F7}.invtb tfoot td{font-weight:700;font-size:17px;border-bottom:none;padding-top:14px}
+.invf{margin-top:22px;padding-top:14px;border-top:1px dashed #D0D5DD;font-size:13px;color:#667085;text-align:center}
+.invbtn{height:48px;padding:0 22px;border:none;border-radius:12px;background:#175CD3;color:#FFF;font-size:16px;font-weight:600;font-family:inherit}
+@media print{.invbtn{display:none}.invw{background:#FFF;padding:0}.inv{box-shadow:none;max-width:none}}
+.rseg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:#EAECF0;border-radius:12px;padding:3px;margin:0 0 14px}
+.rseg button{height:38px;border:none;border-radius:10px;background:none;font-family:inherit;font-size:15px;font-weight:600;color:#475467}
+.rseg button.on{background:#FFF;color:#101828;box-shadow:0 1px 2px rgba(16,24,40,.08)}
+.rsum{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:600;padding:2px 4px 12px}
+.rsum.bad{color:#B42318}.rsum.ok{color:#067647}
+.rmark{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0}
+.rmark.t-bad{background:#FEE4E2;color:#B42318}.rmark.t-ok{background:#DCFAE6;color:#067647}.rmark.t-mid{background:#F2F4F7;color:#667085}
+.rrow{display:flex;align-items:center;gap:12px;min-height:68px;padding:10px 0;border-bottom:1px solid #F2F4F7;text-decoration:none;color:inherit}
+.rrow:last-child{border-bottom:none}
+.rt{font-size:16px;font-weight:600;color:#101828}.rsub{white-space:normal;line-height:1.35}
+.rv{font-size:16px;font-weight:700;white-space:nowrap;text-align:right}.rv.t-bad{color:#B42318}.rv.t-ok{color:#067647}.rv.t-mid{color:#344054}
+.rback{display:inline-flex;align-items:center;gap:8px;border:none;background:none;padding:0;font-family:inherit;font-size:16px;font-weight:600;color:#175CD3}
+.rnew{font-size:14px;font-weight:600;color:#175CD3;text-decoration:none}
+.rhead{font-size:15px;color:#475467}.rhead.t-bad b{color:#B42318}.rhead.t-ok b{color:#067647}
+.rsub2{white-space:normal;line-height:1.35;text-align:left}
+.racts{display:flex;gap:8px;padding:0 0 12px}
+.ract{height:34px;padding:0 12px;border-radius:9px;border:1px solid #D0D5DD;background:#FFF;color:#344054;font-family:inherit;font-size:14px;font-weight:600;display:inline-flex;align-items:center;text-decoration:none}
+div.act-head{cursor:default}
 </style>
 </head>
 <body>
@@ -523,11 +553,12 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       register: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
       inbox: '<path d="M4 13l2.5-7h11l2.5 7v5H4z"/><path d="M4 13h5l1 2h4l1-2h5"/>',
       clinic: '<path d="M5 20V11M12 20V5M19 20v-6"/>',
-      after: '<path d="M3 12h4l3-8 4 16 3-8h4"/>',
+      after: '<rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 3h6v3H9z"/><path d="M9 12.5l2 2 4-4"/><path d="M9 18h6"/>',
       patients: '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.9-5 5.5-5s4.9 1.8 5.5 5"/><path d="M15.5 5.3a3 3 0 0 1 0 5.4M17.5 14.4c1.6.7 2.7 2.3 3 4.6"/>'
     };
-    var LAB = { queue: 'OPD', today: 'OPD', register: 'Register', inbox: 'Enquiries', patients: 'Patients', clinic: 'Clinic', after: 'Enquiries' };
+    var LAB = { queue: 'OPD', today: 'OPD', register: 'Register', inbox: 'Inbox', patients: 'Patients', clinic: 'Clinic', after: 'Report' };
     var PHONE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>';
+    var BACK = '<svg width="9" height="15" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 1L1 7l6 6"/></svg>';
     var CHEV = '<svg width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="#98A2B3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0"><path d="M1 1l6 6-6 6"/></svg>';
     var GEAR = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg>';
     var STAT = { in: ['In', '#ECFDF3', C.ok, '#12B76A'], late: ['Late', '#FFFAEB', C.warn, '#F79009'], away: ['Away', '#FFFAEB', C.warn, '#F79009'], leave: ['Leave', '#FEF3F2', C.bad, '#F04438'] };
@@ -535,6 +566,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     function view() {
       var b = {};
       if (S.tab === 'register') { b.view = 'register'; b.period = S.per; }
+      if (S.tab === 'after') { b.view = 'report'; b.per = S.rper || 'today'; }
       if (S.tab === 'patients') { if (S.pk && !S.desk) { b.view = 'patient'; b.pk = S.pk; } else { b.view = 'patients'; b.q = S.q; if (S.pk) b.pk = S.pk; } }
       return b;
     }
@@ -654,7 +686,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     }
     function scrInbox() {
       var ib = S.d.inbox || { calls: [], callbacks: [], wait: [] };
-      var h = hdr('', 'Enquiries') + '<div style="margin:12px 16px 0">' + seg([['calls', 'Missed calls · ' + ib.calls.length], ['cb', 'Call back · ' + ib.callbacks.length], ['wl', 'Waitlist · ' + ib.wait.length]], S.seg, 'data-seg') + '</div>';
+      var h = hdr('', 'Inbox') + '<div style="margin:12px 16px 0">' + seg([['calls', 'Missed calls · ' + ib.calls.length], ['cb', 'Call back · ' + ib.callbacks.length], ['wl', 'Waitlist · ' + ib.wait.length]], S.seg, 'data-seg') + '</div>';
       var L, head, foot, act;
       if (S.seg === 'calls') { L = ib.calls.map(function (x) { return [x.shown, x.at, x.booked ? 'WhatsApp sent · booked' : 'WhatsApp sent · not booked yet', x.booked ? C.ok : C.warn, x.call, x.phone, 'mc_done']; }); head = 'Missed calls'; foot = 'Each caller already got a WhatsApp with booking options.'; }
       else if (S.seg === 'cb') { L = ib.callbacks.map(function (x) { return [x.name || x.shown, x.at, x.reason ? '"' + x.reason + '"' : (x.name ? x.shown + ' · no reason given yet' : 'Asked for a call back'), x.reason ? '#344054' : C.sec, x.call, x.phone, 'cb', x.tried, x.noans]; }); head = 'Asked for a call'; foot = 'Tap the phone to call. Then tap Talked or No answer. The doctor sees both.'; }
@@ -749,52 +781,32 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       return h + '</div></div></div>';
     }
     function scrAfter() {
-      var d = S.d, bo = d.boon || { lost: [] }, A = d.act || { attention: [], feed: [] };
+      var R = S.d.report; S.rper = S.rper || 'today';
+      if (S.rd && R && R.per === S.rper) return scrReportDetail(R);
+      var h = '<div class="v11"><div class="v11-hd" style="flex-direction:column;align-items:flex-start;gap:2px"><span class="v11-date">How the clinic is really doing</span><h1 class="v11-h1">Report</h1></div><div class="v11-after">' +
+        '<div class="rseg">' + [['today', 'Today'], ['7', '7 days'], ['30', '30 days']].map(function (p) { return '<button data-rper="' + p[0] + '" class="' + (S.rper === p[0] ? 'on' : '') + '">' + p[1] + '</button>'; }).join('') + '</div>';
+      if (!R || R.per !== S.rper) return h + '<div class="v11-meta" style="padding:30px 0;text-align:center">Loading…</div></div></div>';
+      h += R.problems ? '<div class="rsum bad"><span class="rmark t-bad">!</span>' + R.problems + (R.problems > 1 ? ' things need' : ' thing needs') + ' your look</div>' : '<div class="rsum ok"><span class="rmark t-ok">✓</span>Nothing looks wrong</div>';
+      h += '<div class="v11-card v11-list">' + R.cards.map(function (c) {
+        return '<a class="rrow" href="#report/' + c.id + '/' + R.per + '" data-rd="' + c.id + '"><span class="rmark t-' + c.tone + '">' + (c.tone === 'bad' ? '!' : c.tone === 'ok' ? '✓' : '·') + '</span><span class="icol"><span class="rt">' + esc(c.title) + '</span><span class="tl-sub rsub">' + esc(c.sub) + '</span></span><span class="rv t-' + c.tone + '">' + esc(c.value) + '</span>' + CHEV + '</a>'; }).join('') + '</div>';
+      h += '<div class="v11-meta" style="margin:12px 20px 0;font-size:14px">Every bill gets a fixed number (last #' + String(R.inv).padStart(4, '0') + ') and can\'t be deleted. Any change is saved with who made it. Patients get their bill on WhatsApp.</div>';
+      return h + '<div style="height:28px"></div></div></div>';
+    }
+    function scrReportDetail(R) {
       if (!S.openEv) S.openEv = {};
-      var tone = { bad: ['#FEF3F2', '#B42318'], ok: ['#ECFDF3', '#067647'], mid: ['#F2F4F7', '#475467'] };
-      var who = function (x) { return esc(x.name || x.shown); };
-      var h = '<div class="v11"><div class="v11-hd" style="flex-direction:column;align-items:flex-start;gap:2px"><span class="v11-date">Missed calls and WhatsApp</span><h1 class="v11-h1">Enquiries</h1></div><div class="v11-after">';
-      // needs attention
-      var cbBtns = function (x) { return x.tried ? '<div class="act-btns"><button class="act-call" data-done="cb_done" data-ph="' + esc(x.ph) + '">Talked ✓</button><button class="act-done" style="color:#B42318" data-done="cb_noans" data-ph="' + esc(x.ph) + '">No answer</button></div>'
-        : '<div class="act-btns one"><a class="act-call" href="tel:' + esc(x.call) + '" data-cbtry="' + esc(x.ph) + '">Call ' + esc(x.shown) + '</a></div>'; };
-      h += '<div class="v11-lh"><span>Waiting for a call back</span><span>' + (A.attention.length ? A.attention.length : 'Nobody') + '</span></div>';
-      if (A.attention.length) h += A.attention.map(function (x) {
-        return '<div class="v11-card act-att"><div class="act-top"><span class="act-name">' + who(x) + '</span><span class="act-chip" style="background:' + tone.bad[0] + ';color:' + tone.bad[1] + '">' + esc(x.st.label) + '</span></div>' +
-          (x.name ? '<div class="v11-meta" style="margin:0">' + esc(x.shown) + '</div>' : '') +
-          (x.reason ? '<div class="act-why">' + esc(x.reason) + '</div>' : '<div class="v11-meta" style="margin:4px 0 0">Didn\'t say why yet</div>') + cbBtns(x) + '</div>'; }).join('');
-      else h += '<div class="v11-card"><div class="v11-meta" style="margin:0">Everyone who asked has been called.</div></div>';
-      // stories, today then yesterday
-      var grp = function (title, L) { if (!L.length) return '';
-        return '<div class="v11-lh" style="padding-top:22px"><span>' + title + '</span><span>' + L.length + '</span></div><div class="v11-card v11-list">' + L.map(function (x) {
-          var open = !!S.openEv[x.ph], last = x.items[x.items.length - 1];
-          return '<div class="act-row"><button class="act-head" data-ev="' + esc(x.ph) + '" aria-expanded="' + open + '"><span class="act-l1"><span class="act-name">' + who(x) + '</span><span class="act-t">' + esc(x.at) + '</span></span><span class="act-l2"><span class="act-chip" style="background:' + tone[x.st.tone][0] + ';color:' + tone[x.st.tone][1] + '">' + esc(x.st.label) + '</span>' + (open || x.st.label.indexOf(last.txt) === 0 ? '' : '<span class="tl-sub act-last">' + esc(last.txt) + '</span>') + '</span></button>' +
-            (open ? '<div class="act-steps">' + x.items.map(function (i) { return '<div class="act-step k-' + i.k + '"><span class="act-t">' + esc(i.t) + '</span><span class="act-dot"></span><span class="act-tx">' + esc(i.txt) + '</span></div>'; }).join('') + '<a class="act-link" href="tel:' + esc(x.call) + '">Call ' + esc(x.shown) + '</a></div>' : '') + '</div>'; }).join('') + '</div>'; };
-      var T = A.feed.filter(function (x) { return x.day === 'today'; }), Y = A.feed.filter(function (x) { return x.day !== 'today'; });
-      h += (T.length ? grp('Today', T) : '<div class="v11-lh" style="padding-top:22px"><span>Today</span><span>0</span></div><div class="v11-card"><div class="v11-meta" style="margin:0">No missed calls or WhatsApp yet today</div></div>') + grp('Yesterday', Y);
-      // reminders that worked, reviews, where patients came from
-      var G = d.grow;
-      if (G) {
-        h += '<div class="v11-lh" style="padding-top:22px"><span>Brought back by reminders</span><span>' + esc(G.month) + '</span></div><div class="v11-card act-nums" style="grid-template-columns:repeat(3,1fr)">' +
-          [[G.recalls, 'reminded'], [G.back, 'came back'], [rupee(G.money), 'earned from them']].map(function (n) { return '<div><b>' + n[0] + '</b><span>' + n[1] + '</span></div>'; }).join('') + '</div>' +
-          '<div class="v11-meta" style="margin:8px 20px 0;font-size:14px">Patients who skip their follow-up get a WhatsApp the next day, after 1 week and after 1 month.</div>';
-        h += '<div class="v11-lh" style="padding-top:22px"><span>Reviews</span><span>' + esc(G.month) + '</span></div><div class="v11-card">' +
-          '<div class="act-nums" style="grid-template-columns:repeat(3,1fr)">' + [[G.good, 'happy'], [G.mid, 'okay'], [G.low, 'not happy']].map(function (n) { return '<div><b>' + n[0] + '</b><span>' + n[1] + '</span></div>'; }).join('') + '</div>' +
-          (G.link ? '' : '<button class="v11-soft" data-tab="clinic" style="margin-top:12px;background:#FFFAEB;color:#B54708">Add your Google review link so happy patients can post a review</button>') +
-          (G.fb.length ? '<div class="v11-lab" style="margin-top:14px">What patients told you privately</div>' + G.fb.map(function (f) { return '<div class="act-fb"><span class="act-fbh"><b>' + esc(f.name) + '</b><span>' + esc(f.at) + '</span></span><span>' + esc(f.t) + '</span><a href="tel:' + esc(f.call) + '">Call</a></div>'; }).join('') : '') + '</div>';
-        if (G.src.length) { var sm = G.src.reduce(function (a, x) { return a + x.n; }, 0) || 1; h += '<div class="v11-lh" style="padding-top:22px"><span>How new patients found you</span><span>' + sm + ' this month</span></div><div class="v11-card v11-list">' +
-          G.src.map(function (x) { return '<div class="v11-row" style="flex-direction:column;align-items:stretch;gap:6px;padding:12px 0"><span style="display:flex;justify-content:space-between;font-size:15px"><span>' + esc(x.label) + '</span><span style="font-weight:600">' + x.n + ' · ' + Math.round(x.n / sm * 100) + '%</span></span><span class="earnbar"><span style="width:' + Math.round(x.n / sm * 100) + '%"></span></span></div>'; }).join('') + '</div>'; }
-      }
-      // follow-ups + lost
-      h += '<div class="v11-lh" style="padding-top:22px"><span>Follow-ups for today</span><span>' + (d.fups || []).length + '</span></div><div class="v11-card v11-list">' +
-        ((d.fups || []).length ? d.fups.slice(0, S.allF ? 99 : 4).map(function (f) { return '<div class="v11-row"><span class="icol"><span class="tl-name">' + esc(f.name) + '</span></span><span style="font-size:15px;color:' + (f.c === 'ok' ? '#067647' : f.c === 'warn' ? '#B54708' : '#475467') + '">' + esc(f.state) + '</span></div>'; }).join('') + (d.fups.length > 4 && !S.allF ? '<button class="v11-row act-more" data-more="allF">See all ' + d.fups.length + '</button>' : '') : '<div class="v11-row"><span class="v11-meta" style="margin:0">None today</span></div>') + '</div>';
-      h += '<div class="v11-lh" style="padding-top:22px"><span>Didn\'t come back</span><span>' + (bo.lost || []).length + '</span></div><div class="v11-card v11-list">' +
-        ((bo.lost || []).length ? bo.lost.slice(0, S.allL ? 99 : 4).map(function (p) { return '<div class="v11-row"><button class="dplain" data-pk="' + esc(p.pk) + '" style="flex:1"><span class="tl-name">' + esc(p.name) + '</span><span class="tl-sub">Was due ' + esc(p.due) + '</span></button>' + (p.wa ? '<a class="dmini" href="' + esc(p.wa) + '" target="_blank" rel="noopener" style="height:38px;font-size:15px">Remind</a>' : '') + '</div>'; }).join('') + (bo.lost.length > 4 && !S.allL ? '<button class="v11-row act-more" data-more="allL">See all ' + bo.lost.length + '</button>' : '') : '<div class="v11-row"><span class="v11-meta" style="margin:0">Everyone came back</span></div>') + '</div>';
-      // the day in numbers
-      var t = (d.wa || { today: {} }).today;
-      h += '<div class="v11-lh" style="padding-top:22px"><span>Today in numbers</span><span></span></div><div class="v11-card act-nums">' +
-        [[d.today.seen, 'seen'], [rupee(d.today.money), 'recorded'], [t.chats || 0, 'WhatsApp chats'], [t.mcalls || 0, 'missed calls'], [t.booked || 0, 'booked on WhatsApp'], [t.qr || 0, 'tokens by QR']].map(function (n) { return '<div><b>' + n[0] + '</b><span>' + n[1] + '</span></div>'; }).join('') + '</div>' +
-        (d.today.nobill ? '<button class="v11-soft" data-tab="register" style="margin-top:10px">' + d.today.nobill + ' seen without a bill · see Register</button>' : '') +
-        (d.me.role === 'owner' ? '<button class="v11-soft" data-tab="inbox" style="background:#EFF4FF;color:#175CD3;margin-top:8px">See reception\'s list</button>' : '');
+      var c = R.cards.filter(function (x) { return x.id === S.rd; })[0]; if (!c) { S.rd = null; return scrAfter(); }
+      var rows = R.rows[c.id] || [], TN = { bad: ['#FEF3F2', '#B42318'], ok: ['#ECFDF3', '#067647'], mid: ['#F2F4F7', '#475467'] }, PER = { today: 'Today', '7': 'Last 7 days', '30': 'Last 30 days' }[R.per];
+      var h = '<div class="v11"><div class="v11-hd" style="flex-direction:column;align-items:flex-start;gap:6px"><span style="display:flex;width:100%;justify-content:space-between;align-items:center"><button class="rback" data-rback="1">' + BACK + 'Report</button>' +
+        (S.desk ? '<a class="rnew" href="#report/' + c.id + '/' + R.per + '" target="_blank" rel="noopener">Open in new window ↗</a>' : '') + '</span>' +
+        '<span class="v11-date">' + esc(PER) + '</span><h1 class="v11-h1">' + esc(c.title) + '</h1><span class="rhead t-' + c.tone + '"><b>' + esc(c.value) + '</b> · ' + esc(c.sub) + '</span></div><div class="v11-after">';
+      if (!rows.length) return h + '<div class="v11-card"><div class="v11-meta" style="margin:0">Nothing to show for ' + esc(PER.toLowerCase()) + '.</div></div></div></div>';
+      h += '<div class="v11-card v11-list">' + rows.map(function (r, i) {
+        var key = c.id + i, open = !!S.openEv[key], tn = TN[r.tone] || TN.mid;
+        var acts = (r.call ? '<a class="ract" href="tel:' + esc(r.call) + '">Call</a>' : '') + (r.inv ? '<a class="ract" href="' + esc(r.inv) + '" target="_blank" rel="noopener">Invoice</a>' : '') + (r.pk ? '<button class="ract" data-pk="' + esc(r.pk) + '">Record</button>' : '');
+        return '<div class="act-row"><' + (r.story ? 'button class="act-head" data-ev="' + key + '"' : 'div class="act-head"') + '><span class="act-l1"><span class="act-name">' + esc(r.t) + '</span><span class="act-chip" style="background:' + tn[0] + ';color:' + tn[1] + '">' + esc(r.r) + '</span></span><span class="tl-sub rsub2">' + esc(r.s) + '</span></' + (r.story ? 'button' : 'div') + '>' +
+          (open && r.story ? '<div class="act-steps">' + r.story.map(function (e) { return '<div class="act-step k-' + e.k + '"><span class="act-t">' + esc(e.t) + '</span><span class="act-dot"></span><span class="act-tx">' + esc(e.txt) + '</span></div>'; }).join('') + '</div>' : '') +
+          (acts ? '<div class="racts">' + acts + '</div>' : '') + '</div>'; }).join('') + '</div>';
+      if (c.n > rows.length) h += '<div class="v11-meta" style="margin:10px 20px 0;font-size:14px">Showing the latest ' + rows.length + ' of ' + c.n + '.</div>';
       return h + '<div style="height:28px"></div></div></div>';
     }
     var TYPES_DEF = [['skin', 'Skin & hair'], ['dental', 'Dental'], ['child', 'Child'], ['general', 'General'], ['eye', 'Eye'], ['physio', 'Physio']];
@@ -930,6 +942,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
           '<div style="font-size:15px;color:#475467;padding:4px 4px 0">' + (nW ? nW + ' waiting patient' + (nW > 1 ? 's' : '') + ' will get a WhatsApp with the new time.' : 'Reception, TV and the WhatsApp bot will show this.') + '</div>' +
           '<div class="stgrid">' + M.map(function (m) { return '<button class="stm" data-stm="' + m + '">' + (m >= 60 ? (m / 60) + (m === 60 ? ' hour' : ' hours') : m + ' min') + '</button>'; }).join('') + '</div>' +
           '<button data-close="1" style="height:44px;border:none;background:none;font-size:15px;font-weight:600;color:#475467;margin-top:6px;font-family:inherit">Cancel</button>';
+      } else if (s.t === 'billdone') {
+        inner = '<div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:18px 4px 4px;gap:4px"><span class="rmark t-ok" style="width:40px;height:40px;font-size:20px">✓</span><div style="font-size:20px;font-weight:700;margin-top:8px">Bill #' + esc(s.inv.no) + ' saved</div><div style="font-size:15px;color:#475467">' + esc(s.name || '') + (s.inv.sent ? ' got the bill on WhatsApp.' : ' is not on WhatsApp right now. Print it and hand it over.') + (s.fup ? ' Follow-up reminder set.' : '') + '</div></div>' +
+          '<a class="v11-done" href="' + esc(s.inv.url) + '" target="_blank" rel="noopener" style="margin-top:16px;text-decoration:none;display:flex;align-items:center;justify-content:center">Print invoice</a><button data-close="1" style="height:44px;border:none;background:none;font-size:15px;font-weight:600;color:#475467;margin-top:4px;font-family:inherit">Done</button>';
       } else if (s.t === 'tlrow') {
         inner = '<span class="v11-tok" style="align-self:flex-start;margin-top:12px">' + esc(s.tok) + '</span><div style="font-size:26px;font-weight:700;letter-spacing:-.3px;margin-top:6px">' + esc(s.name) + '</div><div style="font-size:17px;color:#344054;margin-top:2px">' + esc(s.prob) + '</div>' +
           '<button class="v11-done" id="callnow" style="margin-top:16px">Call now</button><div style="font-size:14px;color:#475467;text-align:center;margin-top:6px">For emergencies. Everyone else keeps their place.</div>' +
@@ -943,7 +958,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
           (L.tv ? '<a class="irow" href="' + esc(L.tv) + '" target="_blank" rel="noopener"><span class="icol"><span>Waiting-room TV screen</span></span>' + CHEV + '</a>' : '') +
           '<button class="irow" id="logout" style="color:' + C.bad + '"><span>Log out</span></button></div>';
       }
-      return '<div class="isheetbg" data-close="1"><div class="isheet" role="dialog" aria-modal="true"' + (s.t === 'dstat' || s.t === 'vstat' || s.t === 'tlrow' || s.t === 'stpick' ? ' style="background:#FFF"' : '') + '><div class="grab"></div>' + inner + '</div></div>';
+      return '<div class="isheetbg" data-close="1"><div class="isheet" role="dialog" aria-modal="true"' + (s.t === 'dstat' || s.t === 'vstat' || s.t === 'tlrow' || s.t === 'stpick' || s.t === 'billdone' ? ' style="background:#FFF"' : '') + '><div class="grab"></div>' + inner + '</div></div>';
     }
 
     // ---------- draw ----------
@@ -962,7 +977,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       var y = window.scrollY; var anim = S.sheet && S.sheet !== S.lastSheet; S.lastSheet = S.sheet;
       var regBadge = 0;
       if (S.desk) {
-        var sideItems = tabs.map(function (t) { var bd = t === 'inbox' && badge ? badge : t === 'after' ? (((S.d.act || {}).attention) || []).length : 0; return '<button data-tab="' + t + '" class="sitem' + (t === S.tab ? ' on' : '') + '"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[t] + '</svg><span>' + LAB[t] + '</span>' + (bd ? '<span class="sbadge">' + bd + '</span>' : '') + '</button>'; }).join('');
+        var sideItems = tabs.map(function (t) { var bd = t === 'inbox' && badge ? badge : t === 'after' ? (S.d.report ? S.d.report.problems : (((S.d.act || {}).attention) || []).length) : 0; return '<button data-tab="' + t + '" class="sitem' + (t === S.tab ? ' on' : '') + '"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[t] + '</svg><span>' + LAB[t] + '</span>' + (bd ? '<span class="sbadge">' + bd + '</span>' : '') + '</button>'; }).join('');
         var dsh = '<div class="dshell"><aside class="side"><div class="sclinic">' + esc(S.d.clinic.name) + '</div><div class="srole">' + esc(S.d.me.name) + ' · ' + esc(docApp ? (S.d.me.role === 'owner' ? 'Owner' : 'Doctor') : 'Reception') + '</div><nav class="snav">' + sideItems + '</nav><div style="flex:1"></div>' +
           (isDoc() && S.viewAs === 'reception' ? '<button class="sitem" data-asdoc="1"><span>Back to doctor app</span></button>' : '') + '<div class="skey">Press <b>N</b> for Call next</div><button class="sitem" id="logout"><span>Log out</span></button></aside>' +
           '<main class="dmain t-' + S.tab + '">' + (S.err ? '<div class="errbar">' + esc(S.err) + '</div>' : '') + scr + '</main>' + (S.toast ? '<div class="itoast" role="status">' + esc(S.toast) + (S.undo ? '<button class="tundo" id="stundo">Undo</button>' : '') + '</div>' : '') + sheetHtml() + '</div>';
@@ -973,7 +988,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         '<div class="content">' + scr + '</div>' +
         (S.toast ? '<div class="itoast" role="status">' + esc(S.toast) + (S.undo ? '<button class="tundo" id="stundo">Undo</button>' : '') + '</div>' : '') +
         '<nav class="itabs' + (docApp ? ' dtabs' : '') + '"><div class="in" style="grid-template-columns:repeat(' + tabs.length + ',minmax(0,1fr))">' + tabs.map(function (t) {
-          var bd = t === 'inbox' && badge ? badge : t === 'register' && regBadge ? regBadge : t === 'after' ? (((S.d.act || {}).attention) || []).length : 0;
+          var bd = t === 'inbox' && badge ? badge : t === 'register' && regBadge ? regBadge : t === 'after' ? (S.d.report ? S.d.report.problems : (((S.d.act || {}).attention) || []).length) : 0;
           return '<button data-tab="' + t + '" class="' + (t === S.tab ? 'on' : '') + '"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[t] + '</svg>' + LAB[t] + (bd ? '<span class="badge">' + bd + '</span>' : '') + '</button>'; }).join('') + '</div></nav>' +
         sheetHtml() + '</div>';
       html = html.replace('class="isheet"', 'class="isheet' + (anim ? ' up' : '') + '"');
@@ -1003,7 +1018,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       on('[data-m]', function (el) { readFee(); S.sheet.m = el.getAttribute('data-m'); S.sheet.qr = false; draw(); });
       on('[data-fup]', function (el) { readFee(); S.sheet.fup = Number(el.getAttribute('data-fup')); draw(); });
       on('[data-upiqr]', function () { readFee(); S.sheet.qr = true; draw(); });
-      on('#savebill', function (el) { readFee(); var s = S.sheet; el.disabled = true; call({ action: 'bill', k: s.b.k, fee: s.fee, m: s.m, fup: s.fup, items: s.items || [] }, function (r) { if (r.billed) { S.sheet = null; toast(r.billed + ' billed' + (s.fup ? ' · reminder set' : '')); } }); });
+      on('#savebill', function (el) { readFee(); var s = S.sheet; el.disabled = true; call({ action: 'bill', k: s.b.k, fee: s.fee, m: s.m, fup: s.fup, items: s.items || [] }, function (r) { if (r.billed) { S.sheet = r.inv ? { t: 'billdone', inv: r.inv, name: s.b.name, fup: s.fup } : null; if (!r.inv) toast(r.billed + ' billed'); draw(); } }); });
       on('#addtok', function (el) { var n = (document.getElementById('wn').value || '').trim(), p = (document.getElementById('wp').value || '').trim(); if (!n) { document.getElementById('wn').focus(); return; } el.disabled = true; call({ action: 'add_token', name: n, phone: p, srcOf: S.sheet.src || '' }, function (r) { S.sheet = null; if (r.added) toast('Token ' + r.added + (r.sent ? ' · sent on WhatsApp' : '')); }); });
       on('[data-rm]', function (el) { S.sheet = { t: 'rm', key: el.getAttribute('data-rm'), name: el.getAttribute('data-rmname') }; draw(); });
       on('#rmtok', function () { var k = S.sheet.key; S.sheet = null; call({ action: 'remove_token', key: k }, function () { toast('Removed'); }); });
@@ -1059,6 +1074,9 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         else { S.leaveArm = false; S.sheet = { t: 'stpick', st: st }; draw(); } });
       on('[data-stm]', function (el) { var st = S.sheet && S.sheet.st; S.sheet = null; stSend(st, Number(el.getAttribute('data-stm'))); });
       on('#stundo', function () { S.undo = 0; S.toast = ''; call({ action: 'status_undo' }, function () { toast('Undone · nothing was sent'); }); });
+      on('[data-rper]', function (el) { S.rper = el.getAttribute('data-rper'); S.rd = null; draw(); call({}); });
+      on('[data-rd]', function (el, e) { if (e.metaKey || e.ctrlKey || e.shiftKey) return; e.preventDefault(); S.rd = el.getAttribute('data-rd'); draw(); window.scrollTo(0, 0); });
+      on('[data-rback]', function () { S.rd = null; if (location.hash) history.replaceState(null, '', location.pathname + location.search); draw(); });
       on('[data-ev]', function (el) { var p = el.getAttribute('data-ev'); S.openEv[p] = !S.openEv[p]; draw(); });
       on('[data-vst]', function (el) { S.sheet.st = el.getAttribute('data-vst'); draw(); });
       on('[data-vmin]', function (el) { S.sheet.mins = Number(el.getAttribute('data-vmin')); draw(); });
@@ -1094,6 +1112,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       var t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
       var b = document.getElementById('cdone') || document.querySelector('[data-a="call_next"]'); if (b && !b.disabled) { e.preventDefault(); b.click(); }
     });
+    (function () { var m = location.hash.match(/^#report\/(\w+)\/(today|7|30)$/); if (m) { S.tab = 'after'; S.rd = m[1]; S.rper = m[2]; } })();
     var code = qs.get('code');
     if (code) {
       history.replaceState(null, '', location.pathname);
@@ -1108,8 +1127,27 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     document.addEventListener('visibilitychange', function () { if (!document.hidden) poll(); });
   }
 
+
+  function invoice(id) {
+    $app.innerHTML = '<div class="wrap white"><div class="empty">Loading…</div></div>';
+    post({ action: 'inv', id: id }).then(function (d) {
+      var e = function (x) { return String(x == null ? '' : x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+      var rp = function (n) { return '₹' + Number(n || 0).toLocaleString('en-IN'); };
+      if (!d.ok) { $app.innerHTML = '<div class="wrap white"><div style="padding:60px 24px;text-align:center;font-size:18px;font-weight:600">This invoice link is not valid.</div></div>'; return; }
+      document.title = 'Invoice #' + d.no + ' · ' + d.clinic.name;
+      $app.innerHTML = '<div class="invw"><div class="inv">' +
+        '<div class="invh"><div><div class="invc">' + e(d.clinic.name) + '</div><div class="invs">' + e(d.clinic.doctor) + (d.clinic.address ? '<br>' + e(d.clinic.address) : '') + '</div></div><div style="text-align:right"><div class="invt">INVOICE</div><div class="invs">#' + e(d.no) + '<br>' + e(d.date) + (d.time ? ', ' + e(d.time) : '') + '</div></div></div>' +
+        '<div class="invp"><span class="invs">Patient</span><b>' + e(d.name) + '</b>' + (d.phone ? '<span class="invs">' + e(d.phone) + '</span>' : '') + '</div>' +
+        '<table class="invtb"><thead><tr><th>Item</th><th style="text-align:right">Amount</th></tr></thead><tbody>' + d.items.map(function (i) { return '<tr><td>' + e(i.n) + '</td><td style="text-align:right">' + rp(i.p) + '</td></tr>'; }).join('') + '</tbody>' +
+        '<tfoot><tr><td>Total paid</td><td style="text-align:right">' + rp(d.total) + '</td></tr></tfoot></table>' +
+        '<div class="invs" style="margin-top:10px">Paid by ' + (d.m === 'upi' ? 'UPI' : d.m === 'free' ? '—' : 'cash') + (d.by ? ' · received by ' + e(d.by) : '') + '</div>' +
+        '<div class="invf">Thank you. Keep this invoice for your records.</div></div>' +
+        '<button class="invbtn" onclick="window.print()">Print / Save as PDF</button></div>';
+    }).catch(function () { $app.innerHTML = '<div class="wrap white"><div class="empty">Could not load. Check your internet.</div></div>'; });
+  }
   var v = qs.get('v');
-  if (v === 't') tracker(qs.get('k'));
+  if (qs.get('inv')) invoice(qs.get('inv'));
+  else if (v === 't') tracker(qs.get('k'));
   else if (v === 'tv') tv(qs.get('k'));
   else if (v === 'qr') poster();
   else staff();
