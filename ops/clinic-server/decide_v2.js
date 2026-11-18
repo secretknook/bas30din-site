@@ -1139,11 +1139,12 @@ function timeList(d, after) {
   if (sl.length > 10) sections.push({ title: L.later, rows: [{ id: `M|${d}|${sl[8]}`, title: L.later }] });
   return sectionsTo(msg.from, L.timesFor(dateLabel(d, lang)), L.timeBtn, sections, lang);
 }
-const svcs = S.services || [];
+const svcBase = ($('Clinic Settings').first().json.services || []).filter(v => v && typeof v === 'object');
+const svcs = (S.services || []).map((v, i) => { if (v && typeof v === 'object' && v.name) return v; const n = String(v || '').trim(); const b0 = svcBase.find(x => x.name.toLowerCase() === n.toLowerCase()); return b0 || { id: 's' + i + '-' + n.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 12), name: n, en: '', hl: '' }; }).filter(v => v.name);
 const svcName = sid => { const x = svcs.find(v => v.id === sid); return x ? x.name : ''; };
 function svcList(intro) {
   if (!svcs.length) return dateList(intro);
-  return sectionsTo(msg.from, intro, L.svcBtn, [{ title: L.svcTitle, rows: svcs.slice(0, 9).map(v => ({ id: `TR|${v.id}`, title: v.name.slice(0, 24), description: (lang === 'hl' ? v.hl : v.en || '').slice(0, 72) })) }, { title: L.liveRow, rows: [{ id: 'LIVE', title: L.liveRow, description: L.liveRowD }] }], lang);
+  return sectionsTo(msg.from, intro, L.svcBtn, [{ title: L.svcTitle, rows: svcs.slice(0, 9).map(v => ({ id: `TR|${v.id}`, title: String(v.name).slice(0, 24), description: String((lang === 'hl' ? v.hl : v.en) || v.en || v.hl || '').slice(0, 72) })) }, { title: L.liveRow, rows: [{ id: 'LIVE', title: L.liveRow, description: L.liveRowD }] }], lang);
 }
 const cleanName = s => s.replace(/[^\p{L}\p{M}\s.'-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 40).replace(/\b\p{L}/gu, c => c.toUpperCase());
 const confirmMsg = r => buttons(L.confirmed(r, W(r)), [[`RR|${r.row_number}`, L.changeBtn], [`RX|${r.row_number}`, L.cancelBtn]],
@@ -1164,6 +1165,7 @@ else if (isDocPh && !id && raw && raw.trim().split(/\s+/).length <= 6) {
     docIntent = { k: 'leave', d };
   }
   else if (/\b(late|let|der|deri|delay|delayed|traffic)\b/.test(low)) docIntent = { k: 'late', m: mins };
+  else if (mins && /\b(min|mins|minute|minutes|minat|hr|hour|ghanta|ghante)\b/.test(low) && /\b(mein|me|main|in|reach|reaching|pahunch|pahunchunga|pahunchungi|aa raha|aa rahi|aaunga|aaungi|coming|be there|nikal)\b/.test(low)) docIntent = { k: 'late', m: mins };
   else if (/\b(away|bahar|surgery|ward|ot mein|nikal raha|nikal rahi)\b/.test(low)) docIntent = { k: 'away', m: mins };
   else if (/^(in|back|aa gaya|aa gayi|aagaya|aagayi|pahunch gaya|pahunch gayi|reached|in clinic|i am in|i'm in|im in|start|started|wapas|wapas aa gaya|wapas aa gayi)\b/.test(low)) docIntent = { k: 'in' };
 }
@@ -1193,7 +1195,62 @@ const liveOpen = p => { const l = mem.live[p]; return l && DateTime.fromISO(l.la
 const adminTarget = null; if (mem.live && Object.keys(mem.live).length) mem.live = {};
 let liveHandled = false;
 const sysWord = /^(login|reset|code|token)$/i.test((raw || '').trim());
-if (!adminCmd && !sysWord && isAdmin && adminTarget && liveOpen(adminTarget) && !id) {
+if (adminCmd) {
+  const today = now.toFormat('yyyy-MM-dd');
+  const nWait = () => waitingOf(qRead()).filter(x => x.phone).length;
+  const sync = '\nReception app, TV screen and the WhatsApp bot now show this.';
+  if (docIntent && docIntent.k === 'cancel') payload = text('Okay, nothing changed.');
+  else if (docIntent && (docIntent.k === 'late' || docIntent.k === 'away') && !docIntent.m) {
+    payload = docIntent.k === 'late' ? buttons('How late will you be?', [['DS|late|15', '15 min'], ['DS|late|30', '30 min'], ['DS|late|60', '1 hour']]) : buttons('Back in about?', [['DS|away|30', '30 min'], ['DS|away|60', '1 hour'], ['DS|away|120', '2 hours']]);
+  }
+  else if (docIntent && (docIntent.k === 'late' || docIntent.k === 'away')) {
+    delete mem.docPend; const told = setDoc(docIntent.k, docIntent.m, more);
+    const appts = docIntent.k === 'late' ? rows.filter(r => r.date === today && active(r) && at(r.date, r.time) >= now.minus({ minutes: 15 })) : [];
+    appts.forEach(r => notifyPatient(r, lg => T[lg].lateMsg(docIntent.m, at(r.date, r.time).plus({ minutes: docIntent.m }).toFormat('h:mm a')), null, [[`UK|${r.row_number}`, 'okBtn'], [`RR|${r.row_number}`, 'changeBtn'], [`RX|${r.row_number}`, 'cancelBtn']]));
+    const lab = docIntent.k === 'late' ? `Running ${docIntent.m} min late` : `Away · back by ${now.plus({ minutes: docIntent.m }).toFormat('h:mm a')}`;
+    payload = buttons(`Done ✓ ${lab}.\n${told + appts.length ? `Told ${told ? told + ' waiting' : ''}${told && appts.length ? ' and ' : ''}${appts.length ? appts.length + ' booked' : ''} on WhatsApp.` : 'No WhatsApp needed to go out.'}${sync}\n\nWhen you reach, tap below or send "in".`, [['DS|in', "I'm in clinic"]]);
+  }
+  else if (docIntent && docIntent.k === 'in') {
+    delete mem.docPend; const told = setDoc('in', 0, more);
+    payload = text(`Done ✓ In clinic.${told ? `\n${told} patient${told > 1 ? 's' : ''} who were told you are late now know you are here.` : ''}${sync}`);
+  }
+  else if (docIntent && docIntent.k === 'leave' && !docIntent.sure) {
+    const d = docIntent.d; const n = rows.filter(r => r.date === d && active(r)).length + (d === today ? nWait() : 0);
+    payload = buttons(`Leave on ${DateTime.fromISO(d).toFormat('ccc, d LLL')}?\nNo new tokens or bookings that day.${n ? ` ${n} patient${n > 1 ? 's' : ''} will be told on WhatsApp.` : ''}`, [[`DS|leave|${d}`, 'Yes, leave'], ['DS|cancel', 'No']]);
+  }
+  else if (docIntent && docIntent.k === 'leave') {
+    const d = docIntent.d; const l = rows.filter(r => r.date === d && active(r));
+    l.forEach(r => notifyPatient(r, lg => T[lg].leaveMsg(dateLabel(d, lg)), null, [[`RR|${r.row_number}`, 'newTimeBtn'], [`RX|${r.row_number}`, 'cancelBtn']]));
+    if (!holidays.includes(d)) holiday = [[d, 'Doctor on leave (set by WhatsApp)']];
+    if (d === today) { delete mem.docPend; setDoc('leave', 0, more); }
+    payload = text(`Done ✓ ${DateTime.fromISO(d).toFormat('ccc, d LLL')} is marked as leave.\n${l.length ? `${l.length} booked patient${l.length > 1 ? 's were' : ' was'} asked to pick a new time.` : 'Nobody was booked that day.'}${sync}`);
+  }
+  else if (/^(TODAY|AAJ)/.test(cmd)) {
+    const l = rows.filter(r => r.date === today && active(r)).sort((a, b) => a.time.localeCompare(b.time));
+    payload = text(l.length ? `Today (${now.toFormat('ccc, d LLL')}): ${l.length} appointment${l.length > 1 ? 's' : ''}\n\n${l.map(r => `${at(r.date, r.time).toFormat('h:mm a')}  ${r.name || 'Patient'}  (+${r.phone})${r.status === 'confirmed' ? '  ✓' : ''}`).join('\n')}\n\n✓ = confirmed by patient`
+      : `No appointments booked for today (${now.toFormat('ccc, d LLL')}).`);
+  } else if (/^LATE/.test(cmd)) {
+    const m = Number((cmd.match(/\d+/) || [])[0] || 0);
+    if (!m) payload = text('Please send the delay in minutes, for example: LATE 30');
+    else {
+      const l = rows.filter(r => r.date === today && active(r) && at(r.date, r.time) >= now.minus({ minutes: 15 }));
+      l.forEach(r => notifyPatient(r, lg => T[lg].lateMsg(m, at(r.date, r.time).plus({ minutes: m }).toFormat('h:mm a')), null, [[`UK|${r.row_number}`, 'okBtn'], [`RR|${r.row_number}`, 'changeBtn'], [`RX|${r.row_number}`, 'cancelBtn']]));
+      payload = text(l.length ? `Done. ${l.length} patient${l.length > 1 ? 's' : ''} with an appointment later today ${l.length > 1 ? 'have' : 'has'} been told you are running about ${m} minutes late.` : 'There are no more appointments today, so nobody needed to be told.');
+    }
+  } else if (/^LEAVE/.test(cmd)) {
+    const d = parseLeaveDate(cmd);
+    if (!d) payload = text('I could not read that date. Examples: LEAVE TODAY, LEAVE TOMORROW, LEAVE 20 Nov');
+    else {
+      const l = rows.filter(r => r.date === d && active(r));
+      l.forEach(r => notifyPatient(r, lg => T[lg].leaveMsg(dateLabel(d, lg)), null, [[`RR|${r.row_number}`, 'newTimeBtn'], [`RX|${r.row_number}`, 'cancelBtn']]));
+      if (!holidays.includes(d)) holiday = [[d, 'Doctor on leave (set by WhatsApp)']];
+      payload = text(`Done. ${DateTime.fromISO(d).toFormat('ccc, d LLL')} is now closed for new bookings.\n${l.length ? `${l.length} patient${l.length > 1 ? 's' : ''} booked on that day ${l.length > 1 ? 'have' : 'has'} been asked to choose a new time.` : 'Nobody was booked on that day.'}`);
+    }
+  } else {
+    payload = text('You can tell the clinic bot in your own words, from this number:\n\n• "30 min late" / "aaj der hogi"\n• "away 1 hour" / "surgery hai"\n• "in" / "aa gaya"\n• "kal chutti" / "leave 25 Nov"\n• TODAY - today\'s bookings\n\nReception app, TV and waiting patients update by themselves.');
+  }
+}
+else if (!adminCmd && !sysWord && isAdmin && adminTarget && liveOpen(adminTarget) && !id) {
   liveHandled = true;
   const pl = langOf(adminTarget, '');
   if (cmd === 'END') {
@@ -1226,7 +1283,7 @@ else if (!isAdmin && !sysWord && liveOpen(me) && !id) {
 }
 const staffOf = p => (S.staff || []).find(x => same(x.phone, p));
 const docAsk = !id && has(['doctor', 'dr', 'daktar', 'doc']) && has(['aa', 'aaye', 'aayi', 'aaya', 'gaye', 'gayi', 'hai', 'hain', 'kab', 'kahan', 'late', 'available', 'here', 'in']);
-if (liveHandled) {}
+if (liveHandled || adminCmd) {}
 else if (!id && /^code$/i.test(raw) && staffOf(me)) {
   if (!mem.otp) mem.otp = {};
   const code = String(Math.floor(100000 + Math.random() * 900000)); const salt = rid(8); const o = mem.otp[me] || {};
@@ -1287,61 +1344,6 @@ else if (id === 'TQ|HERE') {
 else if (docAsk) {
   const q0 = qRead(); const tk = q0.list.find(x => x.phone === me && x.st === 'w');
   payload = text(docLine(lang) + (tk ? (lang === 'en' ? ` ${aheadOf(q0, tk)} ahead of you (${etaText(q0, aheadOf(q0, tk), 'en')}).` : ` Aapse pehle ${aheadOf(q0, tk)} patient (${etaText(q0, aheadOf(q0, tk), 'hl')}).`) : ''));
-}
-else if (adminCmd) {
-  const today = now.toFormat('yyyy-MM-dd');
-  const nWait = () => waitingOf(qRead()).filter(x => x.phone).length;
-  const sync = '\nReception app, TV screen and the WhatsApp bot now show this.';
-  if (docIntent && docIntent.k === 'cancel') payload = text('Okay, nothing changed.');
-  else if (docIntent && (docIntent.k === 'late' || docIntent.k === 'away') && !docIntent.m) {
-    payload = docIntent.k === 'late' ? buttons('How late will you be?', [['DS|late|15', '15 min'], ['DS|late|30', '30 min'], ['DS|late|60', '1 hour']]) : buttons('Back in about?', [['DS|away|30', '30 min'], ['DS|away|60', '1 hour'], ['DS|away|120', '2 hours']]);
-  }
-  else if (docIntent && (docIntent.k === 'late' || docIntent.k === 'away')) {
-    delete mem.docPend; const told = setDoc(docIntent.k, docIntent.m, more);
-    const appts = docIntent.k === 'late' ? rows.filter(r => r.date === today && active(r) && at(r.date, r.time) >= now.minus({ minutes: 15 })) : [];
-    appts.forEach(r => notifyPatient(r, lg => T[lg].lateMsg(docIntent.m, at(r.date, r.time).plus({ minutes: docIntent.m }).toFormat('h:mm a')), null, [[`UK|${r.row_number}`, 'okBtn'], [`RR|${r.row_number}`, 'changeBtn'], [`RX|${r.row_number}`, 'cancelBtn']]));
-    const lab = docIntent.k === 'late' ? `Running ${docIntent.m} min late` : `Away · back by ${now.plus({ minutes: docIntent.m }).toFormat('h:mm a')}`;
-    payload = buttons(`Done ✓ ${lab}.\n${told + appts.length ? `Told ${told ? told + ' waiting' : ''}${told && appts.length ? ' and ' : ''}${appts.length ? appts.length + ' booked' : ''} on WhatsApp.` : 'No WhatsApp needed to go out.'}${sync}\n\nWhen you reach, tap below or send "in".`, [['DS|in', "I'm in clinic"]]);
-  }
-  else if (docIntent && docIntent.k === 'in') {
-    delete mem.docPend; const told = setDoc('in', 0, more);
-    payload = text(`Done ✓ In clinic.${told ? `\n${told} patient${told > 1 ? 's' : ''} who were told you are late now know you are here.` : ''}${sync}`);
-  }
-  else if (docIntent && docIntent.k === 'leave' && !docIntent.sure) {
-    const d = docIntent.d; const n = rows.filter(r => r.date === d && active(r)).length + (d === today ? nWait() : 0);
-    payload = buttons(`Leave on ${DateTime.fromISO(d).toFormat('ccc, d LLL')}?\nNo new tokens or bookings that day.${n ? ` ${n} patient${n > 1 ? 's' : ''} will be told on WhatsApp.` : ''}`, [[`DS|leave|${d}`, 'Yes, leave'], ['DS|cancel', 'No']]);
-  }
-  else if (docIntent && docIntent.k === 'leave') {
-    const d = docIntent.d; const l = rows.filter(r => r.date === d && active(r));
-    l.forEach(r => notifyPatient(r, lg => T[lg].leaveMsg(dateLabel(d, lg)), null, [[`RR|${r.row_number}`, 'newTimeBtn'], [`RX|${r.row_number}`, 'cancelBtn']]));
-    if (!holidays.includes(d)) holiday = [[d, 'Doctor on leave (set by WhatsApp)']];
-    if (d === today) { delete mem.docPend; setDoc('leave', 0, more); }
-    payload = text(`Done ✓ ${DateTime.fromISO(d).toFormat('ccc, d LLL')} is marked as leave.\n${l.length ? `${l.length} booked patient${l.length > 1 ? 's were' : ' was'} asked to pick a new time.` : 'Nobody was booked that day.'}${sync}`);
-  }
-  else if (/^(TODAY|AAJ)/.test(cmd)) {
-    const l = rows.filter(r => r.date === today && active(r)).sort((a, b) => a.time.localeCompare(b.time));
-    payload = text(l.length ? `Today (${now.toFormat('ccc, d LLL')}): ${l.length} appointment${l.length > 1 ? 's' : ''}\n\n${l.map(r => `${at(r.date, r.time).toFormat('h:mm a')}  ${r.name || 'Patient'}  (+${r.phone})${r.status === 'confirmed' ? '  ✓' : ''}`).join('\n')}\n\n✓ = confirmed by patient`
-      : `No appointments booked for today (${now.toFormat('ccc, d LLL')}).`);
-  } else if (/^LATE/.test(cmd)) {
-    const m = Number((cmd.match(/\d+/) || [])[0] || 0);
-    if (!m) payload = text('Please send the delay in minutes, for example: LATE 30');
-    else {
-      const l = rows.filter(r => r.date === today && active(r) && at(r.date, r.time) >= now.minus({ minutes: 15 }));
-      l.forEach(r => notifyPatient(r, lg => T[lg].lateMsg(m, at(r.date, r.time).plus({ minutes: m }).toFormat('h:mm a')), null, [[`UK|${r.row_number}`, 'okBtn'], [`RR|${r.row_number}`, 'changeBtn'], [`RX|${r.row_number}`, 'cancelBtn']]));
-      payload = text(l.length ? `Done. ${l.length} patient${l.length > 1 ? 's' : ''} with an appointment later today ${l.length > 1 ? 'have' : 'has'} been told you are running about ${m} minutes late.` : 'There are no more appointments today, so nobody needed to be told.');
-    }
-  } else if (/^LEAVE/.test(cmd)) {
-    const d = parseLeaveDate(cmd);
-    if (!d) payload = text('I could not read that date. Examples: LEAVE TODAY, LEAVE TOMORROW, LEAVE 20 Nov');
-    else {
-      const l = rows.filter(r => r.date === d && active(r));
-      l.forEach(r => notifyPatient(r, lg => T[lg].leaveMsg(dateLabel(d, lg)), null, [[`RR|${r.row_number}`, 'newTimeBtn'], [`RX|${r.row_number}`, 'cancelBtn']]));
-      if (!holidays.includes(d)) holiday = [[d, 'Doctor on leave (set by WhatsApp)']];
-      payload = text(`Done. ${DateTime.fromISO(d).toFormat('ccc, d LLL')} is now closed for new bookings.\n${l.length ? `${l.length} patient${l.length > 1 ? 's' : ''} booked on that day ${l.length > 1 ? 'have' : 'has'} been asked to choose a new time.` : 'Nobody was booked on that day.'}`);
-    }
-  } else {
-    payload = text('You can tell the clinic bot in your own words, from this number:\n\n• "30 min late" / "aaj der hogi"\n• "away 1 hour" / "surgery hai"\n• "in" / "aa gaya"\n• "kal chutti" / "leave 25 Nov"\n• TODAY - today\'s bookings\n\nReception app, TV and waiting patients update by themselves.');
-  }
 }
 // ---------- patients ----------
 else if (id === 'MC_Q') { payload = text(L.mcQ); }
