@@ -883,7 +883,7 @@ if (mode === 'desk') {
     const q = qRead(); const tk = q.list.find(x => x.key === b.k);
     if (!tk) res = { ok: false, gone: true, clinic };
     else { if (b.cancel && tk.st === 'w') { qWrite(); tk.st = 'x'; }
-      const n = aheadOf(q, tk); res = { ok: true, tok: tk.tok, st: tk.st, ahead: tk.st === 'w' ? n : 0, eta: tk.st === 'w' ? etaText(q, n, 'hl') : '', now: (servingOf(q) || {}).tok || null, missed: tk.missed || 0, clinic, doc: Object.assign(docInfo(), { line: docLine(langOf(tk.phone, '')) }), lang: langOf(tk.phone, '') }; }
+      const n = aheadOf(q, tk); const cf8 = mem.cfg || {}; res = { ok: true, line: waitingOf(q).slice(0, 12).map(x => x.tok), me1: String(tk.name || '').split(' ')[0].slice(0, 20), brand: { color: cf8.color || '#8A6A1F', logo: cf8.logo || String(C)[0], phone: (cf8.biz || {}).phone || S.clinicPhone || '', address: S.address || '' }, tok: tk.tok, st: tk.st, ahead: tk.st === 'w' ? n : 0, eta: tk.st === 'w' ? etaText(q, n, 'hl') : '', now: (servingOf(q) || {}).tok || null, missed: tk.missed || 0, clinic, doc: Object.assign(docInfo(), { line: docLine(langOf(tk.phone, '')) }), lang: langOf(tk.phone, '') }; }
   } else if (b.action === 'inv') {
     const [d0, k0, ik0] = String(b.id || '').split('.'); const v = /^\d{4}-\d{2}-\d{2}$/.test(d0 || '') ? ((mem.vis || {})[d0] || []).find(x => x.k === k0) : null;
     if (!v || !v.ik || v.ik !== ik0 || !v.m) res = { ok: false, clinic };
@@ -971,7 +971,8 @@ if (mode === 'desk') {
     const stNow = staffRec(sess.phone); const role = stNow.role || sess.role; const isDoc = role === 'doctor' || role === 'owner'; if (stNow.name && sess.name !== stNow.name) sess.name = stNow.name;
     const q0 = qRead();
     const callBy = S.callBy === 'reception' ? 'reception' : 'doctor';
-    if (String(b.action || '').startsWith('v8_')) { try { v8act(b, sess, role, isDoc, out, res); } catch (e) { res.error = 'Something went wrong. Please try again.'; res.v8err = String(e && e.stack || e).slice(0, 400); } }
+    if (String(b.action || '').startsWith('v8_') && b.rq && (mem.rq || []).includes(String(b.rq))) { res.dup = true; }
+    else if (String(b.action || '').startsWith('v8_')) { try { if (b.rq) mem.rq = (mem.rq || []).concat([String(b.rq).slice(0, 24)]).slice(-300); v8act(b, sess, role, isDoc, out, res); } catch (e) { res.error = 'Something went wrong. Please try again.'; res.v8err = String(e && e.stack || e).slice(0, 400); } }
     else if (['call_next', 'finish', 'call_now'].includes(b.action) && role === 'reception' && callBy === 'doctor' && b.action !== 'finish') { res.error = 'The doctor calls the next patient in this clinic.'; }
     else if (['call_next', 'finish', 'call_now'].includes(b.action)) { const q = qWrite(); const cur = servingOf(q);
       if (cur && isDoc && b.forTok === cur.tok) {

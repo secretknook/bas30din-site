@@ -61,7 +61,7 @@
   /* ---------- every tap that changes something ---------- */
   function send(payload) {
     if (!payload) return;
-    L.sends = (L.sends || 0) + 1; L.queue.push(payload); pump();
+    L.sends = (L.sends || 0) + 1; payload.rq = payload.rq || (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)); L.queue.push(payload); pump();
   }
   function pump() {
     if (L.busy || !L.queue.length) return;
@@ -221,7 +221,7 @@
   function loggedOut(msg) { store('cd_sid', null); store('cd_role', null); L.sid = null; CD.liveState = null; drawLogin(msg); }
   let LG = { step: 'phone', ph: '', err: '' };
   function drawLogin(msg) {
-    if (msg) LG.err = msg;
+    if (msg) LG.err = String(msg).replace(/Use "First time\? Get login link" below\./, 'Tap "Get code on WhatsApp" instead.');
     document.body.className = 'app-reception';
     const r = document.getElementById('root');
     const err = LG.err ? '<div class="bad small" style="min-height:4px">' + esc(LG.err) + '</div>' : '';
@@ -237,7 +237,7 @@
     if ($('lg-otp')) $('lg-otp').onclick = () => { const p = phOk(); if (!p) return; busy(true); post({ action: 'otp_send', phone: p }).then(x => { LG.err = ''; if (!x.ok) { LG.err = x.error || 'Could not send the code.'; } else if (x.viaWa) LG.step = 'wa'; else { LG.step = 'code'; LG.sentTo = x.sentTo; } drawLogin(); }).catch(() => { LG.err = 'No internet. Try again.'; drawLogin(); }); };
     if ($('lg-pwb')) $('lg-pwb').onclick = () => { const p = phOk(); if (!p) return; LG.step = 'pw'; LG.err = ''; drawLogin(); };
     if ($('lg-back')) $('lg-back').onclick = () => { LG.step = 'phone'; LG.err = ''; drawLogin(); };
-    const done = x => { if (!x.ok) { LG.err = x.error || 'Could not log in.'; drawLogin(); return; } store('cd_sid', x.sid); store('cd_role', x.role); L.sid = x.sid; L.role = x.role; LG = { step: 'phone', ph: '', err: '' }; boot(); };
+    const done = x => { if (!x.ok) { drawLogin(x.error || 'Could not log in.'); return; } store('cd_sid', x.sid); store('cd_role', x.role); L.sid = x.sid; L.role = x.role; LG = { step: 'phone', ph: '', err: '' }; boot(); };
     if ($('lg-go')) $('lg-go').onclick = () => {
       busy(true);
       const q = LG.step === 'code' ? { action: 'otp_verify', phone: LG.ph, code: ($('lg-code').value || '').replace(/\D/g, '') } : { action: 'pw_login', phone: LG.ph, pw: $('lg-pw').value };
@@ -257,7 +257,7 @@
       apply(r.v8);
       if (!CD.allowApp(UI.app) || !location.hash) { UI.app = CD.homeApp(); UI.scr = 'home'; }
       CD.start();
-      setInterval(() => { if (!document.hidden) refresh(false); }, 7000);
+      setInterval(() => { if (!document.hidden) refresh(false); }, 12000);
       document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(false); });
       window.addEventListener('online', () => { L.offline = false; pump(); refresh(false); });
     }).catch(() => { document.getElementById('root').innerHTML = '<main class="pg narrow" style="padding-top:80px"><div class="card pad">No internet. <button class="btn" onclick="location.reload()">Try again</button></div></main>'; });

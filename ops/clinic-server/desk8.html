@@ -534,35 +534,72 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 
   // ---------------- patient live tracker ----------------
   function tracker(k) {
-    var st = { d: null };
+    var st = { d: null, at: null, err: false };
+    var E = function (x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+    document.title = 'Your token';
+    var css = document.createElement('style');
+    css.textContent = "@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap');" +
+      'body{margin:0;background:#F6F2EA}' +
+      '.pt{font-family:"IBM Plex Sans",system-ui,sans-serif;color:#16213A;max-width:480px;margin:0 auto;min-height:100vh;padding:calc(env(safe-area-inset-top) + 18px) 16px calc(env(safe-area-inset-bottom) + 28px);box-sizing:border-box;display:flex;flex-direction:column;gap:14px}' +
+      '.pt *{box-sizing:border-box}.pt .sf{font-family:"Newsreader",Georgia,serif}' +
+      '.pt .hd{display:flex;align-items:center;gap:12px}.pt .lg{width:42px;height:42px;border-radius:50%;border:1.5px solid var(--b);color:var(--b);display:flex;align-items:center;justify-content:center;font-family:"Newsreader",serif;font-size:21px;font-weight:600;background:#FFF}' +
+      '.pt .cn{font-family:"Newsreader",serif;font-size:21px;font-weight:600;line-height:1.15}.pt .dn{font-size:14px;color:#5B6474}' +
+      '.pt .card{background:#FFF;border:1px solid #E2DACB;border-radius:20px;padding:18px}' +
+      '.pt .tk{text-align:center;padding:24px 18px 22px}.pt .tl{font-size:14px;color:#5B6474;letter-spacing:.3px}.pt .tn{font-family:"Newsreader",serif;font-size:76px;font-weight:600;line-height:1;margin:6px 0 10px;color:var(--b)}' +
+      '.pt .stt{font-size:20px;font-weight:600;line-height:1.3}.pt .sts{font-size:15px;color:#5B6474;margin-top:4px}' +
+      '.pt .go{background:#E8F5EE;border-color:#B7DEC8}.pt .go .tn,.pt .go .stt{color:#1D7A4C}' +
+      '.pt .warn{background:#FFF6E5;border:1px solid #F1D49A;color:#7A4B00;border-radius:16px;padding:14px 16px;font-size:15px;line-height:1.45}' +
+      '.pt .trw{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}.pt .tr{display:flex;align-items:flex-end;gap:6px;width:max-content;padding:4px 2px 0}' +
+      '.pt .co{position:relative;min-width:52px;padding:0 6px;height:46px;border-radius:10px 10px 5px 5px;border:1.5px solid #D8D0C0;background:#FFF;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#5B6474}' +
+      '.pt .co:before,.pt .co:after{content:"";position:absolute;bottom:-5px;width:9px;height:9px;border-radius:50%;background:#16213A}.pt .co:before{left:9px}.pt .co:after{right:9px}' +
+      '.pt .co.you{background:var(--b);border-color:var(--b);color:#FFF;flex-direction:column;line-height:1.1}.pt .co.you small{font-size:11px;font-weight:500;opacity:.9}' +
+      '.pt .co.en{min-width:88px;height:58px;background:#16213A;border-color:#16213A;color:#FFF;flex-direction:column;border-radius:16px 22px 6px 6px;font-size:13px;line-height:1.15}.pt .co.en small{font-size:11px;opacity:.75;font-weight:500}' +
+      '.pt .rail{height:2px;background:#CFC5B3;margin-top:8px;border-radius:2px}' +
+      '.pt .lgd{display:flex;justify-content:space-between;font-size:12px;color:#8A8F99;margin-top:8px}' +
+      '.pt .note{font-size:14px;color:#4A5468;line-height:1.5;display:flex;gap:10px;align-items:flex-start}' +
+      '.pt .acts{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pt .bt{height:50px;border-radius:14px;border:1.5px solid #D8D0C0;background:#FFF;color:#16213A;font:600 16px "IBM Plex Sans",sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;cursor:pointer}' +
+      '.pt .bt.cx{grid-column:1/-1;color:#8E2A22;border-color:#E8B9B4;background:transparent}' +
+      '.pt .ft{text-align:center;font-size:12px;color:#8A8F99}';
+    document.head.appendChild(css);
     function draw() {
       var d = st.d;
-      if (!d) { $app.innerHTML = '<div class="wrap white"><div class="empty">Loading…</div></div>'; return; }
-      if (!d.ok) { $app.innerHTML = '<div class="wrap white"><div style="padding:60px 24px;text-align:center"><div style="font-size:20px;font-weight:700">Ye token ab active nahi hai</div><div class="sub" style="margin-top:8px">Naya token lene ke liye clinic ka QR scan karein.</div></div></div>'; return; }
-      var en = d.lang === 'en';
-      var a = d.ahead, card;
-      if (d.st === 's') card = [en ? "It's your turn" : 'Aapki baari aa gayi', en ? 'Please come in 🙏' : 'Andar aaiye 🙏', '#12B76A', '#FFFFFF'];
-      else if (d.st === 'd') card = [en ? 'Visit done' : 'Aapka visit ho gaya', en ? 'Thank you for visiting' : 'Aane ke liye dhanyavaad', '#F2F4F7', '#101828'];
-      else if (d.st === 'x') card = [en ? 'Token cancelled' : 'Token cancel ho gaya', '', '#F2F4F7', '#101828'];
-      else if (a <= 1) card = [en ? 'You are next' : 'Aap agle hain', (en ? 'Please come to the waiting room · ' : 'Waiting room mein aa jaiye · ') + d.eta, '#EFF4FF', '#1849A9'];
-      else if (a === 2) card = [en ? 'Please come near the clinic' : 'Clinic ke paas aa jaiye', (en ? '2 ahead · ' : '2 patients aapse pehle · ') + d.eta, '#FFFAEB', '#93370D'];
-      else card = [d.eta, en ? 'Relax, there is still time' : 'Aaram se aaiye, abhi time hai', '#F2F4F7', '#101828'];
-      var dots = ''; for (var i = 3; i >= 0; i--) dots += '<span style="flex:1;height:6px;border-radius:3px;background:' + (d.st === 's' ? '#12B76A' : (i >= Math.min(a, 3) ? '#175CD3' : '#EAECF0')) + '"></span>';
-      var docNote = d.doc && d.doc.status !== 'in' ? '<div style="margin:14px 20px 0;padding:12px 14px;border-radius:12px;background:' + DOC[d.doc.status][2] + ';color:' + DOC[d.doc.status][3] + ';font-size:14px;line-height:1.5">' + esc(d.doc.line) + '</div>' : '';
-      $app.innerHTML = '<div class="wrap white">' +
-        '<div style="padding:calc(env(safe-area-inset-top) + 24px) 20px 0;display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:15px;font-weight:700">' + esc(d.clinic.name) + '</div><div class="sub">' + esc(d.clinic.doctor) + '</div></div><span style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#067647"><span class="dot" style="background:#12B76A"></span>Live</span></div>' +
-        '<div style="margin:24px 20px 0;border-radius:20px;padding:22px 20px;display:flex;flex-direction:column;align-items:center;gap:6px;background:' + card[2] + ';color:' + card[3] + '"><span style="font-size:14px;font-weight:600;opacity:.85">' + (en ? 'Your token' : 'Aapka token') + '</span><span class="tok" style="font-size:64px;font-weight:800;letter-spacing:-1.5px;line-height:1">' + esc(d.tok) + '</span><span style="font-size:18px;font-weight:700;margin-top:8px;text-align:center">' + esc(card[0]) + '</span><span style="font-size:14px;opacity:.85;text-align:center">' + esc(card[1]) + '</span></div>' +
-        (d.st === 'w' ? '<div style="margin:20px 20px 0;display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="card" style="padding:12px 14px"><div class="sub">' + (en ? 'Now serving' : 'Abhi chal raha hai') + '</div><div class="tok" style="font-size:26px;font-weight:800">' + esc(d.now || '—') + '</div></div><div class="card" style="padding:12px 14px"><div class="sub">' + (en ? 'Ahead of you' : 'Aapse pehle') + '</div><div class="tok" style="font-size:26px;font-weight:800">' + a + '</div></div></div><div style="margin:18px 20px 0;display:flex;gap:6px">' + dots + '</div>' : '') +
-        docNote +
-        (d.st === 'w' ? '<div style="margin:18px 20px 0;padding:12px 14px;border-radius:12px;background:#F2F4F7;font-size:14px;line-height:1.5;color:#344054">' + (en ? 'We will message you on WhatsApp when 2 patients are ahead of you.' : 'Jab 2 patients aapse pehle honge, hum WhatsApp par bata denge. Tab tak aap bahar wait kar sakte hain.') + '</div>' : '') +
-        '<div style="flex:1"></div>' +
-        (d.st === 'w' ? '<div style="padding:16px 20px calc(env(safe-area-inset-bottom) + 24px)"><button class="btn" id="cx" style="width:100%;color:#B42318;border-color:#FDA29B">' + (en ? 'Cancel my token' : 'Token cancel karein') + '</button></div>' : '') +
-        '</div>';
+      if (!d) { $app.innerHTML = '<div class="pt"><div class="card tk"><div class="tl">Loading…</div></div></div>'; return; }
+      if (!d.ok) { $app.innerHTML = '<div class="pt"><div class="card tk"><div class="stt sf">Ye token ab active nahi hai</div><div class="sts">This token is no longer active. Send TOKEN on WhatsApp for a new one.</div></div></div>'; return; }
+      var en = d.lang === 'en', b = d.brand || {}, a = d.ahead, T = function (e, h) { return en ? e : h; };
+      var tok = String(d.tok || ''), cls = 'card tk', head, sub;
+      if (d.st === 's') { cls += ' go'; head = T("It's your turn", 'Aapki baari aa gayi'); sub = T('Please go in to the doctor 🙏', 'Kripya doctor ke paas andar jaiye 🙏'); }
+      else if (d.st === 'd') { head = T('Visit done', 'Aapka visit ho gaya'); sub = T('Thank you for visiting. Get well soon!', 'Aane ke liye dhanyavaad. Jaldi theek ho jaiye!'); }
+      else if (d.st === 'x') { head = T('Token cancelled', 'Token cancel ho gaya'); sub = T('Send TOKEN on WhatsApp if you need a new one.', 'Naya token chahiye to WhatsApp par TOKEN bhejiye.'); }
+      else if (a <= 1) { head = T('You are next', 'Agla number aapka hai'); sub = T('Please come to the waiting room now', 'Kripya abhi waiting room mein aa jaiye'); }
+      else { head = T(a + ' patients before you', 'Aapse pehle ' + a + ' patients'); sub = (d.eta ? T('Your turn in ', 'Aapki baari ') + E(d.eta) + T('', ' mein') + ' · ' : '') + (a === 2 ? T('please start coming', 'clinic ki taraf aana shuru karein') : T('no need to wait here', 'yahan rukne ki zaroorat nahi')); }
+      var banner = d.doc && d.doc.status && d.doc.status !== 'in' && d.st === 'w' ? '<div class="warn">' + E(d.doc.line) + '</div>' : '';
+      var train = '';
+      if (d.st === 'w') {
+        var line = (d.line || []).slice(), i = line.indexOf(tok); if (i < 0) { line.push(tok); i = line.length - 1; }
+        var show = i <= 3 ? line.slice(0, Math.min(line.length, i + 2)) : line.slice(0, 2).concat(['+' + (i - 2)], [tok]);
+        show = show.reverse();
+        var co = show.map(function (t) { return t === tok ? '<div class="co you">' + E(t) + '<small>' + T('You', 'Aap') + '</small></div>' : t.charAt(0) === '+' ? '<div class="co" style="border-style:dashed;min-width:48px">' + E(t) + '</div>' : '<div class="co">' + E(t) + '</div>'; }).join('');
+        var out = d.doc && d.doc.status && d.doc.status !== 'in';
+        var eng = '<div class="co en">' + (out ? T('Doctor out', 'Doctor bahar') : d.now ? E(d.now) : T('Free', 'Khali')) + '<small>' + T("Doctor's cabin", 'Doctor ka cabin') + '</small></div>';
+        train = '<div class="card"><div class="tl" style="margin-bottom:10px">' + T('Live queue', 'Live line') + '</div><div class="trw" id="trw"><div class="tr">' + co + eng + '</div><div class="rail"></div></div><div class="lgd"><span>' + T('Last', 'Peeche') + '</span><span>' + T('Going in →', 'Andar ja rahe →') + '</span></div></div>';
+      }
+      var note = d.st === 'w' ? '<div class="note"><span>💬</span><span>' + T('We will message you on WhatsApp when 2 patients are ahead of you. You can wait outside.', 'Jab aapse pehle 2 patients rahenge, hum WhatsApp par bata denge. Aap bahar intezaar kar sakte hain.') + '</span></div>' : '';
+      var acts = '<div class="acts">' + (b.phone ? '<a class="bt" href="tel:' + E(String(b.phone).replace(/[^\d+]/g, '')) + '">📞 ' + T('Call clinic', 'Call karein') + '</a>' : '') +
+        (b.address ? '<a class="bt" target="_blank" rel="noopener" href="https://maps.google.com/?q=' + encodeURIComponent((d.clinic.name || '') + ' ' + b.address) + '">📍 ' + T('Directions', 'Raasta') + '</a>' : '') +
+        (d.st === 'w' ? '<button class="bt cx" id="cx">' + T('Cancel my token', 'Token cancel karein') + '</button>' : '') + '</div>';
+      var upd = st.at ? T('Updated ', 'Update: ') + st.at.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }) + (st.err ? T(' · no internet, retrying', ' · internet nahi, dobara try') : '') : '';
+      $app.innerHTML = '<div class="pt" style="--b:' + E(b.color || '#8A6A1F') + '">' +
+        '<div class="hd"><span class="lg">' + E(b.logo || 'C') + '</span><div><div class="cn">' + E(d.clinic.name) + '</div><div class="dn">' + E(d.clinic.doctor) + '</div></div></div>' +
+        banner +
+        '<div class="' + cls + '"><div class="tl">' + (d.me1 ? E(d.me1) + ' · ' : '') + T('Your token', 'Aapka token') + '</div><div class="tn">' + E(tok) + '</div><div class="stt">' + head + '</div><div class="sts">' + sub + '</div></div>' +
+        train + note + acts + '<div class="ft">' + upd + '</div></div>';
+      var w = document.getElementById('trw'); if (w) w.scrollLeft = w.scrollWidth;
       var cx = document.getElementById('cx');
-      if (cx) cx.onclick = function () { if (confirm(en ? 'Cancel your token?' : 'Token cancel karna hai?')) post({ action: 'track', k: k, cancel: true }).then(function (r) { st.d = r; draw(); }); };
+      if (cx) cx.onclick = function () { if (confirm(en ? 'Cancel your token?' : 'Token cancel karna hai?')) post({ action: 'track', k: k, cancel: true }).then(function (r) { st.d = r; st.at = new Date(); draw(); }); };
     }
-    function tick() { post({ action: 'track', k: k }).then(function (r) { st.d = r; draw(); }).catch(function () {}); }
-    draw(); tick(); setInterval(tick, 12000);
+    function tick() { post({ action: 'track', k: k }).then(function (r) { st.d = r; st.at = new Date(); st.err = false; draw(); }).catch(function () { st.err = true; if (st.d) draw(); }); }
+    draw(); tick(); setInterval(function () { if (!document.hidden) tick(); }, 12000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) tick(); });
   }
 
   // ---------------- waiting room TV ----------------
@@ -3974,7 +4011,7 @@ textarea.field{height:auto;min-height:96px;padding:12px 16px;line-height:1.45;re
   /* ---------- every tap that changes something ---------- */
   function send(payload) {
     if (!payload) return;
-    L.sends = (L.sends || 0) + 1; L.queue.push(payload); pump();
+    L.sends = (L.sends || 0) + 1; payload.rq = payload.rq || (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)); L.queue.push(payload); pump();
   }
   function pump() {
     if (L.busy || !L.queue.length) return;
@@ -4134,7 +4171,7 @@ textarea.field{height:auto;min-height:96px;padding:12px 16px;line-height:1.45;re
   function loggedOut(msg) { store('cd_sid', null); store('cd_role', null); L.sid = null; CD.liveState = null; drawLogin(msg); }
   let LG = { step: 'phone', ph: '', err: '' };
   function drawLogin(msg) {
-    if (msg) LG.err = msg;
+    if (msg) LG.err = String(msg).replace(/Use "First time\? Get login link" below\./, 'Tap "Get code on WhatsApp" instead.');
     document.body.className = 'app-reception';
     const r = document.getElementById('root');
     const err = LG.err ? '<div class="bad small" style="min-height:4px">' + esc(LG.err) + '</div>' : '';
@@ -4150,7 +4187,7 @@ textarea.field{height:auto;min-height:96px;padding:12px 16px;line-height:1.45;re
     if ($('lg-otp')) $('lg-otp').onclick = () => { const p = phOk(); if (!p) return; busy(true); post({ action: 'otp_send', phone: p }).then(x => { LG.err = ''; if (!x.ok) { LG.err = x.error || 'Could not send the code.'; } else if (x.viaWa) LG.step = 'wa'; else { LG.step = 'code'; LG.sentTo = x.sentTo; } drawLogin(); }).catch(() => { LG.err = 'No internet. Try again.'; drawLogin(); }); };
     if ($('lg-pwb')) $('lg-pwb').onclick = () => { const p = phOk(); if (!p) return; LG.step = 'pw'; LG.err = ''; drawLogin(); };
     if ($('lg-back')) $('lg-back').onclick = () => { LG.step = 'phone'; LG.err = ''; drawLogin(); };
-    const done = x => { if (!x.ok) { LG.err = x.error || 'Could not log in.'; drawLogin(); return; } store('cd_sid', x.sid); store('cd_role', x.role); L.sid = x.sid; L.role = x.role; LG = { step: 'phone', ph: '', err: '' }; boot(); };
+    const done = x => { if (!x.ok) { drawLogin(x.error || 'Could not log in.'); return; } store('cd_sid', x.sid); store('cd_role', x.role); L.sid = x.sid; L.role = x.role; LG = { step: 'phone', ph: '', err: '' }; boot(); };
     if ($('lg-go')) $('lg-go').onclick = () => {
       busy(true);
       const q = LG.step === 'code' ? { action: 'otp_verify', phone: LG.ph, code: ($('lg-code').value || '').replace(/\D/g, '') } : { action: 'pw_login', phone: LG.ph, pw: $('lg-pw').value };
@@ -4170,7 +4207,7 @@ textarea.field{height:auto;min-height:96px;padding:12px 16px;line-height:1.45;re
       apply(r.v8);
       if (!CD.allowApp(UI.app) || !location.hash) { UI.app = CD.homeApp(); UI.scr = 'home'; }
       CD.start();
-      setInterval(() => { if (!document.hidden) refresh(false); }, 7000);
+      setInterval(() => { if (!document.hidden) refresh(false); }, 12000);
       document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(false); });
       window.addEventListener('online', () => { L.offline = false; pump(); refresh(false); });
     }).catch(() => { document.getElementById('root').innerHTML = '<main class="pg narrow" style="padding-top:80px"><div class="card pad">No internet. <button class="btn" onclick="location.reload()">Try again</button></div></main>'; });

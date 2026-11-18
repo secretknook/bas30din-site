@@ -6,6 +6,8 @@ A = '/home/claude/clinic-app/'
 cur = open(D + 'desk.html').read()
 old_router = "  else staff();\n})();"
 assert old_router in cur, 'router not found'
+t0 = cur.index('  function tracker(k) {'); t1 = cur.index('  // ---------------- waiting room TV')
+cur = cur[:t0] + open(A + 'tracker8.js').read() + cur[t1:]
 cur = cur.replace(old_router, "  else if (qs.get('old')) staff();\n  else window.cd8Start();\n})();", 1)
 css = open(A + 'app.css').read()
 css += """

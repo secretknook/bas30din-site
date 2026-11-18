@@ -26,6 +26,7 @@ services:
       - EXECUTIONS_DATA_PRUNE=true
       - EXECUTIONS_DATA_MAX_AGE=168
       - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_CONCURRENCY_PRODUCTION_LIMIT=1
     volumes:
       - n8n_data:/home/node/.n8n
   caddy:
@@ -43,9 +44,11 @@ volumes:
 YML
 cat > Caddyfile <<'CADDY'
 bot.bas30din.com {
+  encode gzip
   reverse_proxy n8n:5678
 }
 desk.bas30din.com {
+  encode gzip
   handle /api {
     rewrite * /webhook/desk-api
     reverse_proxy n8n:5678
