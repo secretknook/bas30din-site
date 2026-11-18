@@ -867,67 +867,68 @@ if (mode === 'desk') {
       res.opd = !rg.length ? { label: 'No OPD today', time: '' } : over ? { label: 'OPD over for today', time: '' } : rg.length === 1 ? { label: 'OPD today', time: fmt2(cur) } : { label: (+cur.split('-')[0].slice(0, 2) < 14 ? 'Morning OPD' : 'Evening OPD'), time: fmt2(cur) }; }      // tell reception on WhatsApp once if a call back waits 30+ min (only reaches staff who messaged the bot in the last 24 h)
       for (const cb of (mem.callbacks || [])) if (!cb.pinged && cb.at < now.minus({ minutes: 30 }).toISO() && isOpenNow()) { cb.pinged = now.toISO(); for (const st of (S.staff || []).filter(x => x.role === 'reception' && inWindow(x.phone))) out.push(textTo(st.phone, '⏰ Call back pending 30+ min: ' + ((mem.pname || {})[cb.phone] || cb.name || '+' + cb.phone) + (cb.reason ? ' — "' + cb.reason + '"' : '') + '\nCall: +' + cb.phone)); }
     if (b.view === 'report' && isDoc) {
-      const per = ['today', '7', '30'].includes(b.per) ? b.per : 'today'; const nd = per === 'today' ? 1 : Number(per);
-      const from = now.minus({ days: nd - 1 }).toFormat('yyyy-MM-dd'), fromIso = now.minus({ days: nd - 1 }).startOf('day').toISO();
-      const T = {}; for (const d of Object.keys(mem.st || {})) if (d >= from) for (const [k, n] of Object.entries(mem.st[d])) T[k] = (T[k] || 0) + n;
-      const R = regSum(from, todayStr), V = R.V; const hm2 = iso => DateTime.fromISO(iso).setZone(TZ).toFormat(per === 'today' ? 'h:mm a' : 'd LLL, h:mm a');
-      const pkOf = v => patKey(v.ph, v.name);
-      const dayOfV = v => DateTime.fromISO(v.in || v.at || now.toISO()).setZone(TZ).toFormat('d LLL');
-      const nm = ph => (mem.pname || {})[ph] || '+' + ph.slice(0, 2) + ' ' + ph.slice(2, 7) + ' ' + ph.slice(7);
-      const mins = (a, c) => Math.max(0, Math.round(DateTime.fromISO(c).diff(DateTime.fromISO(a), 'minutes').minutes));
-      const dur = m => m < 60 ? m + ' min' : Math.floor(m / 60) + ' h' + (m % 60 ? ' ' + (m % 60) + ' min' : '');
-      const C2 = [], D2 = {};
-      const add = (id, title, value, sub, tone, rows) => { C2.push({ id, title, value: String(value), sub, tone, n: rows.length }); D2[id] = rows.slice(0, 150); };
-      // 1. seen but not billed
-      const nob = V.filter(v => !v.m && v.out);
-      add('nobill', 'Seen but not billed', nob.length, nob.length ? 'Money may be missing from the register' : 'Every patient seen has a bill', nob.length ? 'bad' : 'ok',
-        nob.map(v => ({ t: v.name, s: dayOfV(v) + ' · token ' + String(v.tok || '').replace('-', '') + ' · seen, no bill', r: 'No bill', tone: 'bad', pk: pkOf(v) })));
-      // 2. bills changed after saving
-      const ed = (mem.edits || []).filter(e => e.at >= fromIso);
-      add('edits', 'Bills changed after saving', ed.length, ed.length ? ed.reduce((a, e) => a + (e.from.fee - e.to.fee), 0) > 0 ? rupees(ed.reduce((a, e) => a + (e.from.fee - e.to.fee), 0)) + ' less than first written' : 'Check who changed them' : 'No bill was changed', ed.length ? 'bad' : 'ok',
-        ed.slice().reverse().map(e => ({ t: e.name + (e.inv ? ' · #' + String(e.inv).padStart(4, '0') : ''), s: 'Changed by ' + e.by + ' · ' + hm2(e.at), r: rupees(e.from.fee) + ' ' + e.from.m + ' → ' + rupees(e.to.fee) + ' ' + e.to.m, tone: e.to.fee < e.from.fee ? 'bad' : 'mid' })));
-      // 3. cash count at closing
-      const cl = Object.entries(mem.close || {}).filter(([d]) => d >= from).map(([d, c]) => { const r0 = regSum(d, d); return { d, c, cd: c.cash - r0.cash, ud: c.upi - r0.upi }; });
-      const short = cl.filter(x => x.cd < 0 || x.ud < 0);
-      add('cash', 'Cash count at closing', short.length ? rupees(-short.reduce((a, x) => a + Math.min(0, x.cd) + Math.min(0, x.ud), 0)) + ' short' : cl.length ? 'Matched' : 'Not done', short.length ? short.length + ' day' + (short.length > 1 ? 's' : '') + ' did not match the register' : cl.length ? 'Cash and UPI matched the register' : 'Reception has not counted the cash yet', short.length ? 'bad' : cl.length ? 'ok' : 'mid',
-        cl.sort((a, c) => c.d.localeCompare(a.d)).map(x => ({ t: DateTime.fromISO(x.d).toFormat('ccc d LLL'), s: 'Counted by ' + x.c.by + ' · cash ' + rupees(x.c.cash) + ' · UPI ' + rupees(x.c.upi), r: x.cd < 0 || x.ud < 0 ? rupees(-(Math.min(0, x.cd) + Math.min(0, x.ud))) + ' short' : 'Matched', tone: x.cd < 0 || x.ud < 0 ? 'bad' : 'ok' })));
-      // 4. call backs
-      const cbs = (mem.cbLog || []).filter(x => x.at >= fromIso); const pend = (mem.callbacks || []).filter(x => x.at >= fromIso || per !== 'today');
-      const doneW = cbs.filter(x => x.done).map(x => mins(x.at, x.done)); const avg = doneW.length ? Math.round(doneW.reduce((a, c) => a + c, 0) / doneW.length) : 0;
-      add('cb', 'Call backs', pend.length ? pend.length + ' waiting' : cbs.length ? 'All done' : 'None', cbs.length ? cbs.length + ' asked · ' + (cbs.length - pend.length) + ' called' + (avg ? ' · avg wait ' + dur(avg) : '') : 'Nobody asked for a call back', pend.length || avg > 60 ? 'bad' : cbs.length ? 'ok' : 'mid',
-        pend.map(x => ({ t: nm(x.phone), s: (x.reason ? '"' + x.reason + '" · ' : '') + 'asked ' + hm2(x.at) + (x.noans ? ' · no answer ×' + x.noans : ''), r: 'Waiting ' + dur(mins(x.at, now.toISO())), tone: 'bad', call: '+' + x.phone })).concat(
-        cbs.filter(x => x.done).reverse().map(x => ({ t: nm(x.ph), s: (x.reason ? '"' + x.reason + '" · ' : '') + 'called by ' + x.by, r: 'after ' + dur(mins(x.at, x.done)), tone: mins(x.at, x.done) > 60 ? 'mid' : 'ok', call: '+' + x.ph }))));
-      // 5. people who reached out (missed calls + WhatsApp)
-      const evs = Object.keys(mem.ev || {}).map(ph => ({ ph, l: (mem.ev[ph] || []).filter(e => e.at >= fromIso) })).filter(x => x.l.length);
-      const outc = x => { const ks = x.l.map(e => e.k); return ks.includes('booked') ? ['Booked', 'ok'] : ks.includes('token') ? ['Came', 'ok'] : (mem.callbacks || []).some(c => c.phone === x.ph) ? ['Waiting for call', 'bad'] : ks.includes('done') ? ['Called back', 'ok'] : ['No reply', 'mid']; };
-      const lostN = evs.filter(x => outc(x)[1] !== 'ok').length;
-      add('reach', 'People who reached out', evs.length, (T.mcalls || 0) + ' missed calls · ' + (T.chats || 0) + ' WhatsApp chats · ' + evs.filter(x => outc(x)[1] === 'ok').length + ' booked, came or were called', lostN ? 'mid' : 'ok',
-        evs.sort((a, c) => c.l[c.l.length - 1].at.localeCompare(a.l[a.l.length - 1].at)).map(x => { const o = outc(x); return { t: nm(x.ph), s: hm2(x.l[0].at) + ' · ' + x.l[x.l.length - 1].t, r: o[0], tone: o[1], ph: x.ph, story: x.l.map(e => ({ t: hm2(e.at), k: e.k, txt: e.t })), call: '+' + x.ph }; }));
-      // 6. patients seen + money
-      const firstSeen = {}; for (const d of Object.keys(mem.vis || {}).sort()) for (const v of mem.vis[d]) { const k = pkOf(v); if (!firstSeen[k]) firstSeen[k] = d; }
-      const newP = V.filter(v => firstSeen[pkOf(v)] >= from).length;
-      add('seen', 'Patients seen', R.seen, rupees(R.money) + ' · ' + newP + ' new · ' + (R.seen - newP) + ' returning', 'ok',
-        V.slice().reverse().map(v => ({ t: v.name, s: dayOfV(v) + (v.inv ? ' · #' + String(v.inv).padStart(4, '0') : '') + (v.items && v.items.length ? ' · ' + v.items.map(i => i.n).join(', ') : ''), r: v.m === 'free' ? 'Free' : v.m ? rupees(v.fee) + ' ' + v.m : 'No bill', tone: v.m ? 'ok' : 'bad', pk: pkOf(v), inv: v.ik ? (S.appUrl || 'https://desk.bas30din.com/') + '?inv=' + DateTime.fromISO(v.in || v.at).setZone(TZ).toFormat('yyyy-MM-dd') + '.' + v.k + '.' + v.ik : '' })));
-      // 7. free visits
-      const fr = V.filter(v => v.m === 'free');
-      add('free', 'Free visits', fr.length, fr.length ? 'Marked free by ' + [...new Set(fr.map(v => v.by || '?'))].join(', ') : 'No free visits', 'mid',
-        fr.map(v => ({ t: v.name, s: dayOfV(v) + ' · marked free by ' + (v.by || '?'), r: 'Free', tone: 'mid', pk: pkOf(v) })));
-      // 8. follow-ups
-      const VA = []; for (const d of Object.keys(mem.vis || {}).sort()) for (const v of mem.vis[d]) VA.push({ d, v });
-      const due = VA.filter(x => x.v.fup && x.v.fup >= from && x.v.fup <= todayStr).map(x => ({ v: x.v, cameOn: (VA.find(y => y.d > x.d && y.d >= DateTime.fromISO(x.v.fup).minus({ days: 3 }).toFormat('yyyy-MM-dd') && pkOf(y.v) === pkOf(x.v)) || {}).d }));
-      const came = due.filter(x => x.cameOn);
-      add('fup', 'Follow-ups due', due.length ? came.length + ' of ' + due.length + ' came' : 'None', due.length ? (due.length - came.length) + ' did not come back yet · ' + (T.recalls || 0) + ' reminders sent · ' + (T.recallBack || 0) + ' came after a reminder' + (T.recallMoney ? ' (' + rupees(T.recallMoney) + ')' : '') : 'No follow-ups were due', due.length - came.length > 0 ? 'mid' : 'ok',
-        due.map(x => ({ t: x.v.name, s: 'Due ' + DateTime.fromISO(x.v.fup).toFormat('d LLL') + (x.cameOn ? ' · came ' + DateTime.fromISO(x.cameOn).toFormat('d LLL') : ''), r: x.cameOn ? 'Came' : 'Not yet', tone: x.cameOn ? 'ok' : 'mid', pk: pkOf(x.v), call: x.v.ph ? '+' + x.v.ph : '' })));
-      // 9. reviews
-      const fb = Object.entries(mem.rv || {}).filter(([, r]) => r.at >= fromIso && r.r);
-      add('rv', 'Patient happiness', (T.rvGood || 0) + ' happy', (T.rvMid || 0) + ' okay · ' + (T.rvLow || 0) + ' not happy' + ((mem.cfg || {}).googleReview ? '' : ' · add your Google review link in Clinic'), T.rvLow ? 'mid' : 'ok',
-        fb.map(([ph, r]) => { const f = (mem.fb || []).filter(x => x.ph === ph).pop(); return { t: nm(ph), s: (f ? '"' + f.t + '" · ' : '') + hm2(r.at), r: r.r >= 4 ? 'Happy' : r.r >= 3 ? 'Okay' : 'Not happy', tone: r.r >= 4 ? 'ok' : r.r >= 3 ? 'mid' : 'bad', call: '+' + ph }; }));
-      // 10. how new patients found you
-      const srcs = Object.entries(T).filter(([k]) => k.startsWith('src_')).sort((a, c) => c[1] - a[1]); const sTot = srcs.reduce((a, x) => a + x[1], 0);
-      add('src', 'How new patients found you', sTot ? (SRC[srcs[0][0].slice(4)] || srcs[0][0].slice(4)) : '—', sTot ? sTot + ' new patients answered' : 'Nobody answered yet', 'mid',
-        srcs.map(([k, n]) => ({ t: SRC[k.slice(4)] || k.slice(4), s: Math.round(n / sTot * 100) + '% of new patients', r: String(n), tone: 'mid' })));
-      const order = { bad: 0, mid: 1, ok: 2 }; C2.sort((a, c) => order[a.tone] - order[c.tone]);
-      res.report = { per, cards: C2, rows: D2, problems: C2.filter(c => c.tone === 'bad').length, inv: mem.invSeq || 0 };
+      const RANGES = { today: [0, 0], yday: [1, 1], d7: [6, 0], month: null, lmonth: null };
+      const rg = RANGES.hasOwnProperty(b.range) ? b.range : 'today'; let from, to;
+      if (rg === 'month') { from = now.startOf('month'); to = now; } else if (rg === 'lmonth') { from = now.minus({ months: 1 }).startOf('month'); to = now.minus({ months: 1 }).endOf('month'); } else { from = now.minus({ days: RANGES[rg][0] }); to = now.minus({ days: RANGES[rg][1] }); }
+      const F = from.toFormat('yyyy-MM-dd'), Tt = to.toFormat('yyyy-MM-dd'), FI = from.startOf('day').toISO(), TI = to.endOf('day').toISO();
+      const label = { today: 'Today', yday: 'Yesterday', d7: 'Last 7 days', month: now.toFormat('LLLL yyyy'), lmonth: now.minus({ months: 1 }).toFormat('LLLL yyyy') }[rg];
+      const R0 = regSum(F, Tt), V = R0.V; const pk = v => patKey(v.ph, v.name); const dOf = v => DateTime.fromISO(v.in || v.at).setZone(TZ);
+      const R = n => Math.round(n); const fmtD = d => DateTime.fromISO(d).toFormat('dd LLL'); const ph = x => x ? '+' + x.slice(0, 2) + ' ' + x.slice(2, 7) + ' ' + x.slice(7) : '';
+      const firstSeen = {}; for (const d of Object.keys(mem.vis || {}).sort()) for (const v of mem.vis[d]) if (!firstSeen[pk(v)]) firstSeen[pk(v)] = d;
+      const days = []; for (let d = from.startOf('day'); d <= to.startOf('day'); d = d.plus({ days: 1 })) days.push(d.toFormat('yyyy-MM-dd'));
+      const invUrl = v => v.ik ? APP + '?inv=' + dOf(v).toFormat('yyyy-MM-dd') + '.' + v.k + '.' + v.ik : '';
+      const edits = (mem.edits || []).filter(x => x.at >= FI && x.at <= TI); const nob = V.filter(v => !v.m && v.out);
+      const cbs = (mem.cbLog || []).filter(x => x.at >= FI && x.at <= TI);
+      const list = [
+        { g: 'Collections', id: 'daybook', t: 'Day book', d: 'Daily collection by cash and UPI, with the cash count' },
+        { g: 'Collections', id: 'invoices', t: 'Invoice register', d: 'Every invoice issued, with revised ones marked' },
+        { g: 'Collections', id: 'services', t: 'Income by service', d: 'Which services bring in the money' },
+        { g: 'Collections', id: 'staff', t: 'Collection by staff', d: 'Who received how much' },
+        { g: 'Patients', id: 'opd', t: 'OPD register', d: 'Every patient seen, new or returning' },
+        { g: 'Patients', id: 'followup', t: 'Follow-up report', d: 'Follow-ups due, came, or still pending' },
+        { g: 'Patients', id: 'source', t: 'Referral source', d: 'How new patients heard about the clinic' },
+        { g: 'Patients', id: 'feedback', t: 'Patient feedback', d: 'Ratings and comments after visits' },
+        { g: 'Front desk', id: 'calls', t: 'Calls & call backs', d: 'Call back requests, reasons and response time' },
+        { g: 'Audit', id: 'audit', t: 'Revised invoices', d: 'Invoices changed after they were issued', n: edits.length },
+        { g: 'Audit', id: 'nobill', t: 'Visits without invoice', d: 'Patients seen but not billed', n: nob.length },
+      ];
+      const out2 = { range: rg, label, from: F, to: Tt, list, kpi: { money: R0.money, seen: R0.seen, inv: V.filter(v => v.m && v.m !== 'free').length, avg: V.filter(v => v.fee).length ? R(R0.money / V.filter(v => v.fee).length) : 0, cash: R0.cash, upi: R0.upi } };
+      const id = String(b.rid || '');
+      let rep0 = null;
+      if (id === 'daybook') { const rows = days.slice().reverse().map(d => { const r = regSum(d, d); const c = (mem.close || {})[d]; const diff = c ? (c.cash - r.cash) + (c.upi - r.upi) : null; return [fmtD(d), r.seen, r.V.filter(v => v.m && v.m !== 'free').length, r.cash, r.upi, r.free, r.money, c ? c.cash + c.upi : '—', diff == null ? 'Not counted' : diff === 0 ? 'Matched' : (diff < 0 ? 'Short ' : 'Extra ') + rupees(Math.abs(diff))]; }).filter(r => r[1] || r[7] !== '—');
+        rep0 = { cols: ['Date', 'Patients', 'Invoices', 'Cash ₹', 'UPI ₹', 'Free', 'Total ₹', 'Counted ₹', 'Cash check'], money: [3, 4, 6, 7], rows, total: ['Total', R0.seen, out2.kpi.inv, R0.cash, R0.upi, R0.free, R0.money, '', ''] }; }
+      if (id === 'invoices') { const rows = V.filter(v => v.m).slice().reverse().map(v => [invNo(v), dOf(v).toFormat('dd LLL, h:mm a'), v.name, uhidOf(v), (v.items && v.items.length ? v.items.map(i => i.n).join(', ') : 'Consultation'), v.m === 'upi' ? 'UPI' : v.m === 'free' ? 'Free' : 'Cash', v.fee || 0, v.edited ? 'Revised' : 'Issued', { link: invUrl(v) }]);
+        rep0 = { cols: ['Invoice no.', 'Date', 'Patient', 'UHID', 'Items', 'Mode', 'Amount ₹', 'Status', ''], money: [6], rows, total: ['Total', '', rows.length + ' invoices', '', '', '', R0.money, '', ''] }; }
+      if (id === 'services') { const E = {}; for (const v of V) { if (!v.fee || v.m === 'free') continue; const its = v.items && v.items.length ? v.items : [{ n: 'Consultation', p: v.fee }]; const tot = its.reduce((a, x) => a + x.p, 0) || 1; for (const it of its) { const k = it.n; if (!E[k]) E[k] = { n: 0, m: 0 }; E[k].n++; E[k].m += v.fee * it.p / tot; } }
+        const rows = Object.entries(E).sort((a, c) => c[1].m - a[1].m).map(([k, x]) => [k, x.n, R(x.m), R0.money ? Math.round(x.m / R0.money * 1000) / 10 + '%' : '—']);
+        rep0 = { cols: ['Service', 'Times', 'Amount ₹', 'Share'], money: [2], rows, total: ['Total', rows.reduce((a, r) => a + r[1], 0), R0.money, '100%'] }; }
+      if (id === 'staff') { const E = {}; for (const v of V) { if (!v.m) continue; const k = v.by || '—'; if (!E[k]) E[k] = { n: 0, c: 0, u: 0, f: 0 }; E[k].n++; if (v.m === 'cash') E[k].c += v.fee || 0; else if (v.m === 'upi') E[k].u += v.fee || 0; else E[k].f++; }
+        const rows = Object.entries(E).map(([k, x]) => [k, x.n, x.c, x.u, x.f, x.c + x.u]);
+        rep0 = { cols: ['Received by', 'Invoices', 'Cash ₹', 'UPI ₹', 'Free', 'Total ₹'], money: [2, 3, 5], rows, total: ['Total', rows.reduce((a, r) => a + r[1], 0), R0.cash, R0.upi, R0.free, R0.money] }; }
+      if (id === 'opd') { const rows = V.slice().reverse().map(v => [dOf(v).toFormat('dd LLL'), String(v.tok || '').replace('-', ''), v.name, ph(v.ph), firstSeen[pk(v)] >= dOf(v).toFormat('yyyy-MM-dd') ? 'New' : 'Revisit', (v.prob || '').replace(/"/g, ''), v.m ? (v.m === 'free' ? 'Free' : v.fee) : 'Not billed', { pk: pk(v) }]);
+        const nw = V.filter(v => firstSeen[pk(v)] >= dOf(v).toFormat('yyyy-MM-dd')).length;
+        rep0 = { cols: ['Date', 'Token', 'Patient', 'Phone', 'Type', 'Complaint', 'Bill ₹', ''], money: [6], rows, total: ['Total', '', rows.length + ' visits', '', nw + ' new · ' + (rows.length - nw) + ' revisit', '', R0.money, ''] }; }
+      if (id === 'followup') { const VA = []; for (const d of Object.keys(mem.vis || {}).sort()) for (const v of mem.vis[d]) VA.push({ d, v });
+        const rows = VA.filter(x => x.v.fup && x.v.fup >= F && x.v.fup <= Tt).map(x => { const came = VA.find(y => y.d > x.d && y.d >= DateTime.fromISO(x.v.fup).minus({ days: 3 }).toFormat('yyyy-MM-dd') && pk(y.v) === pk(x.v)); const rc = (mem.rc || {})[x.v.ph];
+          return [x.v.name, ph(x.v.ph), fmtD(x.d), fmtD(x.v.fup), came ? 'Came ' + fmtD(came.d) : x.v.fup < todayStr ? 'Overdue' : 'Due', rc && rc.fup === x.v.fup ? rc.n : 0, { pk: pk(x.v) }]; });
+        rep0 = { cols: ['Patient', 'Phone', 'Last visit', 'Due on', 'Status', 'Reminders', ''], rows, total: ['Total', '', '', rows.length + ' due', rows.filter(r => r[4].startsWith('Came')).length + ' came', '', ''] }; }
+      if (id === 'source') { const E = {}; for (const d of days) for (const [k, n] of Object.entries((mem.st || {})[d] || {})) if (k.startsWith('src_')) E[k.slice(4)] = (E[k.slice(4)] || 0) + n; const tot = Object.values(E).reduce((a, c) => a + c, 0);
+        const rows = Object.entries(E).sort((a, c) => c[1] - a[1]).map(([k, n]) => [SRC[k] || k, n, tot ? Math.round(n / tot * 100) + '%' : '—']);
+        rep0 = { cols: ['Source', 'New patients', 'Share'], rows, total: ['Total', tot, tot ? '100%' : ''] }; }
+      if (id === 'feedback') { const rows = (mem.fb || []).filter(f => f.at >= FI && f.at <= TI).reverse().map(f => [DateTime.fromISO(f.at).setZone(TZ).toFormat('dd LLL'), f.name || ph(f.ph), f.r >= 4 ? 'Excellent' : f.r >= 3 ? 'Good' : 'Needs improvement', f.t || '']);
+        const T0 = {}; for (const d of days) for (const [k, n] of Object.entries((mem.st || {})[d] || {})) T0[k] = (T0[k] || 0) + n;
+        rep0 = { cols: ['Date', 'Patient', 'Rating', 'Comment'], rows, total: ['Ratings', (T0.rvGood || 0) + ' excellent', (T0.rvMid || 0) + ' good · ' + (T0.rvLow || 0) + ' needs improvement', ''] }; }
+      if (id === 'calls') { const nm = x => (mem.pname || {})[x] || ph(x); const pend = (mem.callbacks || []).filter(x => x.at >= FI && x.at <= TI);
+        const mins = (a, c) => Math.max(0, Math.round(DateTime.fromISO(c).diff(DateTime.fromISO(a), 'minutes').minutes)); const dur = m => m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + (m % 60) + ' min';
+        const rows = cbs.slice().sort((x, y) => y.at.localeCompare(x.at)).map(x => { const p0 = pend.find(c => c.phone === x.ph && !x.done); return [DateTime.fromISO(x.at).setZone(TZ).toFormat('dd LLL, h:mm a'), nm(x.ph), x.reason || (p0 && p0.reason) || '—', x.done ? 'Called' : p0 && p0.noans ? 'No answer ×' + p0.noans : 'Pending', x.done ? x.by : '—', x.done ? dur(mins(x.at, x.done)) : dur(mins(x.at, now.toISO())) + ' so far']; });
+        const T0 = {}; for (const d of days) for (const [k, n] of Object.entries((mem.st || {})[d] || {})) T0[k] = (T0[k] || 0) + n;
+        rep0 = { cols: ['Requested', 'Patient', 'Reason', 'Status', 'Called by', 'Response time'], rows, total: ['Total', rows.length + ' requests', (T0.mcalls || 0) + ' missed calls', rows.filter(r => r[3] === 'Called').length + ' called', '', ''] }; }
+      if (id === 'audit') { const rows = edits.slice().reverse().map(x => [DateTime.fromISO(x.at).setZone(TZ).toFormat('dd LLL, h:mm a'), x.inv ? BIZ().prefix + '/' + fyOf(x.day) + '/' + String(x.inv).padStart(4, '0') : '—', x.name, x.by, rupees(x.from.fee) + ' ' + x.from.m, rupees(x.to.fee) + ' ' + x.to.m, x.to.fee - x.from.fee]);
+        rep0 = { cols: ['Changed on', 'Invoice no.', 'Patient', 'Changed by', 'Before', 'After', 'Difference ₹'], money: [6], rows, total: ['Total', rows.length + ' revised', '', '', '', '', rows.reduce((a, r) => a + r[6], 0)] }; }
+      if (id === 'nobill') { const rows = nob.slice().reverse().map(v => [dOf(v).toFormat('dd LLL'), String(v.tok || '').replace('-', ''), v.name, ph(v.ph), v.out ? DateTime.fromISO(v.out).setZone(TZ).toFormat('h:mm a') : '—', { pk: pk(v) }]);
+        rep0 = { cols: ['Date', 'Token', 'Patient', 'Phone', 'Seen at', ''], rows, total: ['Total', '', rows.length + ' visits', '', '', ''] }; }
+      if (rep0) { const meta = list.find(x => x.id === id); rep0.id = id; rep0.t = meta.t; rep0.d = meta.d; rep0.rows = rep0.rows.slice(0, 500); out2.rep = rep0; }
+      res.report = out2;
     }
     if (b.view === 'register' && isDoc) {
       const per = ['today', 'week', 'month'].includes(b.period) ? b.period : 'today';
