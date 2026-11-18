@@ -1204,9 +1204,23 @@ function welcomeCard() {
     : (en ? '🟢 In the clinic now' : '🟢 Abhi clinic mein hain');
   const queue = open && dc.status !== 'leave' ? (en ? (wN ? ` · ${wN} waiting` : ' · no queue') : (wN ? ` · ${wN} log wait mein` : ' · koi line nahi')) : '';
   const body = en
-    ? `${nm ? `Hello ${nm}` : 'Hello'} 🙏\n${back ? `Good to see you again at *${C}*.` : `Welcome to *${C}*.`}\n\nHow can we help you today?`
-    : `Namaste${nm ? ' ' + nm + ' ji' : ''} 🙏\n${back ? `*${C}* mein phir se swagat hai.` : `*${C}* mein aapka swagat hai.`}\n\nBataiye, kaise madad karein?`;
-  return buttonsTo(msg.from, body, [['NEW', en ? 'Book a visit' : 'Time book karein'], ['SVC', en ? 'Treatments & fees' : 'Treatments & fees'], ['DOC', en ? 'Meet the doctor' : 'Doctor se miliye']], { type: 'image', image: { link: S.welcomeImage || IMG + 'welcome_v3.jpg' } });
+    ? `${nm ? `Hello ${nm}` : 'Hello'} 🙏\n${back ? `Good to see you again at *${C}*.` : `Welcome to *${C}*.`}\n\nWhat would you like to do today?`
+    : `Namaste${nm ? ' ' + nm + ' ji' : ''} 🙏\n${back ? `*${C}* mein phir se swagat hai.` : `*${C}* mein aapka swagat hai.`}\n\nAaj aap kya karna chahenge?`;
+  return buttonsTo(msg.from, body, [['NEW', en ? 'Book a visit' : 'Time book karein'], ['SVC', en ? 'Treatments & fees' : 'Treatments & fees'], ['MENU', en ? 'More options' : 'Aur options']], { type: 'image', image: { link: S.welcomeImage || IMG + 'welcome_v3.jpg' } });
+}
+function mainMenu() {
+  const en = lang === 'en'; const open = isOpenNow() && docRead().status !== 'leave';
+  const R = (id, t, d) => ({ id, title: t.slice(0, 24), description: d.slice(0, 72) });
+  const rows = [
+    R('NEW', en ? 'Book an appointment' : 'Appointment book karein', en ? 'Pick a day and time that suits you' : 'Apni suvidha ka din aur time chunein'),
+    open ? R('TQ|NEW', en ? "Get today's token" : 'Aaj ka token lein', en ? 'No standing in line. We message you before your turn' : 'Line mein khade nahi rehna. Baari se pehle message aayega') : null,
+    R('MYAPPT', en ? 'My appointments' : 'Mere appointments', en ? 'See, change or cancel a booking' : 'Dekhein, badlein ya cancel karein'),
+    R('SVC', en ? 'Treatments & fees' : 'Treatments aur fees', en ? 'Every treatment with its price' : 'Har treatment aur uski fees'),
+    R('DOC', en ? 'Meet the doctor' : 'Doctor se miliye', en ? 'Qualifications, experience, next free time' : 'Degree, anubhav, agla khali time'),
+    R('LOCATE', en ? 'Timings & location' : 'Timing aur location', en ? 'Clinic hours and a map pin' : 'Clinic ka samay aur map'),
+    R('MC_CALL', en ? 'Request a call back' : 'Call back maangein', en ? 'Our team will call you shortly' : 'Humari team aapko jaldi call karegi'),
+  ].filter(Boolean);
+  return list(en ? 'Choose what you need. Everything happens right here on WhatsApp.' : 'Jo chahiye wo chuniye. Sab kuch yahin WhatsApp par.', en ? 'View options' : 'Options dekhein', en ? 'How can we help?' : 'Kaise madad karein?', rows);
 }
 const svcImg = n => { n = String(n).toLowerCase(); return IMG + (/acne|pimple/.test(n) ? 'svc_acne' : /hair|prp/.test(n) && !/laser/.test(n) ? 'svc_hair' : /pigment|tan|melasma/.test(n) ? 'svc_pigment' : /laser/.test(n) ? 'svc_laser' : /hydra|glow|facial|peel/.test(n) ? 'svc_glow' : 'svc_consult') + '.jpg'; };
 const svcPrice = n => { const BL = billList(); const w = String(n).toLowerCase().split(/[^a-z]+/).filter(x => x.length > 3); const hit = BL.find(x => x.n.toLowerCase() === String(n).toLowerCase()) || BL.find(x => w.some(k => x.n.toLowerCase().includes(k))); return hit ? hit.p : (S.fee || 0); };
@@ -1452,6 +1466,9 @@ else if (docAsk) {
 }
 // ---------- patients ----------
 else if (id === 'MC_Q') { payload = text(L.mcQ); }
+else if (id === 'MENU' || (!id && /^(menu|options|main menu|start)$/i.test(raw))) { payload = mainMenu(); }
+else if (id === 'LOCATE') { payload = buttons(L.talk, [['NEW', L.bookBtn], ['MC_CALL', lang === 'en' ? 'Request a call' : 'Call request karein']]); pin(); }
+else if (id === 'MYAPPT') { payload = upcoming.length ? buttons(L.yourAppts(msg.name, upcoming.map(r => `• ${r.name || 'Patient'}: ${W(r)}`).join('\n')), menuBtns()) : buttons(L.noUpcoming, [['NEW', L.bookBtn]]); }
 else if (id === 'MC_CALL') { notify = true; payload = buttons(L.mcCall + (lang === 'en' ? '\n\nWhat is it about? Tap below, or type a line / send a voice note.' : '\n\nBas bata dijiye baat kis baare mein hai. Neeche dabaiye, ya ek line likh dijiye / voice note bhej dijiye.'), lang === 'en' ? [['CBR|Price / fees', 'Price / fees'], ['CBR|Appointment', 'Appointment'], ['CBR|Show report', 'Show report']] : [['CBR|Price / fees', 'Price / fees'], ['CBR|Appointment', 'Appointment'], ['CBR|Report dikhani hai', 'Report dikhani hai']]); if (!mem.callbacks) mem.callbacks = []; mem.callbacks = mem.callbacks.filter(x => x.phone !== me).concat([{ phone: me, name: msg.name || '', at: now.toISO(), reason: '' }]).slice(-50); mem.cbLog = (mem.cbLog || []).concat([{ ph: me, at: now.toISO() }]).slice(-500); ev(me, 'cb', 'Asked for a call back'); }
 else if (['audio', 'voice', 'image', 'document', 'video'].includes(msg.type)) { notify = true; const isV = ['audio', 'voice'].includes(msg.type); const why = isV ? 'Sent a voice note' : 'Sent a photo / file';
   if (!mem.callbacks) mem.callbacks = []; mem.callbacks = mem.callbacks.filter(x => x.phone !== me).concat([{ phone: me, name: msg.name || '', at: now.toISO(), reason: why }]).slice(-50); mem.cbLog = (mem.cbLog || []).concat([{ ph: me, at: now.toISO() }]).slice(-500); ev(me, 'cb', why);
