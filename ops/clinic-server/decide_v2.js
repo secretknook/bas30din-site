@@ -5,6 +5,7 @@ const S = Object.assign({}, $('Clinic Settings').first().json);
 const TZ = 'Asia/Kolkata';
 const now = DateTime.now().setZone(TZ);
 const mem = $getWorkflowStaticData('global');
+if (!mem.mig600) { mem.mig600 = true; if (mem.cfg) { mem.cfg.fee = 600; if (Array.isArray(mem.cfg.bill)) mem.cfg.bill.forEach(x => { if (/^consult/i.test(x.n)) x.p = 600; }); } mem.lang = {}; }
 for (const k of ['lang', 'seen', 'svc', 'wait', 'live', 'liveAdmin']) if (!mem[k]) mem[k] = {};
 if (mem.cfg) Object.assign(S, mem.cfg);
 const OWNERS = (S.staff || []).filter(x => x.role === 'owner');
@@ -1151,8 +1152,8 @@ const swTxt = msg.type === 'text' ? String(msg.text || '').trim() : '';
 const langSwitch = !id && /^(english|in english|hindi|hinglish|हिंदी|हिन्दी)$/i.test(swTxt);
 if (langSwitch) mem.lang[me] = /^(english|in english)$/i.test(swTxt) ? 'en' : 'hl';
 else if (!mem.lang[me] && !id && swTxt) { const hiW = /[\u0900-\u097F]/.test(swTxt) || /\b(namaste|namaskar|ji|hai|hain|kya|kaise|kaisa|karna|chahiye|mujhe|mera|meri|aap|kab|kitna|kitne|kitni|dikhana|sahab|bhai|bhaiya|haan|nahi|nhi|hu|hoon|kal|aaj)\b/i.test(swTxt);
-  const enW = !hiW && swTxt.split(/\s+/).length >= 3 && /\b(i|my|want|need|would|like|appointment|please|can|is|the|book|doctor|what|when|how)\b/i.test(swTxt); mem.lang[me] = enW ? 'en' : 'hl'; }
-if (id.startsWith('MC_') && !mem.lang[me]) mem.lang[me] = 'hl';
+  const enW = !hiW && swTxt.split(/\s+/).length >= 3 && /\b(i|my|want|need|would|like|appointment|please|can|is|the|book|doctor|what|when|how)\b/i.test(swTxt); mem.lang[me] = /[\u0900-\u097F]/.test(swTxt) ? 'hl' : (S.defaultLang || 'en'); }
+if (id.startsWith('MC_') && !mem.lang[me]) mem.lang[me] = S.defaultLang || 'en';
 const lang = langOf(me, (mine[0] || {}).lang);
 const L = T[lang];
 const W = r => whenText(r.date, r.time, lang);
@@ -1191,8 +1192,22 @@ const svcBase = ($('Clinic Settings').first().json.services || []).filter(v => v
 const svcs = (S.services || []).map((v, i) => { if (v && typeof v === 'object' && v.name) return v; const n = String(v || '').trim(); const b0 = svcBase.find(x => x.name.toLowerCase() === n.toLowerCase()); return b0 || { id: 's' + i + '-' + n.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 12), name: n, en: '', hl: '' }; }).filter(v => v.name);
 const svcName = sid => { const x = svcs.find(v => v.id === sid); return x ? x.name : ''; };
 function welcomeCard() {
-  const fn = (cleanName(msg.name || '').split(' ')[0] || ''); const fn2 = fn.length >= 2 && !/^(dr|mr|mrs|ms)$/i.test(fn) ? fn : '';
-  return buttonsTo(msg.from, L.welcome(fn2, mine.length > 0 || seenBefore(me)), [['NEW', L.bookBtn], ['SVC', lang === 'en' ? 'Treatments & fees' : 'Treatments & fees'], ['DOC', lang === 'en' ? 'Meet the doctor' : 'Doctor se miliye']], { type: 'image', image: { link: S.welcomeImage || IMG + 'welcome.jpg' } }, lang === 'en' ? 'Hindi mein baat? Type: Hindi' : 'English mein chahiye? Likhiye: English');
+  const fn = (cleanName(msg.name || '').split(' ')[0] || ''); const nm = fn.length >= 2 && !/^(dr|mr|mrs|ms)$/i.test(fn) ? fn : '';
+  const back = mine.length > 0 || seenBefore(me); const en = lang === 'en';
+  const P = Object.assign({ qual: '' }, (mem.cfg || {}).docp || {}); const dc = docRead(); const open = isOpenNow();
+  const q = qRead(); const wN = waitingOf(q).length;
+  let nf = ''; for (let i = 0; i <= (S.daysAhead || 7) && !nf; i++) { const d = now.plus({ days: i }).toFormat('yyyy-MM-dd'); if (holidays.includes(d)) continue; const sl = slotsFor(d); if (sl && sl.length) nf = whenText(d, sl[0], lang); }
+  const st = dc.status === 'leave' ? (en ? '🔴 On leave today' : '🔴 Aaj chhutti par hain')
+    : !open ? (en ? '⚪ Clinic closed right now' : '⚪ Clinic abhi band hai')
+    : dc.status === 'late' ? (en ? `🟠 Running about ${dc.mins} min late` : `🟠 Lagbhag ${dc.mins} min late`)
+    : dc.status === 'away' ? (en ? '🟠 Stepped out, back soon' : '🟠 Thodi der mein wapas')
+    : (en ? '🟢 In the clinic now' : '🟢 Abhi clinic mein hain');
+  const queue = open && dc.status !== 'leave' ? (en ? (wN ? ` · ${wN} waiting` : ' · no queue') : (wN ? ` · ${wN} log wait mein` : ' · koi line nahi')) : '';
+  const body = en
+    ? `${nm ? `Hello ${nm}` : 'Hello'} 🙏\n${back ? `Good to see you again at *${C}*.` : `Welcome to *${C}*.`}\n\n*${D}*${P.qual ? `\n${P.qual}` : ''}\n${st}${queue}\n\n*Next available:* ${nf || 'please call us'}\n*Consultation:* ₹${S.fee}\n\nHow can we help you today?`
+    : `Namaste${nm ? ' ' + nm + ' ji' : ''} 🙏\n${back ? `*${C}* mein phir se swagat hai.` : `*${C}* mein aapka swagat hai.`}\n\n*${D}*${P.qual ? `\n${P.qual}` : ''}\n${st}${queue}\n\n*Agla khali time:* ${nf || 'call kijiye'}\n*Consultation:* ₹${S.fee}\n\nBataiye, kaise madad karein?`;
+  const foot = `${S.address ? S.address.split(',')[0] + ' · ' : ''}${timingsText('en').split('\n')[0].replace(': ', ' ')}`;
+  return buttonsTo(msg.from, body, [['NEW', en ? 'Book a visit' : 'Time book karein'], ['SVC', en ? 'Treatments & fees' : 'Treatments & fees'], ['DOC', en ? 'Meet the doctor' : 'Doctor se miliye']], { type: 'image', image: { link: S.welcomeImage || IMG + 'welcome.jpg?v=2' } }, foot);
 }
 const svcImg = n => { n = String(n).toLowerCase(); return IMG + (/acne|pimple/.test(n) ? 'svc_acne' : /hair|prp/.test(n) && !/laser/.test(n) ? 'svc_hair' : /pigment|tan|melasma/.test(n) ? 'svc_pigment' : /laser/.test(n) ? 'svc_laser' : /hydra|glow|facial|peel/.test(n) ? 'svc_glow' : 'svc_consult') + '.jpg'; };
 const svcPrice = n => { const BL = billList(); const w = String(n).toLowerCase().split(/[^a-z]+/).filter(x => x.length > 3); const hit = BL.find(x => x.n.toLowerCase() === String(n).toLowerCase()) || BL.find(x => w.some(k => x.n.toLowerCase().includes(k))); return hit ? hit.p : (S.fee || 0); };
