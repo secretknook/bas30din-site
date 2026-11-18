@@ -379,7 +379,7 @@ button.irow:active,a.irow:active{background:#F9FAFB}
 .stgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
 .stgrid .stm{height:60px;border-radius:14px;font-size:18px;font-weight:700;flex:none}
 
-.v11-greet{font-size:22px;font-weight:700;letter-spacing:-.3px;color:#101828}
+.v11-greet{font-size:26px;line-height:1.15;font-weight:700;letter-spacing:-.3px;color:#101828}
 </style>
 </head>
 <body>
@@ -708,7 +708,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       var dt = new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
       var PILL = { in: ['In clinic', '#12B76A', '#ECFDF3', '#067647'], late: ['Running ' + dc.mins + ' min late', '#F79009', '#FFFAEB', '#B54708'], away: ['Away' + (dc.until ? ' · back ' + dc.until : ''), '#F79009', '#FFFAEB', '#B54708'], leave: ['On leave', '#98A2B3', '#F2F4F7', '#344054'] }[k];
       var op = d.opd || { label: 'OPD', time: '' }, hr0 = new Date().getHours(), who0 = d.me.role === 'reception' ? (d.me.name || '').split(' ')[0] : docName();
-      var h = '<div class="v11"><div class="v11-hd" style="flex-direction:column;align-items:flex-start;gap:2px"><span class="v11-greet">' + (hr0 < 12 ? 'Good morning' : hr0 < 17 ? 'Good afternoon' : 'Good evening') + ', ' + esc(who0) + '</span><span class="v11-date">' + esc(op.label) + (op.time ? ' · ' + esc(op.time) : '') + '</span>' +
+      var h = '<div class="v11"><div class="v11-hd" style="flex-direction:column;align-items:flex-start;gap:2px"><span class="v11-date">' + (hr0 < 12 ? 'Good morning' : hr0 < 17 ? 'Good afternoon' : 'Good evening') + '</span><span class="v11-greet">' + esc(who0) + '</span><span class="v11-date" style="font-size:14px;margin-top:2px">' + esc(op.label) + (op.time ? ' · ' + esc(op.time) : '') + '</span>' +
         '</div><div class="stwrap">' + statusBar() + '</div>';
       if (!q.open && !cur && !w.length) h += '<button class="v11-closed" data-tab="after">OPD is over · see Enquiries</button>';
       h += '<div class="v11-grid"><div class="v11-main"><div class="v11-card">';

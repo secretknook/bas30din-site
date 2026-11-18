@@ -820,8 +820,8 @@ if (mode === 'desk') {
           fb: (mem.fb || []).slice(-6).reverse().map(f => ({ name: f.name || ('+' + f.ph), r: f.r, t: f.t, at: DateTime.fromISO(f.at).setZone(TZ).toFormat('d LLL'), call: '+' + f.ph })) }; }
     }
     { const rg = ((S.hours || {})[now.toFormat('ccc').toLowerCase()] || []); const hm = now.toFormat('HH:mm'); const cur = rg.find(r => hm < r.split('-')[1].trim()) || rg[rg.length - 1]; const f = t => DateTime.fromFormat(t.trim(), 'HH:mm').toFormat('h:mm a').replace(':00', '');
-      res.opd = cur ? { label: (+cur.split('-')[0].slice(0, 2) < 14 ? 'Morning OPD' : 'Evening OPD'), time: cur.split('-').map(f).join(' – ') } : { label: 'No OPD today', time: '' }; }
-      // tell reception on WhatsApp once if a call back waits 30+ min (only reaches staff who messaged the bot in the last 24 h)
+      const fmt2 = r => r.split('-').map(f).join(' – '); const over = rg.length && hm >= rg[rg.length - 1].split('-')[1].trim();
+      res.opd = !rg.length ? { label: 'No OPD today', time: '' } : over ? { label: 'OPD over for today', time: '' } : rg.length === 1 ? { label: 'OPD today', time: fmt2(cur) } : { label: (+cur.split('-')[0].slice(0, 2) < 14 ? 'Morning OPD' : 'Evening OPD'), time: fmt2(cur) }; }      // tell reception on WhatsApp once if a call back waits 30+ min (only reaches staff who messaged the bot in the last 24 h)
       for (const cb of (mem.callbacks || [])) if (!cb.pinged && cb.at < now.minus({ minutes: 30 }).toISO() && isOpenNow()) { cb.pinged = now.toISO(); for (const st of (S.staff || []).filter(x => x.role === 'reception' && inWindow(x.phone))) out.push(textTo(st.phone, '⏰ Call back pending 30+ min: ' + ((mem.pname || {})[cb.phone] || cb.name || '+' + cb.phone) + (cb.reason ? ' — "' + cb.reason + '"' : '') + '\nCall: +' + cb.phone)); }
     if (b.view === 'register' && isDoc) {
       const per = ['today', 'week', 'month'].includes(b.period) ? b.period : 'today';
