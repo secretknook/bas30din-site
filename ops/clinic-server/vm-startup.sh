@@ -27,6 +27,7 @@ services:
       - EXECUTIONS_DATA_MAX_AGE=168
       - N8N_DIAGNOSTICS_ENABLED=false
       - N8N_CONCURRENCY_PRODUCTION_LIMIT=1
+      - N8N_RUNNERS_GRANT_TOKEN_TTL=300
     volumes:
       - n8n_data:/home/node/.n8n
   caddy:
