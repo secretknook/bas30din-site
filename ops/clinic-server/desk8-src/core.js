@@ -185,8 +185,9 @@
     const scr = app.screens[UI.scr] || app.screens.home;
     let body;
     try { body = scr(); } catch (e) { console.error(e); body = '<main class="pg"><div class="card pad bad">Something broke on this screen: ' + esc(e.message) + '</div>' + CD.backBtn() + '</main>'; }
-    document.getElementById('root').innerHTML = demoBar() + '<div class="app-' + UI.app + '">' + body + '</div>';
-    document.body.className = 'app-' + UI.app;
+    if (CD.wrapBody) body = CD.wrapBody(body);
+    document.getElementById('root').innerHTML = demoBar() + '<div class="app-' + UI.app + ' v4app">' + body + '</div>';
+    document.body.className = 'app-' + UI.app + (['reception', 'doctor', 'owner'].includes(UI.app) ? ' v4' : '');
     renderModal();
     document.querySelectorAll('.train').forEach(t => { t.scrollLeft = t.scrollWidth; });
     const af = document.querySelector('[data-autofocus]'); if (af) af.focus();

@@ -42,7 +42,9 @@
     CD.liveState = st; CD.load();
     L.lastOk = Date.now(); L.offline = false; L.ver++;
   }
-  function busyUI() { return !!UI.modal || (document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && document.activeElement.type !== 'checkbox'); }
+  function busyUI() { const typing = document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && document.activeElement.type !== 'checkbox'; if (typing) L.pending = true; return typing; }
+  const closeM = CD.closeModal; CD.closeModal = () => { closeM(); if (L.pending) { L.pending = false; CD.render(); } };
+  document.addEventListener('focusout', () => setTimeout(() => { if (L.pending && !busyUI()) { L.pending = false; CD.render(); } }, 150));
   function refresh(force) {
     if (!L.sid || L.busy || L.queue.length) return Promise.resolve();
     L.busy++; const sn = L.sends || 0;
@@ -199,6 +201,10 @@
   P.merge = () => () => { CD.toast('Merging patients is coming soon on the live desk.'); return null; };
   P.changeDoc = () => () => null;
 
+  /* v4 phone screens */
+  P.knotHere = ds => { const v = vTok(ds.tok); return () => v && { action: 'v8_back_q', key: v.key }; };
+  P.kawayGo = () => { const m = Number(UI.f.awm) || 30; const why = UI.f.awr === "Don't say" ? 'Short break' : UI.f.awr; return () => ({ action: 'v8_out', mins: m, reason: why }); };
+  P.krepeat = ds => { const v = vTok(ds.tok); return () => v ? { action: 'v8_start', key: v.key } : null; };
   CD.livePre = (name, ds, el) => { const f = P[name]; if (!f) return null; try { return f(ds, el); } catch (e) { console.error('livePre ' + name, e); return null; } };
   CD.liveAfter = fn => { let p = null; try { p = fn(); } catch (e) { console.error('liveAfter', e); } if (p) send(p); };
 
@@ -207,11 +213,8 @@
   CD.allowApp = a => (APPS[L.role] || APPS.reception).some(x => x[0] === a);
   CD.homeApp = () => (APPS[L.role] || APPS.reception)[0][0];
   function dot() { return L.offline ? '<span class="lv-dot off" title="No internet">Offline · will retry</span>' : (L.busy || L.queue.length) ? '<span class="lv-dot busy">Saving…</span>' : '<span class="lv-dot ok">Live</span>'; }
-  CD.liveBar = () => {
-    const apps = APPS[L.role] || APPS.reception; const me = (S() && S().me) || {};
-    return '<div class="demo live no-print" role="navigation"><b>' + esc(C().name) + '</b>' + (apps.length > 1 ? apps.map(([id, l]) => '<button class="pill' + (UI.app === id ? ' on' : '') + '" data-a="app" data-v="' + id + '">' + l + '</button>').join('') : '') +
-      '<span class="sp"></span><span id="lv-dot">' + dot() + '</span><span class="lv-me">' + esc(me.name || '') + '</span><button class="pill lv-rf" data-a="lvRefresh" title="Get the latest">↻</button><button class="pill" data-a="lvMenu">⋯</button></div>';
-  };
+  CD.liveBar = () => '<div id="lv-dot" class="klvdot no-print">' + dot() + '</div>';
+  CD.liveMenuRows = () => { const me = (S() && S().me) || {}; return '<div class="krow"><span class="kg"><span class="knm">' + esc(me.name || '') + '</span><span class="ksm">' + esc(L.role || '') + ' · ' + (L.offline ? 'offline, will retry' : 'live') + '</span></span></div><button class="krow" data-a="lvRefresh"><span class="kg"><span class="knm">Get the latest</span></span><span class="kchev">›</span></button><a class="krow" style="text-decoration:none" href="?old=1"><span class="kg"><span class="knm">Open the old desk</span></span><span class="kchev">›</span></a><button class="krow" data-a="lvLogout"><span class="kg"><span class="knm" style="color:#B91C1C">Log out</span></span><span class="kchev">›</span></button>'; };
   function paintBar() { const el = document.getElementById('lv-dot'); if (el) el.innerHTML = dot(); }
   CD.A.lvRefresh = () => refresh(true).then(() => CD.toast('Up to date'));
   CD.A.lvMenu = () => CD.modal('<h2 class="t">' + esc((S().me || {}).name || '') + '</h2><div class="muted">' + esc(C().name) + ' · ' + esc(L.role) + '</div><div class="flex wrap"><a class="ghost" style="text-decoration:none" href="?old=1">Open the old desk</a><button class="ghost" data-a="lvLogout">Log out</button><button class="txt" data-a="close">Close</button></div>');
@@ -222,15 +225,15 @@
   let LG = { step: 'phone', ph: '', err: '' };
   function drawLogin(msg) {
     if (msg) LG.err = String(msg).replace(/Use "First time\? Get login link" below\./, 'Tap "Get code on WhatsApp" instead.');
-    document.body.className = 'app-reception';
+    document.body.className = 'app-reception v4';
     const r = document.getElementById('root');
-    const err = LG.err ? '<div class="bad small" style="min-height:4px">' + esc(LG.err) + '</div>' : '';
+    const err = LG.err ? '<div class="kerr">' + esc(LG.err) + '</div>' : '';
     let inner;
-    if (LG.step === 'code') inner = '<h1 class="t">Enter the code</h1><div class="muted">We sent a 6-digit code on WhatsApp to ' + esc(LG.sentTo || LG.ph) + '.</div><input class="field" id="lg-code" inputmode="numeric" maxlength="6" placeholder="6-digit code" style="font-size:26px;letter-spacing:6px" autofocus>' + err + '<button class="btn big full" id="lg-go">Log in</button><button class="txt" id="lg-back">Use another number</button>';
-    else if (LG.step === 'pw') inner = '<h1 class="t">Your password</h1><div class="muted">' + esc(LG.ph) + '</div><input class="field" id="lg-pw" type="password" placeholder="Password" autofocus>' + err + '<button class="btn big full" id="lg-go">Log in</button><button class="txt" id="lg-back">Back</button>';
-    else if (LG.step === 'wa') inner = '<h1 class="t">One step on WhatsApp</h1><div class="card pad soft">Open WhatsApp and send <b>LOGIN</b> to the clinic number. You will get a login link. Tap it and you are in.</div>' + err + '<button class="ghost" id="lg-back">Back</button>';
-    else inner = '<h1 class="t">Log in to the desk</h1><div class="muted">Use the phone number your clinic added.</div><input class="field" id="lg-ph" inputmode="numeric" maxlength="10" placeholder="10-digit mobile" value="' + esc(LG.ph) + '" style="font-size:24px;letter-spacing:1px" autofocus>' + err + '<button class="btn big full" id="lg-otp">Get code on WhatsApp</button><button class="ghost full" id="lg-pwb">I have a password</button>';
-    r.innerHTML = '<div class="app-reception"><main class="pg narrow" style="padding-top:64px"><div class="card pad" style="display:grid;gap:14px">' + inner + '</div><p class="muted small" style="text-align:center">Clinic Desk · bas30din</p></main></div>';
+    if (LG.step === 'code') inner = '<div class="klt" style="font-size:26px">Enter the code</div><div class="ksm">We sent a 6-digit code on WhatsApp to ' + esc(LG.sentTo || LG.ph) + '.</div><div class="kfld"><div class="kfl"><label>Code</label><input id="lg-code" inputmode="numeric" maxlength="6" placeholder="6 digits" style="letter-spacing:4px"></div></div>' + err + '<button class="kbtn" id="lg-go">Log in</button><button class="klink" id="lg-back">Use another number</button>';
+    else if (LG.step === 'pw') inner = '<div class="klt" style="font-size:26px">Your password</div><div class="ksm">' + esc(LG.ph) + '</div><div class="kfld"><div class="kfl"><label>Password</label><input id="lg-pw" type="password" placeholder="Password"></div></div>' + err + '<button class="kbtn" id="lg-go">Log in</button><button class="klink" id="lg-back">Back</button>';
+    else if (LG.step === 'wa') inner = '<div class="klt" style="font-size:26px">One step on WhatsApp</div><div class="kcard kpad" style="font-size:15px;line-height:1.5">Open WhatsApp and send <b>LOGIN</b> to the clinic number. You will get a login link. Tap it and you are in.</div>' + err + '<button class="kbtn2" id="lg-back">Back</button>';
+    else inner = '<div class="kclin">Clinic Desk</div><div class="klt">Log in</div><div class="ksm" style="margin-top:-4px">Use the phone number your clinic added.</div><div class="kfld"><div class="kfl"><label>Mobile</label><input id="lg-ph" inputmode="numeric" maxlength="10" placeholder="10-digit number" value="' + esc(LG.ph) + '"></div></div>' + err + '<button class="kbtn" id="lg-otp">Get code on WhatsApp</button><button class="kbtn2" id="lg-pwb">I have a password</button>';
+    r.innerHTML = '<div class="app-reception"><div class="kph" style="padding-top:56px;display:flex;flex-direction:column;gap:14px">' + inner + '</div></div>';
     const $ = id => document.getElementById(id);
     const busy = b => r.querySelectorAll('button').forEach(x => { x.disabled = b; });
     const phOk = () => { const p = ($('lg-ph') ? $('lg-ph').value : LG.ph).replace(/\D/g, ''); if (p.length !== 10) { LG.err = 'Enter your 10-digit mobile number.'; drawLogin(); return null; } LG.ph = p; return p; };

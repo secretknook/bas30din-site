@@ -9,7 +9,7 @@ assert old_router in cur, 'router not found'
 t0 = cur.index('  function tracker(k) {'); t1 = cur.index('  // ---------------- waiting room TV')
 cur = cur[:t0] + open(A + 'tracker8.js').read() + cur[t1:]
 cur = cur.replace(old_router, "  else if (qs.get('old')) staff();\n  else window.cd8Start();\n})();", 1)
-css = open(A + 'app.css').read()
+css = open(A + 'app.css').read() + '\n' + open(A + 'v4.css').read()
 css += """
 .demo.live{background:#FFFFFF;color:#4A5468;border-bottom:1px solid #E7E1D6}
 .demo.live b{color:#16213A;font-family:'Newsreader',serif;font-size:17px;font-weight:600;margin-right:6px}
@@ -19,14 +19,14 @@ css += """
 .lv-dot:before{content:'';width:8px;height:8px;border-radius:50%;background:#2E9E6A}
 .lv-dot.busy:before{background:#E0A100}.lv-dot.off{color:#8E2A22}.lv-dot.off:before{background:#C2412D}
 """
-files = ['data.js', 'core.js', 'reception.js', 'doctor.js', 'owner.js', 'patient.js', 'admin.js', 'docs.js', 'live.js']
+files = ['data.js', 'core.js', 'reception.js', 'doctor.js', 'owner.js', 'patient.js', 'admin.js', 'docs.js', 'v4.js', 'live.js']
 js = '\n;\n'.join(open(A + f).read() for f in files)
 boot = """<script>
 window.cd8Start = function () {
   function go() {
     document.querySelectorAll('style').forEach(function (s) { s.remove(); });
     var l = document.createElement('link'); l.rel = 'stylesheet';
-    l.href = 'https://fonts.googleapis.com/css2?family=Caveat:wght@500&family=IBM+Plex+Sans+Devanagari:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap';
+    l.href = 'https://fonts.googleapis.com/css2?family=Caveat:wght@500&family=IBM+Plex+Sans+Devanagari:wght@400;500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap';
     document.head.appendChild(l);
     var st = document.createElement('style'); st.textContent = document.getElementById('cd8-css').textContent; document.head.appendChild(st);
     document.title = 'Clinic Desk';
