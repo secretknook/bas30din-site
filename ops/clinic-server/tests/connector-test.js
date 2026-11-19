@@ -35,7 +35,7 @@ r=api({action:'ext_hack',key:K}); ok(r.code==='unknown','unknown action safe');
 r=api({sid:'SO',v8:true,action:'v8_apikey'}); ok(r.apiKey===K&&r.apiLog.length>5,'owner sees activity log ('+r.apiLog.length+')');
 r=api({sid:'SO',v8:true,action:'v8_apikey',reset:true}); ok(r.apiKey!==K,'reset key');
 ok(api({action:'ext_ping',key:K}).code==='bad_key','old key stops working');
-for(let i=0;i<125;i++) r=api({action:'ext_status',key:mem.apiKey}); ok(r.code==='slow_down','rate limit after 120/min');
+for(let i=0;i<125;i++) r=api({action:'ext_doctor',key:mem.apiKey,status:'in'}); ok(r.code==='slow_down','rate limit after 120 changes/min');
 // the desk still works
 r=api({sid:'SR',v8:true,action:'v8_register',name:'Desk Pt',phone:'9876544444',mode:'cash',items:[{n:'Consultation',p:600}]}); ok(!r.error,'desk still works '+(r.error||''));
 console.log(fails?fails+' FAILED':'ALL PASS');

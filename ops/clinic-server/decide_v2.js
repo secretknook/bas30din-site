@@ -874,16 +874,18 @@ function v8act(b, sess, role, isDoc, out, res) {
 function extApi(b, out) {
   const fail = (code, msg) => ({ ok: false, code, error: msg });
   if (!mem.apiKey) return fail('no_key', 'Connector is not switched on. The owner turns it on in Settings › Connect your software.');
-  if (String(b.key || '') !== mem.apiKey) { mem.apiBad = (mem.apiBad || 0) + 1; return fail('bad_key', 'Wrong key.'); }
-  const minute = now.toFormat('yyyy-MM-dd HH:mm'); if (!mem.apiRate || mem.apiRate.m !== minute) mem.apiRate = { m: minute, n: 0 };
-  if (++mem.apiRate.n > 120) return fail('slow_down', 'Too many requests this minute. Try again in a minute.');
+  if (String(b.key || '') !== mem.apiKey) return fail('bad_key', 'Wrong key.');
+  // nothing is saved unless the call really changes something: a save from a read-only or failed call
+  // could land after (and wipe) a save from the call just before it
+  const minute = now.toFormat('yyyy-MM-dd HH:mm'); const used = (mem.apiRate && mem.apiRate.m === minute) ? mem.apiRate.n : 0;
+  if (used >= 120) return fail('slow_down', 'Too many requests this minute. Try again in a minute.');
   const a = String(b.action || '').slice(4);
   const ph = v8full(b.phone); const name = String(b.name || '').trim().slice(0, 40);
   const needPhone = () => { if (ph.length !== 12) return fail('bad_phone', 'Send a 10-digit Indian mobile number (or 91 + 10 digits).'); return null; };
   // which message type we could send: rich (patient wrote to us in the last 24 h) or an approved template, or nothing
   const reach = (tplKey) => inWindow(ph) ? 'whatsapp' : (S.templates && S.templates[tplKey]) ? 'template' : 'none';
-  const log = (what, sent) => { if (!mem.apiLog) mem.apiLog = []; mem.apiLog.push({ at: now.toISO(), a, ph: ph ? ph.slice(-4) : '', what, sent }); mem.apiLog = mem.apiLog.slice(-300); bump('api_' + a); };
-  const q = a === 'ping' || a === 'status' ? qRead() : qWrite();
+  const log = (what, sent) => { mem.apiRate = { m: minute, n: used + 1 }; if (!mem.apiLog) mem.apiLog = []; mem.apiLog.push({ at: now.toISO(), a, ph: ph ? ph.slice(-4) : '', what, sent }); mem.apiLog = mem.apiLog.slice(-300); bump('api_' + a); };
+  const q = a === 'token' ? qWrite() : qRead();
   const findTk = () => q.list.find(x => (b.ref && x.extRef === String(b.ref)) || (ph && x.phone === ph && ['w', 's'].includes(x.st)));
   if (a === 'ping') return { ok: true, clinic: C, doctor: D, time: now.toISO(), version: 'connector-1' };
   if (a === 'status') { const cur = servingOf(q); return { ok: true, now: cur ? cur.tok : null, waiting: waitingOf(q).length, doctor: docRead().status || 'in' }; }
@@ -898,7 +900,7 @@ function extApi(b, out) {
     return { ok: true, token: tk.tok, ref: tk.extRef || tk.key, ahead: aheadOf(q, tk), track_url: trackUrl(tk), whatsapp: r };
   }
   if (a === 'call') { // the patient is called in to the doctor
-    const tk = findTk(); if (!tk) return fail('not_found', 'No waiting token for this patient. Send token first.');
+    const tk = findTk(); if (!tk) return fail('not_found', 'No waiting token for this patient. If you sent the token just now, try again in 5 seconds.');
     const cur = servingOf(q); if (cur && cur !== tk) { cur.st = 'd'; addVisit(cur); }
     tk.st = 's'; tk.calledAt = now.toISO();
     const r = reach('turn'); if (r === 'whatsapp') { const lg = langOf(ph || tk.phone, ''); out.push(textTo(tk.phone, lg === 'en' ? `🔔 *It's your turn!*\n\nPlease go in to ${D} now. Token *${String(tk.tok).replace('-', '')}*.` : `🔔 *Aapki baari aa gayi!*\n\nKripya abhi ${D} ke paas andar jaiye. Token *${String(tk.tok).replace('-', '')}*.`)); }
@@ -906,8 +908,8 @@ function extApi(b, out) {
     queueNotify(q, out); log('call ' + tk.tok, r);
     return { ok: true, token: tk.tok, whatsapp: r, waiting: waitingOf(q).length };
   }
-  if (a === 'done') { const tk = findTk(); if (!tk) return fail('not_found', 'Token not found.'); if (tk.st !== 'd') { tk.st = 'd'; addVisit(tk); } queueNotify(q, out); log('done ' + tk.tok, '-'); return { ok: true }; }
-  if (a === 'cancel') { const tk = findTk(); if (!tk) return fail('not_found', 'Token not found.'); tk.st = 'x'; queueNotify(q, out); log('cancel ' + tk.tok, '-'); return { ok: true }; }
+  if (a === 'done') { const tk = findTk(); if (!tk) return fail('not_found', 'Token not found. If you sent it just now, try again in 5 seconds.'); if (tk.st !== 'd') { tk.st = 'd'; addVisit(tk); } queueNotify(q, out); log('done ' + tk.tok, '-'); return { ok: true }; }
+  if (a === 'cancel') { const tk = findTk(); if (!tk) return fail('not_found', 'Token not found. If you sent it just now, try again in 5 seconds.'); tk.st = 'x'; queueNotify(q, out); log('cancel ' + tk.tok, '-'); return { ok: true }; }
   if (a === 'bill') {
     const e = needPhone(); if (e) return e;
     const amt = Math.round(Number(b.amount) || 0); if (amt <= 0) return fail('bad_amount', 'Send the amount in rupees.');
