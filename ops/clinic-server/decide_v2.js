@@ -853,6 +853,7 @@ function v8act(b, sess, role, isDoc, out, res) {
   else if (a === 'v8_ref') { if (!ownerOnly) return; if (b.id) { const r = (mem.refs || []).find(x => x.id === b.id); if (r) { r.paid = !r.paid; r.paidOn = r.paid ? todayStr : null; } } else { const amt = Math.round(Number(b.amt) || 0); if (!String(b.name || '').trim() || amt <= 0) return fail('Fill name and amount.'); mem.refs = (mem.refs || []).concat([{ id: rid(8), name: String(b.name).slice(0, 60), what: String(b.what || '').slice(0, 60), amt, paid: false, month: now.toFormat('yyyy-MM') }]); } }
   else if (a === 'v8_perm') { if (!ownerOnly) return fail('Only the owner can change this.'); cf.perms = Object.assign({ discount: false, refund: true, editBill: false, money: false }, cf.perms || {}); if (b.k in cf.perms) cf.perms[b.k] = !cf.perms[b.k]; }
   else if (a === 'v8_box') { if (!ownerOnly) return; cf.boxes = Object.assign({ r_appt: true, r_close: true, d_sets: true, p_reports: true, p_pay: false }, cf.boxes || {}); if (b.k in cf.boxes) cf.boxes[b.k] = !cf.boxes[b.k]; }
+  else if (a === 'v8_apikey') { if (!ownerOnly) return fail('Only the owner can turn on the connector.'); if (b.off) { delete mem.apiKey; res.apiKey = null; } else if (b.peek && !mem.apiKey) { res.apiKey = null; } else { if (!mem.apiKey || b.reset) mem.apiKey = 'ck_' + sha256(now.toISO() + Math.random() + Math.random()).slice(0, 32); res.apiKey = mem.apiKey; res.apiLog = (mem.apiLog || []).slice(-30).reverse(); } }
   else if (a === 'v8_cfg') { if (!ownerOnly && !isDoc) return fail('Only the owner can change settings.'); const c0 = b.cfg || {}; const str = (v, n) => String(v || '').trim().slice(0, n);
     if (c0.name) { cf.clinicName = str(c0.name, 60); S.clinicName = cf.clinicName; } if (c0.logo) cf.logo = str(c0.logo, 2).toUpperCase(); if (c0.color && /^#[0-9A-Fa-f]{6}$/.test(c0.color)) cf.color = c0.color;
     if (c0.timings !== undefined) cf.timings = str(c0.timings, 120); if (c0.rxLang && ['hi', 'hl', 'en'].includes(c0.rxLang)) cf.rxLang = c0.rxLang; if (c0.lang && ['en', 'hl'].includes(c0.lang)) { cf.defaultLang = c0.lang; S.defaultLang = c0.lang; }
@@ -868,6 +869,110 @@ function v8act(b, sess, role, isDoc, out, res) {
   else if (a === 'v8_staff_rm') { if (!ownerOnly) return; const ph = v8ph10(b.phone); const T = (Array.isArray(mem.team) && mem.team.length ? mem.team : (S.staff || [])); const x = T.find(y => String(y.phone).slice(-10) === ph); if (!x || x.role === 'owner') return fail('This person can not be removed.'); mem.team = T.filter(y => y !== x); S.staff = mem.team; for (const k of Object.keys(mem.sess || {})) if (mem.sess[k].phone.slice(-10) === ph) delete mem.sess[k]; }
 }
 
+// ================= Connector API: lets any clinic software (BS Infosystems etc.) use our WhatsApp =================
+// Their software sends a small message to /api with the clinic's secret key; we do all the WhatsApp work.
+function extApi(b, out) {
+  const fail = (code, msg) => ({ ok: false, code, error: msg });
+  if (!mem.apiKey) return fail('no_key', 'Connector is not switched on. The owner turns it on in Settings › Connect your software.');
+  if (String(b.key || '') !== mem.apiKey) { mem.apiBad = (mem.apiBad || 0) + 1; return fail('bad_key', 'Wrong key.'); }
+  const minute = now.toFormat('yyyy-MM-dd HH:mm'); if (!mem.apiRate || mem.apiRate.m !== minute) mem.apiRate = { m: minute, n: 0 };
+  if (++mem.apiRate.n > 120) return fail('slow_down', 'Too many requests this minute. Try again in a minute.');
+  const a = String(b.action || '').slice(4);
+  const ph = v8full(b.phone); const name = String(b.name || '').trim().slice(0, 40);
+  const needPhone = () => { if (ph.length !== 12) return fail('bad_phone', 'Send a 10-digit Indian mobile number (or 91 + 10 digits).'); return null; };
+  // which message type we could send: rich (patient wrote to us in the last 24 h) or an approved template, or nothing
+  const reach = (tplKey) => inWindow(ph) ? 'whatsapp' : (S.templates && S.templates[tplKey]) ? 'template' : 'none';
+  const log = (what, sent) => { if (!mem.apiLog) mem.apiLog = []; mem.apiLog.push({ at: now.toISO(), a, ph: ph ? ph.slice(-4) : '', what, sent }); mem.apiLog = mem.apiLog.slice(-300); bump('api_' + a); };
+  const q = a === 'ping' || a === 'status' ? qRead() : qWrite();
+  const findTk = () => q.list.find(x => (b.ref && x.extRef === String(b.ref)) || (ph && x.phone === ph && ['w', 's'].includes(x.st)));
+  if (a === 'ping') return { ok: true, clinic: C, doctor: D, time: now.toISO(), version: 'connector-1' };
+  if (a === 'status') { const cur = servingOf(q); return { ok: true, now: cur ? cur.tok : null, waiting: waitingOf(q).length, doctor: docRead().status || 'in' }; }
+  if (a === 'token') {
+    const e = needPhone(); if (e) return e;
+    let tk = findTk();
+    if (!tk) { tk = issueToken(q, ph, name || 'Patient', 'ext'); if (b.ref) tk.extRef = String(b.ref).slice(0, 40); if (b.token) tk.tok = String(b.token).slice(0, 12); tk.kind = ['new', 'follow', 'proc'].includes(b.kind) ? b.kind : 'new'; }
+    const r = reach('token');
+    if (r === 'whatsapp') out.push(tokenMsg(q, tk, ph));
+    else if (r === 'template') { const n = aheadOf(q, tk); out.push(templateTo(ph, S.templates.token, [name || 'there', String(tk.tok).replace('-', ''), String(n), C], [])); }
+    log('token ' + tk.tok, r);
+    return { ok: true, token: tk.tok, ref: tk.extRef || tk.key, ahead: aheadOf(q, tk), track_url: trackUrl(tk), whatsapp: r };
+  }
+  if (a === 'call') { // the patient is called in to the doctor
+    const tk = findTk(); if (!tk) return fail('not_found', 'No waiting token for this patient. Send token first.');
+    const cur = servingOf(q); if (cur && cur !== tk) { cur.st = 'd'; addVisit(cur); }
+    tk.st = 's'; tk.calledAt = now.toISO();
+    const r = reach('turn'); if (r === 'whatsapp') { const lg = langOf(ph || tk.phone, ''); out.push(textTo(tk.phone, lg === 'en' ? `🔔 *It's your turn!*\n\nPlease go in to ${D} now. Token *${String(tk.tok).replace('-', '')}*.` : `🔔 *Aapki baari aa gayi!*\n\nKripya abhi ${D} ke paas andar jaiye. Token *${String(tk.tok).replace('-', '')}*.`)); }
+    else if (r === 'template') out.push(templateTo(tk.phone, S.templates.turn, [String(tk.tok).replace('-', ''), D], []));
+    queueNotify(q, out); log('call ' + tk.tok, r);
+    return { ok: true, token: tk.tok, whatsapp: r, waiting: waitingOf(q).length };
+  }
+  if (a === 'done') { const tk = findTk(); if (!tk) return fail('not_found', 'Token not found.'); if (tk.st !== 'd') { tk.st = 'd'; addVisit(tk); } queueNotify(q, out); log('done ' + tk.tok, '-'); return { ok: true }; }
+  if (a === 'cancel') { const tk = findTk(); if (!tk) return fail('not_found', 'Token not found.'); tk.st = 'x'; queueNotify(q, out); log('cancel ' + tk.tok, '-'); return { ok: true }; }
+  if (a === 'bill') {
+    const e = needPhone(); if (e) return e;
+    const amt = Math.round(Number(b.amount) || 0); if (amt <= 0) return fail('bad_amount', 'Send the amount in rupees.');
+    const mode = ['cash', 'upi', 'card'].includes(String(b.mode || '').toLowerCase()) ? String(b.mode).toLowerCase() : 'cash';
+    let url = /^https:\/\//.test(b.invoice_url || '') ? String(b.invoice_url) : '';
+    let no = String(b.bill_no || '').slice(0, 30);
+    if (!url) { // make our own GST invoice page from their items
+      if (!mem.vis) mem.vis = {}; const l = mem.vis[todayStr] || (mem.vis[todayStr] = []);
+      const tk = findTk(); let v = tk ? l.find(x => x.k === tk.key) : null;
+      if (!v) { v = { k: tk ? tk.key : rid(10), tok: tk ? tk.tok : '', name: name || (tk && tk.name) || 'Patient', ph, tin: now.toISO(), in: now.toISO(), out: now.toISO(), fee: null, m: null, fupSug: 0, prob: '', ext: true }; l.push(v); }
+      const items = Array.isArray(b.items) && b.items.length ? b.items.map(x => ({ n: x.name || x.n, p: x.amount != null ? x.amount : x.p, g: x.gst || x.g || 0 })) : [{ n: 'Consultation', p: amt, g: 0 }];
+      const tot = items.reduce((s0, x) => s0 + (Math.round(Number(x.p)) || 0), 0);
+      v8bill(v, items, mode, Math.max(0, tot - amt), 'Software', false, []);
+      url = (S.appUrl || 'https://desk.bas30din.com/') + '?inv=' + todayStr + '.' + v.k + '.' + v.ik; no = no || invNo(v);
+    }
+    const r = reach('bill'); const lg = langOf(ph, '');
+    if (r === 'whatsapp') out.push(ctaTo(ph, lg === 'en' ? `🧾 *Payment received, thank you!*\n\n${name ? 'Dear ' + name + ', ' : ''}${rupees(amt)} received by ${v8mode(mode)}.${no ? `\n\n*Bill no:* ${no}` : ''}` : `🧾 *Payment mil gaya, dhanyavaad!*\n\n${name ? name + ' ji, ' : ''}${rupees(amt)} ${v8mode(mode)} se mil gaye.${no ? `\n\n*Bill no:* ${no}` : ''}`, lg === 'en' ? 'View bill' : 'Bill dekhein', url));
+    else if (r === 'template') out.push(templateTo(ph, S.templates.bill, [name || 'there', rupees(amt), no || '-', C], []));
+    log('bill ' + rupees(amt), r);
+    return { ok: true, invoice_url: url, bill_no: no, whatsapp: r };
+  }
+  if (a === 'rx') {
+    const e = needPhone(); if (e) return e;
+    let url = /^https:\/\//.test(b.pdf_url || '') ? String(b.pdf_url) : '';
+    if (!url) {
+      const meds = (Array.isArray(b.medicines) ? b.medicines : []).slice(0, 15).map(m => ({ n: String(m.name || m.n || '').slice(0, 80), how: String(m.how || m.dose || '').slice(0, 120) })).filter(m => m.n);
+      if (!meds.length) return fail('no_rx', 'Send pdf_url, or a medicines list.');
+      const pk = patKey(ph, name); const rec = { id: rid(8), date: todayStr, doc: 'd0', finding: String(b.diagnosis || '').slice(0, 160), meds, advice: String(b.advice || '').slice(0, 400), vitals: {}, tests: [], follow: /^\d{4}-\d{2}-\d{2}$/.test(b.follow_up || '') ? b.follow_up : null, src: 'software' };
+      if (!mem.rx) mem.rx = {}; mem.rx[pk] = (mem.rx[pk] || []).concat([rec]).slice(-30);
+      if (rec.follow) { mem.fup = (mem.fup || []).concat([{ k: rec.id, ph, name: name || 'Patient', date: rec.follow, sent: false }]); }
+      url = `${APP}?v=p&k=${rec.id}.${sha256(pk + rec.id).slice(0, 10)}`;
+    } else if (/^\d{4}-\d{2}-\d{2}$/.test(b.follow_up || '')) mem.fup = (mem.fup || []).concat([{ k: rid(8), ph, name: name || 'Patient', date: b.follow_up, sent: false }]);
+    const r = reach('rx'); const lg = langOf(ph, '');
+    if (r === 'whatsapp') out.push(ctaTo(ph, lg === 'en' ? `💊 *Your prescription from ${D} is ready.*\n\nTap below to see your medicines and how to take them.` : `💊 *${D} ki parchi taiyaar hai.*\n\nDawai aur lene ka tareeka dekhne ke liye neeche tap karein.`, lg === 'en' ? 'View prescription' : 'Parchi dekhein', url));
+    else if (r === 'template') out.push(templateTo(ph, S.templates.rx, [name || 'there', D], []));
+    log('rx', r);
+    return { ok: true, url, whatsapp: r };
+  }
+  if (a === 'appointment') {
+    const e = needPhone(); if (e) return e;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(b.date || '') || !/^\d{2}:\d{2}$/.test(b.time || '')) return fail('bad_time', 'Send date as YYYY-MM-DD and time as HH:MM (24 hour).');
+    const tm = Number(b.time.slice(0, 2)) * 60 + Number(b.time.slice(3, 5));
+    const pk = patKey(ph, name); const ap = { id: 'a' + rid(8), date: b.date, time: tm, pid: pk, name: name || 'Patient', phone: ph, src: 'Software', by: 'Software', at: now.toISO(), extRef: b.ref ? String(b.ref).slice(0, 40) : '' };
+    mem.appts = (mem.appts || []).filter(x => x.date >= todayStr && !(ap.extRef && x.extRef === ap.extRef)).concat([ap]).slice(-500);
+    const when = DateTime.fromISO(b.date).toFormat('ccc d LLL') + ', ' + DateTime.fromFormat(b.time, 'HH:mm').toFormat('h:mm a');
+    const r = reach('appt'); const lg = langOf(ph, '');
+    if (r === 'whatsapp') out.push(textTo(ph, lg === 'en' ? `📅 *Appointment confirmed*\n\n${name ? 'Dear ' + name + ', y' : 'Y'}our visit with ${D} is on *${when}*.\n📍 ${C}${S.address ? ', ' + S.address : ''}\n\nWe will remind you a day before. Reply *NEW* to change the time.` : `📅 *Appointment pakka*\n\n${name ? name + ' ji, a' : 'A'}apka ${D} ke saath appointment *${when}* ko hai.\n📍 ${C}${S.address ? ', ' + S.address : ''}\n\nEk din pehle hum yaad dila denge. Time badalna ho toh *NEW* likhiye.`));
+    else if (r === 'template') out.push(templateTo(ph, S.templates.appt, [name || 'there', D, when, C], []));
+    log('appointment ' + when, r);
+    return { ok: true, id: ap.id, whatsapp: r };
+  }
+  if (a === 'doctor') {
+    const st = { in: 'in', late: 'late', away: 'away', leave: 'leave' }[String(b.status || '')]; if (!st) return fail('bad_status', 'status must be in, late, away or leave.');
+    const told = setDoc(st, Number(b.minutes) || 0, out); log('doctor ' + st, 'whatsapp');
+    return { ok: true, told: told || 0 };
+  }
+  if (a === 'missed_call') { // their phone system can report a missed call; we send the booking WhatsApp
+    const e = needPhone(); if (e) return e;
+    if (!mem.mcalls) mem.mcalls = []; mem.mcalls.push({ ph, at: now.toISO(), src: 'software' }); mem.mcalls = mem.mcalls.slice(-500);
+    log('missed call', reach('missed'));
+    return { ok: true, note: 'Saved. The WhatsApp goes from the missed-call flow when the patient can be reached.' };
+  }
+  return fail('unknown', 'Unknown action. Use ext_ping, ext_token, ext_call, ext_done, ext_cancel, ext_bill, ext_rx, ext_appointment, ext_doctor, ext_status, ext_missed_call.');
+}
+
 // ---------- the app (and the live tracker / TV) talk to this ----------
 if (mode === 'desk') {
   const b = deskReq || {};
@@ -879,7 +984,9 @@ if (mode === 'desk') {
   const publicQ = (q) => { const cur = servingOf(q); const w = waitingOf(q); return { now: cur ? cur.tok : null, next: w.slice(0, 3).map(x => x.tok), waiting: w.length, avg: avgMin(q) }; };
   const docInfo = () => { const d = docRead(); return { status: d.status || 'in', mins: d.mins || 0, until: d.until ? DateTime.fromISO(d.until).setZone(TZ).toFormat('h:mm a') : null, setAt: d.setAt ? DateTime.fromISO(d.setAt).setZone(TZ).toFormat('h:mm a') : null, told: (d.told || []).length, line: docLine('en') }; };
   const clinic = { name: C, doctor: D, address: S.address || '', qr, botNumber: S.botNumber || '' };
-  if (b.action === 'track') {
+  if (String(b.action || '').startsWith('ext_')) {
+    try { res = extApi(b, out); } catch (e) { res = { ok: false, code: 'server', error: 'Something went wrong on our side.' }; }
+  } else if (b.action === 'track') {
     const q = qRead(); const tk = q.list.find(x => x.key === b.k);
     if (!tk) res = { ok: false, gone: true, clinic };
     else { if (b.cancel && tk.st === 'w') { qWrite(); tk.st = 'x'; }
@@ -1253,7 +1360,7 @@ if (mode === 'desk') {
       const nmOf = x => (mem.pname || {})[x] || '';
       const bookedAfter = (ph, iso) => rows.some(r => r.phone === ph && active(r) && r.date >= todayStr);
       const tm = iso => { const d = DateTime.fromISO(iso).setZone(TZ); return d.toFormat(d >= now.startOf('day') ? 'h:mm a' : 'd LLL, h:mm a'); };
-      const story = ph => (mem.ev[ph] || []).filter(e => e.at >= now.minus({ days: 2 }).startOf('day').toISO()).map(e => ({ t: tm(e.at), k: e.k, txt: e.t }));
+      const story = ph => ((mem.ev || {})[ph] || []).filter(e => e.at >= now.minus({ days: 2 }).startOf('day').toISO()).map(e => ({ t: tm(e.at), k: e.k, txt: e.t }));
       // WhatsApp: everyone who wrote to the clinic number in the last 2 days
       const wa = Object.keys(mem.ev || {}).map(ph => { const l = (mem.ev[ph] || []).filter(e => e.at >= now.minus({ days: 1 }).startOf('day').toISO()); return { ph, l }; })
         .filter(x => x.l.some(e => ['msg', 'token', 'booked', 'talk', 'cb', 'why', 'recall'].includes(e.k))).map(x => {

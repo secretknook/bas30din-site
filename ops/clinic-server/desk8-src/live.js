@@ -276,3 +276,30 @@
     if (L.sid) boot(); else drawLogin();
   };
 })();
+
+/* ---------- Connect your clinic software (owner) ---------- */
+(function () {
+  const A = CD.A, esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  const API8 = () => window.CD_API || (location.hostname.indexOf('desk.') === 0 ? location.origin + '/api' : location.origin + '/webhook/desk-api');
+  let K = { key: undefined, log: [], busy: false };
+  const call = x => fetch(API8(), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(Object.assign({ sid: CD.L.sid, v8: false, action: 'v8_apikey' }, x)) }).then(r => r.json()).then(r => r.desk || r);
+  function view() {
+    const on = !!K.key;
+    const what = { token: 'Token sent', call: 'Called in', bill: 'Bill sent', rx: 'Prescription sent', appointment: 'Appointment', doctor: 'Doctor status', done: 'Done', cancel: 'Cancelled', 'missed call': 'Missed call' };
+    const sent = s => s === 'whatsapp' ? 'WhatsApp sent' : s === 'template' ? 'Sent (template)' : s === 'none' ? 'Not sent: patient hasn’t messaged in 24 h' : '';
+    return '<h2 class="t">Connect your clinic software</h2>' +
+      '<p class="muted" style="margin:0">If the clinic bills in BS Infosystems or any other software, that software can tell us when a token, bill or prescription is made, and we send the WhatsApp. Nothing else changes for the staff.</p>' +
+      (K.busy ? '<p>Loading…</p>' : on ?
+        '<div class="card pad" style="display:flex;flex-direction:column;gap:8px"><b>Connector is on</b><span class="muted">Give this key only to your software company. It works like a password.</span>' +
+        '<input class="field" readonly style="height:48px;font-family:monospace" value="' + esc(K.key) + '" onclick="this.select()">' +
+        '<span class="muted">Address: <b>' + esc(API8()) + '</b></span></div>' +
+        '<div class="card pad"><b>Last messages from your software</b>' + (K.log.length ? K.log.slice(0, 12).map(l => '<div class="row" style="padding:6px 0"><span class="grow">' + esc((what[(l.what || '').split(' ')[0]] || l.what)) + (l.ph ? ' · …' + esc(l.ph) : '') + '<br><span class="muted" style="font-size:14px">' + esc(sent(l.sent)) + '</span></span><span class="muted" style="font-size:14px">' + esc(new Date(l.at).toLocaleString('en-IN', { hour: 'numeric', minute: '2-digit', day: 'numeric', month: 'short' })) + '</span></div>').join('') : '<p class="muted">Nothing yet. When the software sends its first token, it shows here.</p>') + '</div>' +
+        '<div class="flex"><button class="btn" data-a="kconnReset">Make a new key</button><button class="btn" data-a="kconnOff">Turn off</button><button class="btn pri" data-a="closeModal">Done</button></div>'
+        : '<div class="flex"><button class="btn pri" data-a="kconnOn">Turn on and get the key</button><button class="btn" data-a="closeModal">Not now</button></div>');
+  }
+  const load = x => { K.busy = true; CD.renderModal && CD.renderModal(); return call(x || {}).then(r => { K.busy = false; if (r.auth) { CD.toast('Please log in again'); return; } if (r.error) { CD.toast(r.error); return; } K.key = r.apiKey; K.log = r.apiLog || []; CD.renderModal(); }).catch(() => { K.busy = false; CD.toast('No internet. Try again.'); CD.renderModal(); }); };
+  A.kconnect = () => { K = { key: undefined, log: [], busy: false }; CD.modal(view, true); load({ peek: true }); };
+  A.kconnOn = () => load({});
+  A.kconnReset = () => { if (confirm('The old key will stop working. Your software company must put in the new key. Continue?')) load({ reset: true }); };
+  A.kconnOff = () => load({ off: true });
+})();

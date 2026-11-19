@@ -159,7 +159,8 @@
       ['fees', 'Fees', 'New ' + rs(c.fee) + ' · Follow-up free within ' + c.freeDays + ' days'],
       ['treat', 'Treatments and prices', c.treatments.length + ' items · ' + c.treatments.slice(1, 4).map(t => t.n.split(' (')[0].toLowerCase()).join(', ') + '…'],
       ['gst', 'Bill and GST', (c.gstin ? 'GSTIN ' + c.gstin : 'No GSTIN') + ' · bill no. ' + c.billPrefix + c.billNo],
-      ['msgs', 'WhatsApp messages', 'Token, receipt, reminder, doctor out — edit the words']
+      ['msgs', 'WhatsApp messages', 'Token, receipt, reminder, doctor out — edit the words'],
+      ['connect', 'Connect your clinic software', 'Use our WhatsApp with BS Infosystems or any other billing software']
     ];
     const B = [['r_appt', 'Reception · Appointments'], ['r_close', 'Reception · Close the day'], ['d_sets', 'Doctor · Rx sets'], ['p_reports', 'Patient · My reports'], ['p_pay', 'Patient · Pay online']];
     return hdr() + '<main class="pg mid">' + CD.backBtn() + '<h1 class="t">Clinic settings</h1><p class="muted" style="margin:0">Change anything here. The app, the WhatsApp bot and the patient page update by themselves.</p>' +
@@ -174,7 +175,7 @@
   A.setLang = ds => { C().lang = ds.v; CD.toast(ds.v === 'hl' ? 'WhatsApp messages will go in Hindi (Roman)' : 'WhatsApp messages will go in English'); CD.render(); };
   A.setRxLang = ds => { C().rxLang = ds.v; CD.render(); };
   A.toggleBox = ds => { const c = C(); c.boxes[ds.k] = !c.boxes[ds.k]; CD.render(); };
-  A.editSetting = ds => { UI.f.es = JSON.parse(JSON.stringify(pickSetting(ds.k))); UI.f.esk = ds.k; CD.modal(settingForm, true); };
+  A.editSetting = ds => { if (ds.k === 'connect') return A.kconnect && A.kconnect();  UI.f.es = JSON.parse(JSON.stringify(pickSetting(ds.k))); UI.f.esk = ds.k; CD.modal(settingForm, true); };
   function pickSetting(k) { const c = C(); return k === 'doctors' ? c.doctors : k === 'timings' ? { t: c.timings } : k === 'fees' ? { fee: c.fee, free: c.freeDays } : k === 'treat' ? c.treatments : k === 'gst' ? { gstin: c.gstin, pre: c.billPrefix } : c.msgs; }
   function settingForm() {
     const k = UI.f.esk, e = UI.f.es, c = C();
