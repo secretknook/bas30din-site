@@ -43,6 +43,7 @@
     if (c.status !== 'now' || !c.started) return -1;
     var start = new Date(c.started + 'T00:00:00'), t = new Date(); t.setHours(0, 0, 0, 0);
     var n = Math.floor((t - start) / 864e5) + 1;
+    (c.skipped || []).forEach(function (s) { var d = new Date(s + 'T00:00:00'); if (d >= start && d <= t) n--; });
     return Math.max(1, Math.min(c.totalDays || 30, n));
   }
   function dayState(c, n) {
