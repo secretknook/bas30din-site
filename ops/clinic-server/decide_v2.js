@@ -208,7 +208,7 @@ const T = {
     noSlots: `Sorry, we're fully booked for the next ${S.daysAhead} days 🙏\n\nIf it's urgent, call us on 📞 ${S.clinicPhone} and we'll try to fit you in. Or join the waiting list below.`,
     dayFull: 'That day just filled up. Please pick another one.',
     timesFor: d => `⏰ Free times on *${d}*:`, timeBtn: 'Choose time', timesTitle: 'Available times', later: 'Later times',
-    held: w => `⏳ *${w}* is held for you for ${S.holdMinutes} minutes.\n\nWho is the appointment for? Tap *Myself*, or type the patient's name.`,
+    held: w => `⏳ *${w}* is held for you for ${S.holdMinutes} minutes.\n\n📝 Please send the patient's details in *one message*:\n*Name, Age, Gender*\n\nExample: _Ravi Kumar, 32, Male_\n\nBooking for yourself? Tap *Myself* and just send your age and gender.`,
     selfBtn: 'Myself',
     askName: "Please type the patient's name (e.g. Riya Sharma), or tap *Myself*.",
     confirmed: (r, w) => `✅ *You're booked*\n\n*Patient:* ${r.name}\n*When:* ${w}\n*Doctor:* ${D}${r.service ? `\n*For:* ${r.service}` : ''}${S.fee ? T.en.feeLine(S.fee) : ''}\n*Booking ID:* ${bookingId(r)}\n\n📍 ${C}${S.address ? ', ' + S.address : ''}\n\nPlease come 10 minutes early and bring any old prescriptions or reports. We'll remind you a day before. Plans change? Use the buttons below.`,
@@ -255,7 +255,7 @@ const T = {
     noSlots: `Sorry 🙏 agle ${S.daysAhead} din sab booked hai.\n\nUrgent ho toh 📞 ${S.clinicPhone} par call kijiye, hum koshish karenge. Ya neeche waiting list mein naam daal dijiye.`,
     dayFull: 'Ye din abhi-abhi bhar gaya. Koi aur din chun lijiye.',
     timesFor: d => `⏰ *${d}* ko ye time khali hain:`, timeBtn: 'Time chunein', timesTitle: 'Khali time', later: 'Aur time dekhein',
-    held: w => `⏳ *${w}* aapke liye ${S.holdMinutes} minute tak rok liya hai.\n\nAppointment kiske liye hai? Apne liye ho toh *Mere liye* dabaiye, nahi toh patient ka naam likh dijiye.`,
+    held: w => `⏳ *${w}* aapke liye ${S.holdMinutes} minute tak rok liya hai.\n\n📝 Patient ki details *ek hi message* mein bhej dijiye:\n*Naam, Umar, Male/Female*\n\nJaise: _Ravi Kumar, 32, Male_\n\nApne liye hai? *Mere liye* dabaiye aur sirf umar aur male/female likhiye.`,
     selfBtn: 'Mere liye',
     askName: 'Patient ka naam likh dijiye (jaise: Riya Sharma), ya apne liye ho toh *Mere liye* dabaiye.',
     confirmed: (r, w) => `✅ *Appointment pakka ho gaya*\n\n*Patient:* ${r.name}\n*Kab:* ${w}\n*Doctor:* ${D}${r.service ? `\n*Kis liye:* ${r.service}` : ''}${S.fee ? T.hl.feeLine(S.fee) : ''}\n*Booking ID:* ${bookingId(r)}\n\n📍 ${C}${S.address ? ', ' + S.address : ''}\n\n10 minute pehle aa jaiye, aur purani parchi ya report ho toh saath le aaiye. Ek din pehle hum yaad dila denge. Plan badle toh neeche se badal sakte hain.`,
@@ -1617,7 +1617,7 @@ function welcomeCard() {
     ? `${nm ? `Hello ${nm}` : 'Hello'} 👋\n\nWelcome to *${C}*.\n\n👇 What would you like to visit for? Choose below and we'll show you the next available times.`
     : `Namaste${nm ? ' ' + nm + ' ji' : ''} 👋\n\n*${C}* mein aapka swagat hai.\n\n👇 Bataiye, aap kis cheez ke liye milna chahte hain? Hum aapko agle khaali samay dikha denge.`;
   // photo first, then the treatments list (a list message can't carry a photo)
-  more.unshift(svcList(body));
+  more.unshift(svcs.length >= 2 ? svcCarousel(body.replace(/Choose below/, 'Swipe the cards').replace(/neeche/, 'cards swipe karke')) : svcList(body));
   return { messaging_product: 'whatsapp', to: msg.from, type: 'image', image: { link: S.welcomeImage || IMG + 'welcome_v3.jpg' } };
 }
 function mainMenu() {
@@ -1636,10 +1636,10 @@ function mainMenu() {
 }
 const svcImg = n => { n = String(n).toLowerCase(); return IMG + (/acne|pimple/.test(n) ? 'svc_acne' : /hair|prp/.test(n) && !/laser/.test(n) ? 'svc_hair' : /pigment|tan|melasma/.test(n) ? 'svc_pigment' : /laser/.test(n) ? 'svc_laser' : /hydra|glow|facial|peel/.test(n) ? 'svc_glow' : 'svc_consult') + '.jpg'; };
 const svcPrice = n => { const BL = billList(); const w = String(n).toLowerCase().split(/[^a-z]+/).filter(x => x.length > 3); const hit = BL.find(x => x.n.toLowerCase() === String(n).toLowerCase()) || BL.find(x => w.some(k => x.n.toLowerCase().includes(k))); return hit ? hit.p : (S.fee || 0); };
-function svcCarousel() {
-  const L0 = svcs.slice(0, 10); if (L0.length < 2) return svcList(L.pickSvc);
+function svcCarousel(introText) {
+  const L0 = svcs.slice(0, 10); if (L0.length < 2) return svcList(introText || L.pickSvc);
   return { messaging_product: 'whatsapp', to: msg.from, type: 'interactive', interactive: { type: 'carousel',
-    body: { text: lang === 'en' ? `🩺 *Our treatments*\n\nSwipe to see everything ${D} treats 👉\nPrices shown are starting fees. The doctor confirms your plan after seeing you, with no hidden charges.` : `🩺 *Humare treatments*\n\nSwipe karke dekhiye ${D} kin cheezon ka ilaaj karte hain 👉\nYe shuruaati fees hain. Doctor aapko dekhkar plan confirm karenge, koi chhupa charge nahi.` },
+    body: { text: introText ? introText : lang === 'en' ? `🩺 *Our treatments*\n\nSwipe to see everything ${D} treats 👉\nPrices shown are starting fees. The doctor confirms your plan after seeing you, with no hidden charges.` : `🩺 *Humare treatments*\n\nSwipe karke dekhiye ${D} kin cheezon ka ilaaj karte hain 👉\nYe shuruaati fees hain. Doctor aapko dekhkar plan confirm karenge, koi chhupa charge nahi.` },
     action: { cards: L0.map((v, i) => { const pr = svcPrice(v.name); const d0 = String((lang === 'hl' ? v.hl : v.en) || v.en || v.hl || '').slice(0, 80);
       return { card_index: i, type: 'cta_url', header: { type: 'image', image: { link: svcImg(v.name) } }, body: { text: `*${String(v.name).slice(0, 40)}*${d0 ? '\n' + d0 : ''}${pr ? `\n${lang === 'en' ? 'From' : 'Shuru'} ₹${Number(pr).toLocaleString('en-IN')}` : ''}`.slice(0, 160) },
         action: { buttons: [{ type: 'quick_reply', quick_reply: { id: `TR|${v.id}`, title: lang === 'en' ? 'Book this' : 'Ye book karein' } }] } }; }) } } };
@@ -1662,6 +1662,29 @@ const cleanName = s => s.replace(/[^\p{L}\p{M}\s.'-]/gu, '').replace(/\s+/g, ' '
 const confirmMsg = r => buttons(L.confirmed(r, W(r)), [[`RR|${r.row_number}`, L.changeBtn], [`RX|${r.row_number}`, L.cancelBtn]],
   S.confirmImage ? { type: 'image', image: { link: S.confirmImage } } : null, `${C} · ${S.clinicPhone}`);
 const pin = () => { const p = locationTo(msg.from); if (p) more.push(p); };
+// the "slot held" message: a WhatsApp form (Flow) once Meta allows it for this number, else the one-message details ask
+const heldMsg = (d, tm) => S.bookFlowId ? { messaging_product: 'whatsapp', to: msg.from, type: 'interactive', interactive: { type: 'flow',
+    body: { text: lang === 'en' ? `⏳ *${whenText(d, tm, 'en')}* is held for you for ${S.holdMinutes} minutes.\n\nTap below and fill the patient details once. That's all we need.` : `⏳ *${whenText(d, tm, 'hl')}* aapke liye ${S.holdMinutes} minute tak rok liya hai.\n\nNeeche dabakar patient ki details ek baar bhar dijiye. Bas itna hi chahiye.` },
+    footer: { text: String(C).slice(0, 60) }, action: { name: 'flow', parameters: { flow_message_version: '3', flow_token: 'bk-' + rid(10), flow_id: String(S.bookFlowId), flow_cta: lang === 'en' ? 'Fill details' : 'Details bharein', flow_action: 'navigate',
+      flow_action_payload: { screen: 'DETAILS', data: { slot: at(d, tm).toFormat('ccc, d LLL') + ' at ' + at(d, tm).toFormat('h:mm a'), clinic: String(C) } } } } } }
+  : buttons(L.held(whenText(d, tm, lang)), [['SELF', L.selfBtn]]);
+const parseDetails = s0 => { let s1 = ' ' + String(s0 || '') + ' '; let sex = '';
+  const g = s1.match(/[\s,;](male|female|other|m|f|ladka|ladki|purush|mahila|aurat|boy|girl|man|woman|lady|gents)(?=[\s,;.])/i);
+  if (g) { const w = g[1].toLowerCase(); sex = /^(f|female|ladki|mahila|aurat|girl|woman|lady)$/.test(w) ? 'Female' : w === 'other' ? 'Other' : 'Male'; s1 = s1.replace(g[0], ' '); }
+  const a = s1.match(/(\d{1,3})\s*(y|yr|yrs|year|years|saal|sal)?(?=[\s,;.])/i); const age = a && +a[1] > 0 && +a[1] < 111 ? +a[1] : 0; if (a) s1 = s1.replace(a[0], ' ');
+  const name = cleanName(s1.replace(/\b(age|gender|name|naam|umar|sex)\b\s*[:=-]?/gi, ' ').replace(/[,;|/:]+/g, ' '));
+  return { name, age, sex }; };
+// booking receipt as a PDF on WhatsApp (the PDF is made by the "Booking receipt" page of this workflow)
+function receiptDoc(r, pd) {
+  if (S.receiptPdf === false) return null;
+  if (!mem.bkr) mem.bkr = {}; const keys = Object.keys(mem.bkr); if (keys.length > 300) for (const k of keys.slice(0, keys.length - 300)) delete mem.bkr[k];
+  const k = r.row_number + '.' + sha256(String(r.row_number) + now.toISO() + Math.random()).slice(0, 12);
+  mem.bkr[k] = { id: bookingId(r), name: pd.name, age: pd.age || 0, sex: pd.sex || '', area: pd.area || '', phone: digits(pd.ph2 || '') || digits(me), date: r.date, time: r.time, svc: r.service || '', made: now.toISO(),
+    clinic: C, doctor: D, address: S.address || '', cphone: S.clinicPhone || '', fee: Number(S.fee || 0), when: at(r.date, r.time).toFormat('ccc, d LLL yyyy, h:mm a') };
+  const base = S.receiptUrl || 'https://bot.bas30din.com/webhook/receipt';
+  return { messaging_product: 'whatsapp', to: msg.from, type: 'document', document: { link: `${base}?b=${k}`, filename: `Booking ${bookingId(r)}.pdf`, caption: lang === 'en' ? '🧾 Your booking receipt. Show it at the reception.' : '🧾 Aapki booking ki receipt. Reception par dikha dijiye.' } };
+}
+
 
 // ---------- doctor / reception commands ----------
 const cmd = raw.toUpperCase().replace(/\s+/g, ' ').trim();
@@ -1904,11 +1927,31 @@ else if (langSwitch) { payload = welcomeCard(); }
 else if (!id && has(['language', 'bhasha', 'lang'])) {
   payload = buttons(T.en.pickLang, [['LANG|en', 'English'], ['LANG|hl', 'Hinglish']]);
 }
-else if (holding && (id === 'SELF' || (!id && raw && !raw.includes('?') && raw.split(/\s+/).length <= 4 && !has(['cancel', 'hi', 'hello', 'menu', 'book', 'talk', 'help'])))) {
-  const name = id === 'SELF' ? cleanName(msg.name) || 'Patient' : cleanName(raw);
-  if (!name || name.length < 2) payload = buttons(L.askName, [['SELF', L.selfBtn]]);
-  else { setStatus(holding, 'Booked', name); payload = confirmMsg({ ...holding, name }); pin(); bump('booked'); ev(me, 'booked', 'Booked ' + at(holding.date, holding.time).toFormat('ccc d LLL, h:mm a')); }
+else if (holding && (id === 'SELF' || id === 'FLOW' || (!id && raw && !raw.includes('?') && raw.split(/\s+/).length <= 8 && !has(['cancel', 'hi', 'hello', 'menu', 'book', 'talk', 'help'])))) {
+  if (!mem.pend) mem.pend = {}; for (const k of Object.keys(mem.pend)) if (mem.pend[k].at < now.minus({ hours: 2 }).toISO()) delete mem.pend[k];
+  const pd = (mem.pend[me] && mem.pend[me].row === holding.row_number) ? mem.pend[me] : { row: holding.row_number, at: now.toISO() };
+  if (id === 'FLOW') { try { const f = JSON.parse(raw || '{}'); pd.name = cleanName(String(f.name || (f.who === 'self' ? msg.name : '') || '')); pd.age = Number(f.age) > 0 && Number(f.age) < 111 ? Number(f.age) : 0; pd.sex = ['Male', 'Female', 'Other'].includes(f.sex) ? f.sex : ''; pd.area = String(f.area || '').slice(0, 60); pd.ph2 = digits(f.phone || '').slice(-10); pd.prob = String(f.prob || '').slice(0, 200); pd.self = f.who === 'self'; pd.asked = true; } catch (e) {} }
+  else if (id === 'SELF') { pd.name = cleanName(msg.name || '') || pd.name || ''; pd.self = true; }
+  else { const x = parseDetails(raw); if (x.name) pd.name = x.name; if (x.age) pd.age = x.age; if (x.sex) pd.sex = x.sex; }
+  mem.pend[me] = pd;
+  if (!pd.name || pd.name.length < 2) payload = buttons(L.askName, [['SELF', L.selfBtn]]);
+  else if ((!pd.age || !pd.sex) && !pd.asked) { pd.asked = true;
+    const miss = !pd.age && !pd.sex ? (lang === 'en' ? '*age and gender*' : '*umar aur male/female*') : !pd.age ? (lang === 'en' ? '*age*' : '*umar*') : (lang === 'en' ? '*gender*' : '*male/female*');
+    payload = pd.age ? buttons(lang === 'en' ? `Thank you. And ${pd.self ? 'your' : pd.name + "'s"} gender?` : `Shukriya. ${pd.self ? 'Aap' : pd.name} male hain ya female?`, [['SEX|Male', 'Male'], ['SEX|Female', 'Female'], ['SEX|Other', 'Other']])
+      : text(lang === 'en' ? `Thank you. Please send ${pd.self ? 'your' : pd.name + "'s"} ${miss}.\nExample: _32 Male_` : `Shukriya. ${pd.self ? 'Apni' : pd.name + ' ki'} ${miss} bhej dijiye.\nJaise: _32 Male_`); }
+  else {
+    setStatus(holding, 'Booked', pd.name); const bk = { ...holding, name: pd.name };
+    const pk = patKey(me, ''); const pi = v8pinfo(pk); if (pd.self || !pi.name) { if (pd.age) pi.age = pd.age; if (pd.sex) pi.sex = pd.sex; if (pd.area) pi.area = pd.area; pi.name = pi.name || pd.name; }
+    if (!mem.bkd) mem.bkd = {}; mem.bkd[holding.row_number] = { name: pd.name, age: pd.age || 0, sex: pd.sex || '', area: pd.area || '', ph2: pd.ph2 || '', prob: pd.prob || '', self: !!pd.self, at: now.toISO() };
+    delete mem.pend[me];
+    payload = confirmMsg({ ...bk, name: pd.name + (pd.age || pd.sex ? ` (${[pd.age ? pd.age + (lang === 'en' ? ' yrs' : ' saal') : '', pd.sex].filter(Boolean).join(', ')})` : '') }); const rd = receiptDoc(bk, pd); if (rd) more.push(rd); pin(); bump('booked'); ev(me, 'booked', 'Booked ' + at(holding.date, holding.time).toFormat('ccc d LLL, h:mm a') + ' · ' + pd.name + (pd.age ? ', ' + pd.age : '') + (pd.sex ? ', ' + pd.sex : ''));
+  }
 }
+else if (holding && id.startsWith('SEX|')) { const pd = (mem.pend || {})[me]; if (pd) { pd.sex = id.slice(4); pd.asked = true; }
+  if (pd && pd.name) { setStatus(holding, 'Booked', pd.name); const bk = { ...holding, name: pd.name }; const pi = v8pinfo(patKey(me, '')); if (pd.self || !pi.name) { if (pd.age) pi.age = pd.age; pi.sex = pd.sex; pi.name = pi.name || pd.name; }
+    if (!mem.bkd) mem.bkd = {}; mem.bkd[holding.row_number] = { name: pd.name, age: pd.age || 0, sex: pd.sex || '', self: !!pd.self, at: now.toISO() }; delete mem.pend[me];
+    payload = confirmMsg({ ...bk, name: pd.name + (pd.age || pd.sex ? ` (${[pd.age ? pd.age + (lang === 'en' ? ' yrs' : ' saal') : '', pd.sex].filter(Boolean).join(', ')})` : '') }); const rd = receiptDoc(bk, pd); if (rd) more.push(rd); pin(); bump('booked'); ev(me, 'booked', 'Booked ' + at(holding.date, holding.time).toFormat('ccc d LLL, h:mm a') + ' · ' + pd.name); }
+  else payload = buttons(L.askName, [['SELF', L.selfBtn]]); }
 else if (holding && has(['cancel'])) { setStatus(holding, 'Cancelled'); payload = text(L.holdCancelled); }
 else if (id === 'WL') {
   const rowsW = [];
@@ -1929,7 +1972,7 @@ else if (id.startsWith('S|')) {
   else {
     action = 'append';
     rec = { name: '', phone: me, email: '', date: d, time: tm, status: 'Holding', bookedAt: DateTime.now().toISO(), lang, service: svcName(mem.svc[me]) };
-    payload = buttons(L.held(whenText(d, tm, lang)), [['SELF', L.selfBtn]]);
+    payload = heldMsg(d, tm);
   }
 }
 else if (id.startsWith('M|')) { const [, d, after] = id.split('|'); payload = timeList(d, after); }

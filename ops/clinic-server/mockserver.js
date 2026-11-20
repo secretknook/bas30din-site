@@ -17,7 +17,7 @@ const run = (kind, x) => { const res = fn(DateTime, n => ({ first: () => {
 const applySheet = j => { if (!j || !j.values || !j.range) return; const r = decodeURIComponent(j.range); const v = j.values[0]; const K = ['Name', 'Phone', 'Email', 'Date', 'Time', 'Status', 'Booked at', 'Reminder', 'Lang', 'Service'];
   const m = r.match(/!A(\d+):/); if (m) { const row = sheet.find(x => x.row_number === Number(m[1])); if (row) v.forEach((x, i) => { row[K[i]] = x; }); }
   else { const o = { row_number: sheet.length + 2 }; K.forEach((k, i) => { o[k] = v[i] == null ? '' : v[i]; }); sheet.push(o); } };
-module.exports = { run, mem };
+module.exports = { run, mem, S, sheet };
 if (require.main === module) {
   // seed: patients take tokens, a live chat, a callback
   ['Riya Sharma', 'Aman Gupta', 'Sunita Devi', 'Kavya Nair', 'Arjun Mehta'].forEach((n, i) => run('chat', { from: '9190000002' + i, name: n, type: 'text', text: 'TOKEN', replyId: '' }));
