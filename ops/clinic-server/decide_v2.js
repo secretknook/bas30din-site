@@ -208,7 +208,7 @@ const T = {
     noSlots: `Sorry, we're fully booked for the next ${S.daysAhead} days 🙏\n\nIf it's urgent, call us on 📞 ${S.clinicPhone} and we'll try to fit you in. Or join the waiting list below.`,
     dayFull: 'That day just filled up. Please pick another one.',
     timesFor: d => `⏰ Free times on *${d}*:`, timeBtn: 'Choose time', timesTitle: 'Available times', later: 'Later times',
-    held: w => `⏳ *${w}* is held for you for ${S.holdMinutes} minutes.\n\n📝 Please send the patient's details in *one message*:\n*Name, Age, Gender*\n\nExample: _Ravi Kumar, 32, Male_\n\nBooking for yourself? Tap *Myself* and just send your age and gender.`,
+    held: w => `⏳ *${w}* is held for you for ${S.holdMinutes} minutes.\n\n👤 Who is the appointment for?`,
     selfBtn: 'Myself',
     askName: "Please type the patient's name (e.g. Riya Sharma), or tap *Myself*.",
     confirmed: (r, w) => `✅ *You're booked*\n\n*Patient:* ${r.name}\n*When:* ${w}\n*Doctor:* ${D}${r.service ? `\n*For:* ${r.service}` : ''}${S.fee ? T.en.feeLine(S.fee) : ''}\n*Booking ID:* ${bookingId(r)}\n\n📍 ${C}${S.address ? ', ' + S.address : ''}\n\nPlease come 10 minutes early and bring any old prescriptions or reports. We'll remind you a day before. Plans change? Use the buttons below.`,
@@ -255,7 +255,7 @@ const T = {
     noSlots: `Sorry 🙏 agle ${S.daysAhead} din sab booked hai.\n\nUrgent ho toh 📞 ${S.clinicPhone} par call kijiye, hum koshish karenge. Ya neeche waiting list mein naam daal dijiye.`,
     dayFull: 'Ye din abhi-abhi bhar gaya. Koi aur din chun lijiye.',
     timesFor: d => `⏰ *${d}* ko ye time khali hain:`, timeBtn: 'Time chunein', timesTitle: 'Khali time', later: 'Aur time dekhein',
-    held: w => `⏳ *${w}* aapke liye ${S.holdMinutes} minute tak rok liya hai.\n\n📝 Patient ki details *ek hi message* mein bhej dijiye:\n*Naam, Umar, Male/Female*\n\nJaise: _Ravi Kumar, 32, Male_\n\nApne liye hai? *Mere liye* dabaiye aur sirf umar aur male/female likhiye.`,
+    held: w => `⏳ *${w}* aapke liye ${S.holdMinutes} minute tak rok liya hai.\n\n👤 Appointment kiske liye hai?`,
     selfBtn: 'Mere liye',
     askName: 'Patient ka naam likh dijiye (jaise: Riya Sharma), ya apne liye ho toh *Mere liye* dabaiye.',
     confirmed: (r, w) => `✅ *Appointment pakka ho gaya*\n\n*Patient:* ${r.name}\n*Kab:* ${w}\n*Doctor:* ${D}${r.service ? `\n*Kis liye:* ${r.service}` : ''}${S.fee ? T.hl.feeLine(S.fee) : ''}\n*Booking ID:* ${bookingId(r)}\n\n📍 ${C}${S.address ? ', ' + S.address : ''}\n\n10 minute pehle aa jaiye, aur purani parchi ya report ho toh saath le aaiye. Ek din pehle hum yaad dila denge. Plan badle toh neeche se badal sakte hain.`,
@@ -1616,9 +1616,8 @@ function welcomeCard() {
   const body = en
     ? `${nm ? `Hello ${nm}` : 'Hello'} 👋\n\nWelcome to *${C}*.\n\n👇 What would you like to visit for? Choose below and we'll show you the next available times.`
     : `Namaste${nm ? ' ' + nm + ' ji' : ''} 👋\n\n*${C}* mein aapka swagat hai.\n\n👇 Bataiye, aap kis cheez ke liye milna chahte hain? Hum aapko agle khaali samay dikha denge.`;
-  // photo first, then the treatments list (a list message can't carry a photo)
-  more.unshift(svcs.length >= 2 ? svcCarousel(body.replace(/Choose below/, 'Swipe the cards').replace(/neeche/, 'cards swipe karke')) : svcList(body));
-  return { messaging_product: 'whatsapp', to: msg.from, type: 'image', image: { link: S.welcomeImage || IMG + 'welcome_v3.jpg' } };
+  // one message: photo on top, the welcome words, and 3 buttons. Treatment cards come only when they ask for them.
+  return buttons(body, [['NEW', en ? 'Book appointment' : 'Appointment book'], ['SVC', en ? 'Treatments & fees' : 'Treatments aur fees'], ['LIVE', en ? 'Talk to clinic' : 'Clinic se baat']], { type: 'image', image: { link: S.welcomeImage || IMG + 'welcome_v3.jpg' } });
 }
 function mainMenu() {
   const en = lang === 'en'; const open = isOpenNow() && docRead().status !== 'leave';
@@ -1667,7 +1666,16 @@ const heldMsg = (d, tm) => S.bookFlowId ? { messaging_product: 'whatsapp', to: m
     body: { text: lang === 'en' ? `⏳ *${whenText(d, tm, 'en')}* is held for you for ${S.holdMinutes} minutes.\n\nTap below and fill the patient details once. That's all we need.` : `⏳ *${whenText(d, tm, 'hl')}* aapke liye ${S.holdMinutes} minute tak rok liya hai.\n\nNeeche dabakar patient ki details ek baar bhar dijiye. Bas itna hi chahiye.` },
     footer: { text: String(C).slice(0, 60) }, action: { name: 'flow', parameters: { flow_message_version: '3', flow_token: 'bk-' + rid(10), flow_id: String(S.bookFlowId), flow_cta: lang === 'en' ? 'Fill details' : 'Details bharein', flow_action: 'navigate',
       flow_action_payload: { screen: 'DETAILS', data: { slot: at(d, tm).toFormat('ccc, d LLL') + ' at ' + at(d, tm).toFormat('h:mm a'), clinic: String(C) } } } } } }
-  : buttons(L.held(whenText(d, tm, lang)), [['SELF', L.selfBtn]]);
+  : buttons(L.held(whenText(d, tm, lang)), [['SELF', L.selfBtn], ['OTHER', lang === 'en' ? 'Someone else' : 'Kisi aur ke liye']]);
+// the WhatsApp form for one day: free times as chips + patient details (needs S.bookFlowId, a published Flow)
+function dayFlow(d, note) {
+  const sl = slotsFor(d); if (!sl.length) return dateList(L.dayFull);
+  const en = lang === 'en'; const sv = svcName(mem.svc[me] || '');
+  return { messaging_product: 'whatsapp', to: msg.from, type: 'interactive', interactive: { type: 'flow',
+    body: { text: (note ? note + '\n\n' : '') + (en ? `📅 *${dateLabel(d, 'en')}*${sv ? ' · ' + sv : ''}\n\n${sl.length} times are free. Tap below to pick one and fill the patient details. It takes 20 seconds.` : `📅 *${dateLabel(d, 'hl')}*${sv ? ' · ' + sv : ''}\n\n${sl.length} time khaali hain. Neeche dabakar time chuniye aur patient ki details bhariye. Bas 20 second.`) },
+    footer: { text: String(C).slice(0, 60) }, action: { name: 'flow', parameters: { flow_message_version: '3', flow_token: 'day-' + rid(10), flow_id: String(S.bookFlowId), flow_cta: en ? 'Pick a time' : 'Time chunein', flow_action: 'navigate',
+      flow_action_payload: { screen: 'BOOK', data: { day: dateLabel(d, 'en'), d, svc: String(mem.svc[me] || ''), times: sl.slice(0, 20).map(x => ({ id: x, title: timeLabel(d, x, 'en') })) } } } } } };
+}
 const parseDetails = s0 => { let s1 = ' ' + String(s0 || '') + ' '; let sex = '';
   const g = s1.match(/[\s,;](male|female|other|m|f|ladka|ladki|purush|mahila|aurat|boy|girl|man|woman|lady|gents)(?=[\s,;.])/i);
   if (g) { const w = g[1].toLowerCase(); sex = /^(f|female|ladki|mahila|aurat|girl|woman|lady)$/.test(w) ? 'Female' : w === 'other' ? 'Other' : 'Male'; s1 = s1.replace(g[0], ' '); }
@@ -1927,31 +1935,46 @@ else if (langSwitch) { payload = welcomeCard(); }
 else if (!id && has(['language', 'bhasha', 'lang'])) {
   payload = buttons(T.en.pickLang, [['LANG|en', 'English'], ['LANG|hl', 'Hinglish']]);
 }
-else if (holding && (id === 'SELF' || id === 'FLOW' || (!id && raw && !raw.includes('?') && raw.split(/\s+/).length <= 8 && !has(['cancel', 'hi', 'hello', 'menu', 'book', 'talk', 'help'])))) {
-  if (!mem.pend) mem.pend = {}; for (const k of Object.keys(mem.pend)) if (mem.pend[k].at < now.minus({ hours: 2 }).toISO()) delete mem.pend[k];
-  const pd = (mem.pend[me] && mem.pend[me].row === holding.row_number) ? mem.pend[me] : { row: holding.row_number, at: now.toISO() };
-  if (id === 'FLOW') { try { const f = JSON.parse(raw || '{}'); pd.name = cleanName(String(f.name || (f.who === 'self' ? msg.name : '') || '')); pd.age = Number(f.age) > 0 && Number(f.age) < 111 ? Number(f.age) : 0; pd.sex = ['Male', 'Female', 'Other'].includes(f.sex) ? f.sex : ''; pd.area = String(f.area || '').slice(0, 60); pd.ph2 = digits(f.phone || '').slice(-10); pd.prob = String(f.prob || '').slice(0, 200); pd.self = f.who === 'self'; pd.asked = true; } catch (e) {} }
-  else if (id === 'SELF') { pd.name = cleanName(msg.name || '') || pd.name || ''; pd.self = true; }
-  else { const x = parseDetails(raw); if (x.name) pd.name = x.name; if (x.age) pd.age = x.age; if (x.sex) pd.sex = x.sex; }
-  mem.pend[me] = pd;
-  if (!pd.name || pd.name.length < 2) payload = buttons(L.askName, [['SELF', L.selfBtn]]);
-  else if ((!pd.age || !pd.sex) && !pd.asked) { pd.asked = true;
-    const miss = !pd.age && !pd.sex ? (lang === 'en' ? '*age and gender*' : '*umar aur male/female*') : !pd.age ? (lang === 'en' ? '*age*' : '*umar*') : (lang === 'en' ? '*gender*' : '*male/female*');
-    payload = pd.age ? buttons(lang === 'en' ? `Thank you. And ${pd.self ? 'your' : pd.name + "'s"} gender?` : `Shukriya. ${pd.self ? 'Aap' : pd.name} male hain ya female?`, [['SEX|Male', 'Male'], ['SEX|Female', 'Female'], ['SEX|Other', 'Other']])
-      : text(lang === 'en' ? `Thank you. Please send ${pd.self ? 'your' : pd.name + "'s"} ${miss}.\nExample: _32 Male_` : `Shukriya. ${pd.self ? 'Apni' : pd.name + ' ki'} ${miss} bhej dijiye.\nJaise: _32 Male_`); }
+else if (id === 'FLOW' && !holding) {
+  // the WhatsApp form came back with a time and the patient's details: book straight away
+  let f = {}; try { f = JSON.parse(raw || '{}'); } catch (e) {}
+  const d = String(f.d || ''), tm = String(Array.isArray(f.time) ? f.time[0] || '' : f.time || ''); if (Array.isArray(f.sex)) f.sex = f.sex[0]; if (Array.isArray(f.who)) f.who = f.who[0]; const en = lang === 'en';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || !slotsFor(d).includes(tm)) payload = d && /^\d{4}-\d{2}-\d{2}$/.test(d) ? dayFlow(d, en ? 'Sorry, that time was just taken. Please pick another one.' : 'Maaf kijiye, woh time abhi kisi ne le liya. Doosra time chuniye.') : dateList(L.pickSvc);
   else {
-    setStatus(holding, 'Booked', pd.name); const bk = { ...holding, name: pd.name };
-    const pk = patKey(me, ''); const pi = v8pinfo(pk); if (pd.self || !pi.name) { if (pd.age) pi.age = pd.age; if (pd.sex) pi.sex = pd.sex; if (pd.area) pi.area = pd.area; pi.name = pi.name || pd.name; }
-    if (!mem.bkd) mem.bkd = {}; mem.bkd[holding.row_number] = { name: pd.name, age: pd.age || 0, sex: pd.sex || '', area: pd.area || '', ph2: pd.ph2 || '', prob: pd.prob || '', self: !!pd.self, at: now.toISO() };
-    delete mem.pend[me];
-    payload = confirmMsg({ ...bk, name: pd.name + (pd.age || pd.sex ? ` (${[pd.age ? pd.age + (lang === 'en' ? ' yrs' : ' saal') : '', pd.sex].filter(Boolean).join(', ')})` : '') }); const rd = receiptDoc(bk, pd); if (rd) more.push(rd); pin(); bump('booked'); ev(me, 'booked', 'Booked ' + at(holding.date, holding.time).toFormat('ccc d LLL, h:mm a') + ' · ' + pd.name + (pd.age ? ', ' + pd.age : '') + (pd.sex ? ', ' + pd.sex : ''));
+    const pd = { self: f.who === 'self', name: cleanName(String(f.name || (f.who === 'self' ? msg.name : '') || '')) || cleanName(msg.name || '') || 'Patient', age: Number(f.age) > 0 && Number(f.age) < 111 ? Number(f.age) : 0, sex: ['Male', 'Female', 'Other'].includes(f.sex) ? f.sex : '', area: String(f.area || '').slice(0, 60), ph2: digits(f.phone || '').slice(-10), prob: String(f.prob || '').slice(0, 200) };
+    const svc = svcName(String(f.svc || mem.svc[me] || ''));
+    action = 'append'; rec = { name: pd.name, phone: me, email: '', date: d, time: tm, status: 'Booked', bookedAt: DateTime.now().toISO(), lang, service: svc };
+    const rowNo = rows.reduce((m0, r0) => Math.max(m0, Number(r0.row_number) || 0), 1) + 1; const bk = { ...rec, row_number: rowNo };
+    const pi = v8pinfo(patKey(me, '')); if (pd.self || !pi.name) { if (pd.age) pi.age = pd.age; if (pd.sex) pi.sex = pd.sex; if (pd.area) pi.area = pd.area; pi.name = pi.name || pd.name; }
+    if (!mem.bkd) mem.bkd = {}; mem.bkd[rowNo] = { ...pd, at: now.toISO() };
+    payload = confirmMsg({ ...bk, name: pd.name + (pd.age || pd.sex ? ` (${[pd.age ? pd.age + (en ? ' yrs' : ' saal') : '', pd.sex].filter(Boolean).join(', ')})` : '') }); const rd = receiptDoc(bk, pd); if (rd) more.push(rd); pin(); bump('booked');
+    ev(me, 'booked', 'Booked ' + at(d, tm).toFormat('ccc d LLL, h:mm a') + ' · ' + pd.name + (pd.age ? ', ' + pd.age : '') + (pd.sex ? ', ' + pd.sex : ''));
   }
 }
-else if (holding && id.startsWith('SEX|')) { const pd = (mem.pend || {})[me]; if (pd) { pd.sex = id.slice(4); pd.asked = true; }
-  if (pd && pd.name) { setStatus(holding, 'Booked', pd.name); const bk = { ...holding, name: pd.name }; const pi = v8pinfo(patKey(me, '')); if (pd.self || !pi.name) { if (pd.age) pi.age = pd.age; pi.sex = pd.sex; pi.name = pi.name || pd.name; }
-    if (!mem.bkd) mem.bkd = {}; mem.bkd[holding.row_number] = { name: pd.name, age: pd.age || 0, sex: pd.sex || '', self: !!pd.self, at: now.toISO() }; delete mem.pend[me];
-    payload = confirmMsg({ ...bk, name: pd.name + (pd.age || pd.sex ? ` (${[pd.age ? pd.age + (lang === 'en' ? ' yrs' : ' saal') : '', pd.sex].filter(Boolean).join(', ')})` : '') }); const rd = receiptDoc(bk, pd); if (rd) more.push(rd); pin(); bump('booked'); ev(me, 'booked', 'Booked ' + at(holding.date, holding.time).toFormat('ccc d LLL, h:mm a') + ' · ' + pd.name); }
-  else payload = buttons(L.askName, [['SELF', L.selfBtn]]); }
+else if (holding && (['SELF', 'OTHER', 'FLOW'].includes(id) || id.startsWith('SEX|') || (!id && raw && !raw.includes('?') && raw.split(/\s+/).length <= 8 && !has(['cancel', 'hi', 'hello', 'menu', 'book', 'talk', 'help'])))) {
+  if (!mem.pend) mem.pend = {}; for (const k of Object.keys(mem.pend)) if (mem.pend[k].at < now.minus({ hours: 2 }).toISO()) delete mem.pend[k];
+  const pd = (mem.pend[me] && mem.pend[me].row === holding.row_number) ? mem.pend[me] : { row: holding.row_number, at: now.toISO() };
+  const en = lang === 'en';
+  if (id === 'FLOW') { try { const f = JSON.parse(raw || '{}'); pd.self = f.who === 'self'; pd.name = cleanName(String(f.name || (pd.self ? msg.name : '') || '')); pd.age = Number(f.age) > 0 && Number(f.age) < 111 ? Number(f.age) : 0; pd.sex = ['Male', 'Female', 'Other'].includes(f.sex) ? f.sex : ''; pd.area = String(f.area || '').slice(0, 60); pd.ph2 = digits(f.phone || '').slice(-10); pd.prob = String(f.prob || '').slice(0, 200); pd.ageTries = 9; } catch (e) {} }
+  else if (id === 'SELF') { pd.self = true; pd.other = false; pd.name = cleanName(msg.name || '') || ''; }
+  else if (id === 'OTHER') { pd.self = false; pd.other = true; pd.name = ''; pd.named = false; }
+  else if (id.startsWith('SEX|')) pd.sex = id.slice(4);
+  else { const x = parseDetails(raw); if (x.name && (!pd.name || (pd.other && !pd.named))) { pd.name = x.name; pd.named = true; } if (x.age) pd.age = x.age; if (x.sex) pd.sex = x.sex; if (!x.age && pd.name && pd.sex && !pd.age) pd.ageTries = (pd.ageTries || 0) + 1; }
+  mem.pend[me] = pd;
+  const who = pd.self ? (en ? 'your' : 'aapki') : (en ? 'the patient\'s' : 'patient ki');
+  if (!pd.name || pd.name.length < 2) payload = pd.other ? text(en ? "✍️ Please type the *patient's full name*.\nExample: _Riya Sharma_" : '✍️ Patient ka *poora naam* likh dijiye.\nJaise: _Riya Sharma_') : buttons(L.held(whenText(holding.date, holding.time, lang)), [['SELF', L.selfBtn], ['OTHER', en ? 'Someone else' : 'Kisi aur ke liye']]);
+  else if (!pd.sex) payload = buttons(en ? `${pd.self ? 'Thank you' : 'Got it, *' + pd.name + '*'}. Please choose ${who} gender:` : `${pd.self ? 'Shukriya' : 'Theek hai, *' + pd.name + '*'}. Gender chuniye:`, [['SEX|Male', 'Male'], ['SEX|Female', 'Female'], ['SEX|Other', 'Other']]);
+  else if (!pd.age && (pd.ageTries || 0) < 2) payload = text(en ? `🎂 And ${who} *age* in years?\nJust type the number, like _32_` : `🎂 Aur ${who} *umar* kitni hai?\nBas number likhiye, jaise _32_`);
+  else {
+    setStatus(holding, 'Booked', pd.name); const bk = { ...holding, name: pd.name };
+    const pi = v8pinfo(patKey(me, '')); if (pd.self || !pi.name) { if (pd.age) pi.age = pd.age; if (pd.sex) pi.sex = pd.sex; if (pd.area) pi.area = pd.area; pi.name = pi.name || pd.name; }
+    if (!mem.bkd) mem.bkd = {}; mem.bkd[holding.row_number] = { name: pd.name, age: pd.age || 0, sex: pd.sex || '', area: pd.area || '', ph2: pd.ph2 || '', prob: pd.prob || '', self: !!pd.self, at: now.toISO() };
+    delete mem.pend[me];
+    payload = confirmMsg({ ...bk, name: pd.name + (pd.age || pd.sex ? ` (${[pd.age ? pd.age + (en ? ' yrs' : ' saal') : '', pd.sex].filter(Boolean).join(', ')})` : '') }); const rd = receiptDoc(bk, pd); if (rd) more.push(rd); pin(); bump('booked');
+    ev(me, 'booked', 'Booked ' + at(holding.date, holding.time).toFormat('ccc d LLL, h:mm a') + ' · ' + pd.name + (pd.age ? ', ' + pd.age : '') + (pd.sex ? ', ' + pd.sex : ''));
+  }
+}
+
 else if (holding && has(['cancel'])) { setStatus(holding, 'Cancelled'); payload = text(L.holdCancelled); }
 else if (id === 'WL') {
   const rowsW = [];
@@ -1976,7 +1999,7 @@ else if (id.startsWith('S|')) {
   }
 }
 else if (id.startsWith('M|')) { const [, d, after] = id.split('|'); payload = timeList(d, after); }
-else if (id.startsWith('D|')) { payload = timeList(id.split('|')[1]); }
+else if (id.startsWith('D|')) { const d0 = id.split('|')[1]; payload = S.bookFlowId && canBookMore ? dayFlow(d0) : timeList(d0); }
 else if (id.startsWith('RC|')) {
   const r = byRow(id.split('|')[1]);
   if (r && active(r)) { setStatus(r, 'Confirmed'); payload = text(L.thanksConfirm(W(r))); pin(); } else payload = text(L.gone);
@@ -2000,7 +2023,7 @@ else if (id === 'DOC' || (!id && has(['doctor', 'dr', 'qualification', 'experien
 else if (id === 'NEW' || id === 'MC_BOOK' || id.startsWith('LANG|') || (!id && has(['book', 'booking', 'appointment']) && !has(['cancel']))) {
   if (id.startsWith('LANG|') && upcoming.length) payload = buttons(L.yourAppts(msg.name, upcoming.map(r => `• ${r.name || 'Patient'}: ${W(r)}`).join('\n')), menuBtns());
   else if (id.startsWith('LANG|')) payload = welcomeCard();
-  else payload = canBookMore ? svcList(L.pickSvc) : buttons(L.limit(upcoming.length), [['CANCEL', L.cancelBookingBtn]]);
+  else payload = canBookMore ? svcCarousel(lang === 'en' ? '🩺 *What would you like to visit for?*\n\nSwipe the cards and tap *Book this* on the one you need 👉' : '🩺 *Aap kis cheez ke liye milna chahte hain?*\n\nCards swipe karke jo chahiye uspe *Ye book karein* dabaiye 👉') : buttons(L.limit(upcoming.length), [['CANCEL', L.cancelBookingBtn]]);
 }
 else if (id === 'CANCEL' || (!id && has(['cancel']))) {
   if (!upcoming.length) payload = buttons(L.noUpcoming, [['NEW', L.bookBtn]]);
