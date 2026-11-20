@@ -1,0 +1,27 @@
+process.chdir('/home/claude/clinic-server');
+const { Settings, DateTime } = require('/home/claude/clinic-server/node_modules/luxon');
+const t = DateTime.now().setZone('Asia/Kolkata').set({ hour: 11, minute: 0 }); Settings.now = () => t.toMillis();
+const { run, mem } = require('/home/claude/clinic-server/mockserver.js');
+const P = '919811155555';
+const show = m => { if (!m) return '(nothing)'; const i = m.interactive; const txt = (m.text && m.text.body) || (i && i.body && i.body.text) || (m.template && 'TEMPLATE ' + m.template.name) || (m.image && 'IMAGE ' + (m.image.caption || '')) || m.type;
+  const btn = i && i.action ? (i.action.buttons ? ' [' + i.action.buttons.map(b => b.reply.id + ':' + b.reply.title).join(' | ') + ']' : i.action.sections ? ' [list: ' + i.action.sections.map(s => s.rows.slice(0, 4).map(r => r.id + ':' + r.title).join(', ')).join(' / ') + ']' : i.action.parameters ? ' [link: ' + i.action.parameters.display_text + ']' : '') : '';
+  return String(txt).replace(/\n+/g, ' ⏎ ').slice(0, 170) + btn; };
+let lastIds = [];
+const say = (text, replyId) => { let o; try { o = run('chat', { from: P, name: 'Ravi Kumar', type: replyId ? 'interactive' : 'text', text: text || '', replyId: replyId || '' }); } catch (e) { console.log('>>', text || replyId, '\n   CRASH', e.message); return []; }
+  const all = [o.payload].concat(o.more || []).filter(Boolean);
+  console.log('>>', text || replyId); all.forEach(m => console.log('   <' + (String(m.to) === P ? 'patient' : 'STAFF ' + m.to) + '>', show(m))); if (!all.length) console.log('   (no reply)', o.action);
+  lastIds = []; all.forEach(m => { const i = m.interactive; if (i && i.action && i.action.buttons) i.action.buttons.forEach(b => lastIds.push(b.reply.id)); if (i && i.action && i.action.sections) i.action.sections.forEach(s => s.rows.forEach(r => lastIds.push(r.id))); });
+  return all; };
+say('Hi');
+say(null, lastIds[0]);
+say(null, lastIds[0]);
+say(null, lastIds[0]);
+say(null, lastIds[0]);
+say('Ravi');
+say('TOKEN');
+say('kitna time lagega');
+say('fees kitni hai');
+say('address');
+say('STOP');
+say('Hi');
+console.log('lang', mem.lang && mem.lang[P]);

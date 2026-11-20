@@ -1,6 +1,50 @@
 // Clinic bot brain v2 - languages (English / Hinglish), photo confirmation, location pin,
 // doctor commands (TODAY, LATE 30, LEAVE <date>, HELP) and the 8 AM doctor summary.
 // All clinic details live in the "Clinic Settings" node.
+
+// ================= Message safety: every WhatsApp the bot sends passes through here =================
+// 1. Night quiet: no automatic patient messages from 9 PM to 8 AM (replies to a patient who just wrote are fine).
+// 2. No repeats: the same message to the same patient is never sent twice within 12 hours.
+// 3. Daily cap: at most 6 automatic messages to one patient in a day.
+// Staff and doctors are never blocked. Blocked messages are listed for the owner (mem.held).
+function __guard(result) {
+  try {
+    const mem = $getWorkflowStaticData('global'); const S0 = Object.assign({}, $('Clinic Settings').first().json, mem.cfg || {});
+    const now = DateTime.now().setZone('Asia/Kolkata'); const d10 = v => String(v || '').replace(/\D/g, '').slice(-10);
+    const staff = new Set([].concat(S0.staff || [], mem.team || []).map(x => d10(x.phone)).concat([].concat(S0.doctorNumbers || [], S0.adminNumbers || []).map(d10)).filter(Boolean));
+    let deskReq = null; try { deskReq = $('Desk API (POST)').first().json.body || {}; } catch (e) {}
+    let msg = null; if (!deskReq) { try { msg = $('Parse message').first().json; } catch (e) {} }
+    const mode = deskReq ? 'desk' : msg ? 'chat' : 'summary';
+    const from = msg ? d10(msg.from) : '';
+    const qFrom = Number(S0.quietFrom == null ? 21 : S0.quietFrom), qTo = Number(S0.quietTo == null ? 8 : S0.quietTo);
+    const quiet = now.hour >= qFrom || now.hour < qTo;
+    const day = now.toFormat('yyyy-MM-dd'); if (!mem.sentLog || mem.sentLog.day !== day) mem.sentLog = { day, n: {}, h: (mem.sentLog && mem.sentLog.h) || {} };
+    const cut = now.minus({ hours: 12 }).toISO(); for (const k of Object.keys(mem.sentLog.h)) if (mem.sentLog.h[k] < cut) delete mem.sentLog.h[k];
+    const hash = m => { const c = Object.assign({}, m); delete c.to; let x = JSON.stringify(c), h = 2166136261; for (let i = 0; i < x.length; i++) { h ^= x.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); };
+    const hold = (m, why) => { mem.held = (mem.held || []).concat([{ at: now.toISO(), to: d10(m.to), why, what: String((m.text && m.text.body) || (m.interactive && m.interactive.body && m.interactive.body.text) || (m.template && m.template.name) || m.type).slice(0, 80) }]).slice(-100); };
+    const ok = m => {
+      if (!m || !m.to) return true; const t = d10(m.to);
+      if (staff.has(t)) return true;
+      const isReply = mode === 'chat' && t === from;
+      if (isReply) return true;
+      if (mem.optout && mem.optout[String(m.to).replace(/\D/g, '')] && !(m.type === 'template' && /otp|login/i.test((m.template || {}).name || ''))) { hold(m, 'patient said STOP'); return false; }
+      if (quiet && mode === 'summary') { hold(m, 'night'); return false; }
+      const hk = t + ':' + hash(m);
+      if (mem.sentLog.h[hk]) { hold(m, 'repeat'); return false; }
+      const n = mem.sentLog.n[t] || 0; if (n >= Number(S0.maxAutoPerDay || 6)) { hold(m, 'daily limit'); return false; }
+      mem.sentLog.h[hk] = now.toISO(); mem.sentLog.n[t] = n + 1; return true;
+    };
+    for (const it of result || []) {
+      const j = it && it.json; if (!j) continue;
+      const all = [j.payload].concat(j.more || []).filter(Boolean).filter(ok);
+      j.payload = all.shift() || null; j.more = all;
+      if (!j.payload && j.action === 'reply') j.action = 'none';
+      if (j.desk && typeof j.desk === 'object') j.desk.sent = (j.payload ? 1 : 0) + all.length;
+    }
+  } catch (e) { /* never block the bot because of the guard */ }
+  return result;
+}
+return __guard((() => {
 const S = Object.assign({}, $('Clinic Settings').first().json);
 const TZ = 'Asia/Kolkata';
 const now = DateTime.now().setZone(TZ);
@@ -467,6 +511,7 @@ function reviewAsks() {
   for (const v of (mem.vis || {})[todayStr] || []) { if (!v.ph || seen.has(v.ph) || !v.m) continue; seen.add(v.ph); const r = mem.rv[v.ph]; if (r && r.at > now.minus({ days: 60 }).toISO()) continue; if (DateTime.fromISO(v.out) > now.minus({ minutes: 45 })) continue; L.push(v); }
   return L;
 }
+const q0Has = ph => { const q = mem.q && mem.q.date === todayStr ? mem.q : null; return !!(q && q.list.some(t => t.phone === ph && ['w', 's'].includes(t.st))); };
 const reviewBtns = lg => [['RV|5', lg === 'en' ? 'Excellent' : 'Bahut accha'], ['RV|3', lg === 'en' ? 'Good' : 'Theek tha'], ['RV|1', lg === 'en' ? 'Needs improvement' : 'Sudhaar chahiye']];
 
 // ---------- demo data: a clinic that has been running for 2 months ----------
@@ -1010,7 +1055,7 @@ if (mode === 'desk') {
         note: Z.gstin ? (anyTax ? 'Healthcare services are exempt from GST (Notification 12/2017-Central Tax (Rate), Sl. No. 74). Cosmetic services are taxable at the rate shown.' : 'Healthcare services exempt from GST under Notification 12/2017-Central Tax (Rate), Sl. No. 74.') : '' };
     }
   } else if (b.action === 'mc_log') {
-    if (S.hookKey && b.key === S.hookKey && digits(b.phone || '')) { if (!mem.mcalls) mem.mcalls = []; mem.mcalls = mem.mcalls.filter(x => x.at > now.minus({ days: 3 }).toISO()).concat([{ ph: digits(b.phone), at: now.toISO() }]).slice(-200); bump('mcalls'); ev(b.phone, 'call', 'Called · nobody picked up'); const mcRich = (b.send === true || b.send === 'true') && inWindow(digits(b.phone)); if (mcRich) out.push(missedCallMsg(digits(b.phone))); if (b.sent !== false && b.sent !== 'false') ev(b.phone, 'bot', 'Bot sent a WhatsApp reply'); res = { ok: true, handled: !!mcRich }; }
+    if (S.hookKey && b.key === S.hookKey && digits(b.phone || '')) { if (!mem.mcalls) mem.mcalls = []; mem.mcalls = mem.mcalls.filter(x => x.at > now.minus({ days: 3 }).toISO()).concat([{ ph: digits(b.phone), at: now.toISO(), night: b.night === true || b.night === 'true' }]).slice(-200); bump('mcalls'); ev(b.phone, 'call', 'Called · nobody picked up'); const mcRich = (b.send === true || b.send === 'true') && inWindow(digits(b.phone)); if (mcRich) out.push(missedCallMsg(digits(b.phone))); if (b.sent !== false && b.sent !== 'false') ev(b.phone, 'bot', 'Bot sent a WhatsApp reply'); res = { ok: true, handled: !!mcRich }; }
     else res = { ok: false };
   } else if (b.action === 'tv') {
     res = (b.k && b.k === S.tvKey) ? { ok: true, ...publicQ(qRead()), clinic, doc: docInfo(), cabin } : { ok: false };
@@ -1422,6 +1467,12 @@ if (mode === 'summary' && (now.hour >= 20 || now.hour < 3)) {
   return [{ json: { action: 'reply', payload, more, backup, holiday: null, values: null, range: null, sheetId: S.sheetId, phoneNumberId: S.phoneNumberId, notify: false } }];
 }
 if (mode === 'summary' && (now.hour < 12 || (now.hour >= 16 && now.hour < 20))) {
+  // missed calls that came at night: the WhatsApp waits until the 8 AM run (never at night)
+  if (now.hour >= 8 && now.hour < 12) { if (!mem.mcMorn) mem.mcMorn = {};
+    for (const x of (mem.mcalls || []).filter(x => x.night && !x.done && x.at > now.minus({ hours: 14 }).toISO())) { x.done = true;
+      const last = mem.mcMorn[x.ph]; if (last && last > now.minus({ days: 7 }).toISO()) continue;
+      if ((mem.callbacks || []).some(c => c.phone === x.ph) || q0Has(x.ph)) continue;
+      more.push(inWindow(x.ph) ? missedCallMsg(x.ph) : templateTo(x.ph, S.missedTemplate || 'missed_call_help', [C], ['MC_BOOK', 'MC_Q', 'MC_CALL'])); mem.mcMorn[x.ph] = now.toISO(); ev(x.ph, 'call', 'Night missed call · WhatsApp sent in the morning'); } }
   if (!mem.remSent) mem.remSent = {};
   const stage = now.hour < 12 ? 'today' : 'tomorrow'; const dRem = now.plus({ days: stage === 'today' ? 0 : 1 }).toFormat('yyyy-MM-dd');
   for (const r of rows.filter(x => x.date === dRem && active(x) && x.phone)) {
@@ -1759,6 +1810,17 @@ else if (!id && /^(login|reset)$/i.test(raw) && staffOf(me)) {
   payload = ctaTo(msg.from, isReset ? `Password reset for ${st0.name || 'you'}.\nTap below and set a new password. The link works once and expires in 15 minutes.\n\nDidn't ask for this? Ignore this message.`
     : `Clinic Desk login for ${st0.name || 'you'} (${st0.role || 'reception'}).\nThis link works once and expires in 15 minutes.`, isReset ? 'Set new password' : 'Open Clinic Desk', `${APP}?code=${code}`);
 }
+else if (!id && /^(stop|unsubscribe|band karo|band kar do|message band|msg band)$/i.test(raw.trim())) {
+  if (!mem.optout) mem.optout = {}; mem.optout[me] = now.toISO(); ev(me, 'note', 'Asked to stop messages');
+  payload = text(lang === 'en' ? `Done. ${C} will not send you reminders or updates any more.\n\nYou can still message us any time. To start again, send *START*.` : `Theek hai. ${C} ab aapko reminder ya update nahi bhejega.\n\nAap kabhi bhi humein message kar sakte hain. Dobara shuru karne ke liye *START* bhejiye.`);
+}
+else if (!id && /^start$/i.test(raw.trim()) && mem.optout && mem.optout[me]) {
+  delete mem.optout[me]; payload = text(lang === 'en' ? `Welcome back! You will get reminders and updates from ${C} again.` : `Wapas swagat hai! Ab aapko ${C} se reminder aur update phir se milenge.`);
+}
+else if (!id && /kitna|kitni der|kitni deri|kab tak|kab aayega|kab ayega|number kab|how long|wait time|kitne log|kitne patient/i.test(raw) && qRead().list.some(x => x.phone === me && ['w', 's'].includes(x.st))) {
+  const q0 = qRead(); const mineTk = q0.list.find(x => x.phone === me && ['w', 's'].includes(x.st));
+  payload = mineTk.st === 's' ? text(QT[lang].turn(cabin)) : tokenMsg(q0, mineTk, msg.from);
+}
 else if ((!id && /^token\b/i.test(raw)) || id === 'TQ|NEW') {
   const q0 = qRead(); const mineTk = q0.list.find(x => x.phone === me && ['w', 's'].includes(x.st));
   if (mineTk) payload = mineTk.st === 's' ? text(QT[lang].turn(cabin)) : tokenMsg(q0, mineTk, msg.from);
@@ -1768,7 +1830,7 @@ else if ((!id && /^token\b/i.test(raw)) || id === 'TQ|NEW') {
     more.push(buttonsTo(msg.from, lang === 'en' ? 'Want to tell the doctor what it is about? Pick one, or type it in your own words. (Optional)' : 'Doctor ko pehle se bata dein, kya problem hai? Neeche chuniye ya apne shabdon mein likh dijiye. (Zaroori nahi)',
       [['PB|Skin', lang === 'en' ? 'Skin' : 'Skin / chehra'], ['PB|Hair', lang === 'en' ? 'Hair' : 'Baal'], ['PB|Follow-up', 'Follow-up']])); }
 }
-else if (id.startsWith('PB|') || (!id && raw.split(/\s+/).length >= 3 && !has(['hi', 'hello', 'cancel', 'book', 'menu', 'token', 'doctor', 'dr', 'help', 'talk', 'chat']) && (() => { const q0 = qRead(); const tk = q0.list.find(x => x.phone === me && x.st === 'w'); return tk && !tk.prob; })())) {
+else if (id.startsWith('PB|') || (!id && raw.split(/\s+/).length >= 3 && !/\?|\b(fee|fees|price|address|kahan|timing|kitna|kitni|kab|kaise)\b/i.test(raw) && !has(['hi', 'hello', 'cancel', 'book', 'menu', 'token', 'doctor', 'dr', 'help', 'talk', 'chat']) && (() => { const q0 = qRead(); const tk = q0.list.find(x => x.phone === me && x.st === 'w'); return tk && !tk.prob; })())) {
   const q = qWrite(); const tk = q.list.find(x => x.phone === me && ['w', 's'].includes(x.st));
   if (tk) { tk.prob = id.startsWith('PB|') ? id.slice(3) : '"' + raw.slice(0, 120) + '"'; }
   payload = (!seenBefore(me) && !(mem.src || {})[me]) ? buttons((lang === 'en' ? '✅ *Thank you, noted*\nThe doctor will read this before your consultation, so you will not need to repeat it. 👩‍⚕️\n\nOne quick question, it helps us a lot: how did you hear about us?' : '✅ *Shukriya, note kar liya*\nDoctor consultation se pehle ise padh lenge, aapko dobara batana nahi padega. 👩‍⚕️\n\nEk chhota sawaal, isse humein bahut madad milti hai: aapko humare baare mein kaise pata chala?'), [['SRC|google', 'Google / Instagram'], ['SRC|friend', lang === 'en' ? 'Someone told me' : 'Kisi ne bataya'], ['SRC|board', lang === 'en' ? 'Board / other' : 'Board / kuch aur']])
@@ -1885,7 +1947,12 @@ else if (id.startsWith('RX|')) {
   const r = byRow(id.split('|')[1]);
   payload = (r && active(r)) ? buttons(L.cancelQ(r, W(r)), [[`CY|${r.row_number}`, L.yesCancel], ['KEEP', L.keepBtn]]) : text(L.gone);
 }
-else if (id === 'SVC' || (!id && has(['price', 'prices', 'fees', 'fee', 'charges', 'treatment', 'treatments', 'services', 'kitna']))) { payload = svcCarousel(); }
+else if (id === 'SVC' || (!id && has(['price', 'prices', 'fees', 'fee', 'charges', 'treatment', 'treatments', 'services', 'kitna', 'kitni', 'paise', 'charge']))) {
+  const fee = Number(S.fee || 0), free = Number(S.freeDays || 0);
+  const feeTxt = fee ? (lang === 'en' ? `💰 *Consultation fee: ₹${fee}*${free ? `\nFollow-up within ${free} days is free.` : ''}\nPaid at the clinic. No booking charge.` : `💰 *Consultation fee: ₹${fee}*${free ? `\n${free} din ke andar follow-up free hai.` : ''}\nPaisa clinic par dena hai. Booking ka koi charge nahi.`) : '';
+  if (feeTxt && svcs.length >= 2) { payload = text(feeTxt); more.push(svcCarousel()); }
+  else payload = feeTxt ? buttons(feeTxt, [['NEW', L.bookBtn], ['LIVE', L.talkBtn]]) : svcCarousel();
+}
 else if (id === 'DOC' || (!id && has(['doctor', 'dr', 'qualification', 'experience']) && !has(['late', 'leave']))) { payload = doctorCard(); }
 else if (id === 'NEW' || id === 'MC_BOOK' || id.startsWith('LANG|') || (!id && has(['book', 'booking', 'appointment']) && !has(['cancel']))) {
   if (id.startsWith('LANG|') && upcoming.length) payload = buttons(L.yourAppts(msg.name, upcoming.map(r => `• ${r.name || 'Patient'}: ${W(r)}`).join('\n')), menuBtns());
@@ -1910,8 +1977,8 @@ else if (id === 'CONFIRM' || (!id && ['confirm', 'yes', 'haan', 'ha'].includes(t
   if (upcoming.length) { const r = upcoming[0]; setStatus(r, 'Confirmed'); payload = text(L.thanksConfirm(W(r))); pin(); }
   else payload = buttons(L.noUpcoming, [['NEW', L.bookBtn]]);
 }
-else if (!id && has(['address', 'location', 'kahan', 'timing', 'timings'])) {
-  payload = buttons(L.talk, [['NEW', L.bookBtn], ['LIVE', L.talkBtn]]); pin();
+else if (!id && has(['address', 'location', 'kahan', 'timing', 'timings', 'where', 'map', 'pata'])) {
+  payload = buttons((S.address ? `📍 *${C}*\n${S.address}\n\n` : '') + L.talk, [['NEW', L.bookBtn], ['LIVE', L.talkBtn]]); pin();
 }
 else if (id === 'TALK' || id === 'LIVE' || (!id && has(['talk', 'human', 'help', 'baat', 'live', 'chat', 'emergency', 'call']))) {
   ev(me, 'talk', 'Asked to talk to the clinic' + (raw && !id ? ': "' + raw.slice(0, 120) + '"' : ''));
@@ -1937,3 +2004,4 @@ if (rec) {
   else { values = [[rec.name, rec.phone, rec.email, rec.date, rec.time, rec.status, rec.bookedAt]]; range = `${tab}!A${rec.row_number}:G${rec.row_number}`; }
 }
 return [{ json: { action, payload, more, holiday, values, range: range ? encodeURIComponent(range) : null, sheetId: S.sheetId, phoneNumberId: S.phoneNumberId, notify, from: msg.from, patientName: msg.name, clinicName: C } }];
+})());
