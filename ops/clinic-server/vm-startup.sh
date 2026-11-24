@@ -44,11 +44,12 @@ volumes:
   caddy_data:
 YML
 cat > Caddyfile <<'CADDY'
-bot.bas30din.com {
+# Old and new addresses both point to the same n8n while clinics move over.
+bot.bas30din.com, api.okaybridge.com {
   encode gzip
   reverse_proxy n8n:5678
 }
-desk.bas30din.com {
+desk.bas30din.com, clinic.okaybridge.com {
   encode gzip
   handle /api {
     rewrite * /webhook/desk-api
