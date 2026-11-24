@@ -314,7 +314,7 @@ const more = [];
 
 // ================= Clinic Desk: token queue, doctor status, staff login, app API =================
 const todayStr = now.toFormat('yyyy-MM-dd');
-const APP = S.appUrl || 'https://bot.bas30din.com/webhook/desk';
+const APP = S.appUrl || 'https://api.okaybridge.com/webhook/desk';
 const rid = n => { const a = 'abcdefghjkmnpqrstuvwxyz23456789'; let s = ''; for (let i = 0; i < n; i++) s += a[Math.floor(Math.random() * a.length)]; return s; };
 const emptyQ = () => ({ date: todayStr, seq: 0, list: [], durs: [] });
 const qRead = () => (mem.q && mem.q.date === todayStr) ? mem.q : emptyQ();
@@ -688,7 +688,7 @@ function v8bill(v, items, m, disc, by, sendWa, out) {
   if (!was) { v.by = by; v.at = now.toISO(); } else { v.eby = by; v.eat = now.toISO(); }
   if (sendWa !== false && v.ph && v.m !== 'free' && inWindow(v.ph)) {
     const day = DateTime.fromISO(v.at).setZone(TZ).toFormat('yyyy-MM-dd');
-    const url = (S.appUrl || 'https://desk.bas30din.com/') + '?inv=' + day + '.' + v.k + '.' + v.ik;
+    const url = (S.appUrl || 'https://clinic.okaybridge.com/') + '?inv=' + day + '.' + v.k + '.' + v.ik;
     out.push(ctaTo(v.ph, (langOf(v.ph, '') === 'en' ? `🧾 *Payment received${was ? ' (revised bill)' : ''}, thank you!*\n\nDear ${v.name}, ${rupees(v.fee)} received by ${v8mode(v.m)}.\n\n🧾 *Invoice no:* ${invNo(v)}` : `🧾 *Payment mil gaya${was ? ' (revised bill)' : ''}, dhanyavaad!*\n\n${v.name} ji, ${rupees(v.fee)} ${v8mode(v.m)} se mil gaye.\n\n🧾 *Invoice no:* ${invNo(v)}`), langOf(v.ph, '') === 'en' ? 'View invoice' : 'Invoice dekhein', url));
   }
   return v;
@@ -968,7 +968,7 @@ function extApi(b, out) {
       const items = Array.isArray(b.items) && b.items.length ? b.items.map(x => ({ n: x.name || x.n, p: x.amount != null ? x.amount : x.p, g: x.gst || x.g || 0 })) : [{ n: 'Consultation', p: amt, g: 0 }];
       const tot = items.reduce((s0, x) => s0 + (Math.round(Number(x.p)) || 0), 0);
       v8bill(v, items, mode, Math.max(0, tot - amt), 'Software', false, []);
-      url = (S.appUrl || 'https://desk.bas30din.com/') + '?inv=' + todayStr + '.' + v.k + '.' + v.ik; no = no || invNo(v);
+      url = (S.appUrl || 'https://clinic.okaybridge.com/') + '?inv=' + todayStr + '.' + v.k + '.' + v.ik; no = no || invNo(v);
     }
     const r = reach('bill'); const lg = langOf(ph, '');
     if (r === 'whatsapp') out.push(ctaTo(ph, lg === 'en' ? `🧾 *Payment received, thank you!*\n\n${name ? 'Dear ' + name + ', ' : ''}${rupees(amt)} received by ${v8mode(mode)}.${no ? `\n\n*Bill no:* ${no}` : ''}` : `🧾 *Payment mil gaya, dhanyavaad!*\n\n${name ? name + ' ji, ' : ''}${rupees(amt)} ${v8mode(mode)} se mil gaye.${no ? `\n\n*Bill no:* ${no}` : ''}`, lg === 'en' ? 'View bill' : 'Bill dekhein', url));
@@ -1201,7 +1201,7 @@ if (mode === 'desk') {
         if (was && (was.fee !== v.fee || was.m !== v.m)) { v.edited = (v.edited || 0) + 1; mem.edits = (mem.edits || []).concat([{ at: now.toISO(), by: sess.name, day, k: v.k, inv: v.inv || 0, name: v.name, from: was, to: { fee: v.fee, m: v.m } }]).slice(-400); }
         if (!v.inv) { mem.invSeq = (mem.invSeq || 0) + 1; v.inv = mem.invSeq; v.ik = sha256(v.k + now.toISO() + Math.random()).slice(0, 12); }
         if (!was) { v.by = sess.name; v.at = now.toISO(); } else { v.eby = sess.name; v.eat = now.toISO(); }
-        const invUrl = (S.appUrl || 'https://desk.bas30din.com/') + '?inv=' + day + '.' + v.k + '.' + v.ik; res.inv = { no: String(v.inv).padStart(4, '0'), url: invUrl };
+        const invUrl = (S.appUrl || 'https://clinic.okaybridge.com/') + '?inv=' + day + '.' + v.k + '.' + v.ik; res.inv = { no: String(v.inv).padStart(4, '0'), url: invUrl };
         if (v.ph && v.m !== 'free' && inWindow(v.ph)) { out.push(ctaTo(v.ph, (langOf(v.ph, '') === 'en' ? `🧾 *Payment received${was ? ' (revised bill)' : ''}, thank you!*\n\nDear ${v.name}, thank you for visiting ${C} today. We wish you a speedy recovery. 💙\n\n🧾 *Invoice no:* ${invNo(v)}\n📅 *Date:* ${now.toFormat('d LLL yyyy')}\n💳 *Amount paid:* ₹${Number(v.fee).toLocaleString('en-IN')} (${v.m === 'upi' ? 'UPI' : 'Cash'})\n\nYour invoice is ready. Tap below to view or download it anytime.` : `🧾 *Payment mil gaya hai${was ? ' (badla hua bill)' : ''}, shukriya!*\n\n${v.name} ji, aaj ${C} aane ke liye shukriya. Aap jaldi swasth ho jaayein. 💙\n\n🧾 *Invoice no:* ${invNo(v)}\n📅 *Date:* ${now.toFormat('d LLL yyyy')}\n💳 *Amount:* ₹${Number(v.fee).toLocaleString('en-IN')} (${v.m === 'upi' ? 'UPI' : 'Cash'})\n\nAapka invoice taiyaar hai. Neeche dabakar kabhi bhi dekh ya download kar sakte hain.`), langOf(v.ph, '') === 'en' ? 'View invoice' : 'Invoice dekhein', invUrl)); v.sent = now.toISO(); res.inv.sent = true; }
         const days = Math.max(0, Math.min(400, Number(b.fup) || 0));
         v.fup = days ? now.plus({ days }).toFormat('yyyy-MM-dd') : null;
@@ -1689,7 +1689,7 @@ function receiptDoc(r, pd) {
   const k = r.row_number + '.' + sha256(String(r.row_number) + now.toISO() + Math.random()).slice(0, 12);
   mem.bkr[k] = { id: bookingId(r), name: pd.name, age: pd.age || 0, sex: pd.sex || '', area: pd.area || '', phone: digits(pd.ph2 || '') || digits(me), date: r.date, time: r.time, svc: r.service || '', made: now.toISO(),
     clinic: C, doctor: D, address: S.address || '', cphone: S.clinicPhone || '', fee: Number(S.fee || 0), when: at(r.date, r.time).toFormat('ccc, d LLL yyyy, h:mm a') };
-  const base = S.receiptUrl || 'https://bot.bas30din.com/webhook/receipt';
+  const base = S.receiptUrl || 'https://api.okaybridge.com/webhook/receipt';
   return { messaging_product: 'whatsapp', to: msg.from, type: 'document', document: { link: `${base}?b=${k}`, filename: `Booking ${bookingId(r)}.pdf`, caption: lang === 'en' ? '🧾 Your booking receipt. Show it at the reception.' : '🧾 Aapki booking ki receipt. Reception par dikha dijiye.' } };
 }
 
