@@ -494,6 +494,42 @@ function inWords(n) { n = Math.round(n); if (!n) return 'Zero'; const a = ['', '
 const seenBefore = ph => !!ph && Object.keys(mem.vis || {}).some(d => d < todayStr && (mem.vis[d] || []).some(v => v.ph === ph));
 const SRC = { google: 'Google / Instagram', friend: 'Someone told them', board: 'Clinic board / poster', doctor: 'Another doctor', other: 'Other' };
 function stSum(from, to) { const o = {}; for (const d of Object.keys(mem.st || {})) if (d >= from && d <= to) for (const k of Object.keys(mem.st[d])) o[k] = (o[k] || 0) + mem.st[d][k]; return o; }
+// ---------- monthly results report for the owner: what the system brought in ----------
+function monthReport(from, to, label, lg) {
+  const R = regSum(from, to); const T = stSum(from, to); const en = lg !== 'hl';
+  const paid = R.V.filter(v => v.m && v.m !== 'free' && v.fee);
+  const avg = paid.length ? Math.round(paid.reduce((a, v) => a + v.fee, 0) / paid.length) : Number(S.fee || 0);
+  const mc = T.mcalls || 0, mcB = T.mcBooked || 0, night = T.bookedNight || 0, wa = T.booked || 0;
+  const back = T.recallBack || 0, backMoney = T.recallMoney || 0;
+  const extra = (mcB + night) * avg + backMoney;
+  const rv = (T.rvGood || 0) + (T.rvMid || 0) + (T.rvLow || 0);
+  const calls = wa + (T.reminders || 0) + (T.recalls || 0);
+  const L = en ? [
+    `📊 *${C} · ${label}*`, '',
+    `*Extra income from the system: about ${rupees(extra)}*`,
+    `(patients who would likely have been missed, at your average fee of ${rupees(avg)}, plus follow-ups that came back)`, '',
+    `📞 Missed calls answered on WhatsApp: *${mc}*${mc ? ` · ${mcB} booked` : ''}`,
+    `🌙 Booked at night, when the clinic was closed: *${night}*`,
+    `📅 Appointments booked on WhatsApp: *${wa}*`,
+    `⏰ Reminders sent: *${T.reminders || 0}*${T.confirmed ? ` · ${T.confirmed} confirmed` : ''}`,
+    `🔁 Follow-up reminders: *${T.recalls || 0}* · ${back} came back${backMoney ? ` (${rupees(backMoney)})` : ''}`,
+    `🌟 Feedback: *${rv}* · ${T.rvGood || 0} happy, ${(T.rvMid || 0) + (T.rvLow || 0)} not happy${T.rvGood && ((mem.cfg || {}).googleReview || S.googleReview) ? ' (happy ones were sent your Google review link)' : ''}`, '',
+    `🏥 Clinic this month: ${R.seen} patients · ${rupees(R.money)} collected`,
+    `🙋 Calls and messages your staff did not have to handle: about *${calls}*`]
+  : [
+    `📊 *${C} · ${label}*`, '',
+    `*System se extra kamaai: lagbhag ${rupees(extra)}*`,
+    `(woh patients jo shayad chhoot jaate, aapki average fees ${rupees(avg)} ke hisaab se, aur wapas aaye follow-up)`, '',
+    `📞 Missed calls ko WhatsApp gaya: *${mc}*${mc ? ` · ${mcB} ne booking ki` : ''}`,
+    `🌙 Raat ko booking (clinic band thi): *${night}*`,
+    `📅 WhatsApp se appointment: *${wa}*`,
+    `⏰ Reminder bheje: *${T.reminders || 0}*${T.confirmed ? ` · ${T.confirmed} ne confirm kiya` : ''}`,
+    `🔁 Follow-up reminder: *${T.recalls || 0}* · ${back} wapas aaye${backMoney ? ` (${rupees(backMoney)})` : ''}`,
+    `🌟 Feedback: *${rv}* · ${T.rvGood || 0} khush, ${(T.rvMid || 0) + (T.rvLow || 0)} naakhush`, '',
+    `🏥 Is mahine clinic: ${R.seen} patients · ${rupees(R.money)} collection`,
+    `🙋 Staff ko jo calls/messages nahi karne pade: lagbhag *${calls}*`];
+  return { text: L.join('\n'), extra, avg, R, T };
+}
 const memSafe = () => { const o = {}; for (const k of Object.keys(mem)) if (!['sess', 'codes', 'otp', 'chat', 'seen'].includes(k)) o[k] = mem[k]; return o; };
 function backupSnap() { const j = JSON.stringify(memSafe()); const parts = []; for (let i = 0; i < j.length; i += 45000) parts.push(j.slice(i, i + 45000)); return [now.toISO(), String(parts.length)].concat(parts); }
 // patients who missed their follow-up: day after, 1 week, 1 month
@@ -628,6 +664,7 @@ function ev(ph, k, t) {
   const keys = Object.keys(mem.ev); if (keys.length > 400) { const cut = now.minus({ days: 3 }).toISO(); for (const x of keys) { const a = mem.ev[x]; if (!a.length || a[a.length - 1].at < cut) delete mem.ev[x]; } }
 }
 function bump(k, n) { if (!mem.st) mem.st = {}; const day = now.toFormat('yyyy-MM-dd'); if (!mem.st[day]) { mem.st[day] = {}; const cut = now.minus({ days: 90 }).toFormat('yyyy-MM-dd'); for (const d of Object.keys(mem.st)) if (d < cut) delete mem.st[d]; } mem.st[day][k] = (mem.st[day][k] || 0) + (n || 1); }
+function bookedExtra(ph) { if ((mem.mcalls || []).some(x => x.ph === ph && x.at > now.minus({ days: 3 }).toISO())) bump('mcBooked'); if (now.hour >= 21 || now.hour < 8) bump('bookedNight'); }
 const patKey = (ph, name) => ph ? 'p' + ph : 'n' + String(name || '').trim().toLowerCase();
 const rupees = n => '₹' + Number(n || 0).toLocaleString('en-IN');
 function addVisit(tk) {
@@ -1455,7 +1492,7 @@ if (mode === 'summary' && (now.hour >= 20 || now.hour < 3)) {
   const to = [...new Set((S.doctorNumbers || []).concat((S.staff || []).filter(x => x.role === 'owner' || x.role === 'doctor').map(x => x.phone)).map(digits))];
   if (!mem.nightSent) mem.nightSent = '';
   const bkOut = [{ json: { action: 'none', payload: null, more: [], backup, sheetId: S.sheetId, phoneNumberId: S.phoneNumberId, notify: false } }];
-  for (const v of reviewAsks()) { if (!inWindow(v.ph)) continue; const lg = langOf(v.ph, ''); mem.rv[v.ph] = { at: now.toISO(), r: 0 }; bump('rvAsk'); more.push(buttonsTo(v.ph, lg === 'en' ? `🌟 *How was your visit today?*\n\nDear ${v.name}, thank you for trusting ${C} with your care. We hope you are feeling better already.\n\nWould you tell us how your visit went? It takes just one tap, and it helps us look after you and every patient better. 🙏` : `🌟 *Aaj aapka anubhav kaisa raha?*\n\n${v.name} ji, apne ilaaj ke liye ${C} par bharosa karne ke liye shukriya. Ummeed hai aap behtar mehsoos kar rahe hain.\n\nKya aap bata sakte hain ki aapka visit kaisa raha? Bas ek tap, aur isse hum aapki aur har patient ki behtar dekhbhaal kar paate hain. 🙏`, reviewBtns(lg))); }
+  for (const v of reviewAsks()) { if (!inWindow(v.ph)) { if (S.templates && S.templates.review && !(mem.optout || {})[v.ph]) { mem.rv[v.ph] = { at: now.toISO(), r: 0 }; bump('rvAsk'); more.push(templateTo(v.ph, S.templates.review, [v.name || 'there', C], ['RV|5', 'RV|3', 'RV|1'])); } continue; } const lg = langOf(v.ph, ''); mem.rv[v.ph] = { at: now.toISO(), r: 0 }; bump('rvAsk'); more.push(buttonsTo(v.ph, lg === 'en' ? `🌟 *How was your visit today?*\n\nDear ${v.name}, thank you for trusting ${C} with your care. We hope you are feeling better already.\n\nWould you tell us how your visit went? It takes just one tap, and it helps us look after you and every patient better. 🙏` : `🌟 *Aaj aapka anubhav kaisa raha?*\n\n${v.name} ji, apne ilaaj ke liye ${C} par bharosa karne ke liye shukriya. Ummeed hai aap behtar mehsoos kar rahe hain.\n\nKya aap bata sakte hain ki aapka visit kaisa raha? Bas ek tap, aur isse hum aapki aur har patient ki behtar dekhbhaal kar paate hain. 🙏`, reviewBtns(lg))); }
   if (mem.nightSent === dk) { if (!more.length) return bkOut; payload = more.shift(); return [{ json: { action: 'reply', payload, more, backup, holiday: null, values: null, range: null, sheetId: S.sheetId, phoneNumberId: S.phoneNumberId, notify: false } }]; }
   for (const ph of to) {
     if (inWindow(ph)) more.push(ctaTo(ph, body, 'Open register', `${APP}`));
@@ -1467,6 +1504,14 @@ if (mode === 'summary' && (now.hour >= 20 || now.hour < 3)) {
   return [{ json: { action: 'reply', payload, more, backup, holiday: null, values: null, range: null, sheetId: S.sheetId, phoneNumberId: S.phoneNumberId, notify: false } }];
 }
 if (mode === 'summary' && (now.hour < 12 || (now.hour >= 16 && now.hour < 20))) {
+  // 1st of the month, morning: last month's results to the owner and doctors
+  if (now.day === 1 && now.hour >= 9 && now.hour < 12 && mem.monthSent !== now.toFormat('yyyy-MM')) {
+    const lm = now.minus({ months: 1 }); const f = lm.startOf('month').toFormat('yyyy-MM-dd'), t = lm.endOf('month').toFormat('yyyy-MM-dd');
+    const to = [...new Set((S.doctorNumbers || []).concat((S.staff || []).filter(x => x.role === 'owner' || x.role === 'doctor').map(x => x.phone)).map(digits))].filter(Boolean);
+    for (const ph of to) { const rep = monthReport(f, t, lm.toFormat('LLLL yyyy'), langOf(ph, ''));
+      if (inWindow(ph)) more.push(ctaTo(ph, rep.text, 'Open register', `${APP}`));
+      else if (S.templates && S.templates.monthly) more.push(templateTo(ph, S.templates.monthly, [C, lm.toFormat('LLLL yyyy'), rupees(rep.extra), String(rep.T.mcalls || 0), String(rep.T.booked || 0), String(rep.T.recallBack || 0)], [])); }
+    mem.monthSent = now.toFormat('yyyy-MM'); }
   // missed calls that came at night: the WhatsApp waits until the 8 AM run (never at night)
   if (now.hour >= 8 && now.hour < 12) { if (!mem.mcMorn) mem.mcMorn = {};
     for (const x of (mem.mcalls || []).filter(x => x.night && !x.done && x.at > now.minus({ hours: 14 }).toISO())) { x.done = true;
@@ -1515,7 +1560,7 @@ if (mode === 'summary' && now.hour >= 16) {
     else if (S.templates && S.templates.followup) more.push(templateTo(x.ph, S.templates.followup, [x.name, D, lg === 'en' ? 'this week' : 'is hafte'], ['NEW']));
     else continue;
     x.r.n = x.st; x.r.at = now.toISO(); bump('recalls'); ev(x.ph, 'recall', 'Reminded about missed follow-up' + (x.st > 1 ? ' (' + (x.st === 2 ? '1 week' : '1 month') + ' late)' : '')); }
-  for (const v of reviewAsks()) { if (!inWindow(v.ph)) continue; const lg = langOf(v.ph, ''); mem.rv[v.ph] = { at: now.toISO(), r: 0 }; bump('rvAsk');
+  for (const v of reviewAsks()) { if (!inWindow(v.ph)) { if (S.templates && S.templates.review && !(mem.optout || {})[v.ph]) { mem.rv[v.ph] = { at: now.toISO(), r: 0 }; bump('rvAsk'); more.push(templateTo(v.ph, S.templates.review, [v.name || 'there', C], ['RV|5', 'RV|3', 'RV|1'])); } continue; } const lg = langOf(v.ph, ''); mem.rv[v.ph] = { at: now.toISO(), r: 0 }; bump('rvAsk');
     more.push(buttonsTo(v.ph, lg === 'en' ? `🌟 *How was your visit today?*\n\nDear ${v.name}, thank you for trusting ${C} with your care. We hope you are feeling better already.\n\nWould you tell us how your visit went? It takes just one tap, and it helps us look after you and every patient better. 🙏` : `🌟 *Aaj aapka anubhav kaisa raha?*\n\n${v.name} ji, apne ilaaj ke liye ${C} par bharosa karne ke liye shukriya. Ummeed hai aap behtar mehsoos kar rahe hain.\n\nKya aap bata sakte hain ki aapka visit kaisa raha? Bas ek tap, aur isse hum aapki aur har patient ki behtar dekhbhaal kar paate hain. 🙏`, reviewBtns(lg))); }
   if (!more.length) return [];
   payload = more.shift();
@@ -1712,7 +1757,8 @@ else if (isDocPh && !id && raw && raw.trim().split(/\s+/).length <= 6) {
   else if (/\b(away|bahar|surgery|ward|ot mein|nikal raha|nikal rahi)\b/.test(low)) docIntent = { k: 'away', m: mins };
   else if (/^(in|back|aa gaya|aa gayi|aagaya|aagayi|pahunch gaya|pahunch gayi|reached|in clinic|i am in|i'm in|im in|start|started|wapas|wapas aa gaya|wapas aa gayi)\b/.test(low)) docIntent = { k: 'in' };
 }
-const adminCmd = (isAdmin && !id && /^(TODAY|AAJ|HELP|ADMIN)/.test(cmd)) || !!docIntent;
+const repCmd = isDocPh && !id && /^(REPORT|RIPORT|HISAAB|HISAB)$/.test(cmd);
+const adminCmd = (isAdmin && !id && /^(TODAY|AAJ|HELP|ADMIN)/.test(cmd)) || repCmd || !!docIntent;
 function parseLeaveDate(s) {
   const x = s.replace(/^LEAVE\s*/, '').trim();
   if (!x || x === 'TODAY' || x === 'AAJ') return now.toFormat('yyyy-MM-dd');
@@ -1767,6 +1813,10 @@ if (adminCmd) {
     if (!holidays.includes(d)) holiday = [[d, 'Doctor on leave (set by WhatsApp)']];
     if (d === today) { delete mem.docPend; setDoc('leave', 0, more); }
     payload = text(`Done ✓ ${DateTime.fromISO(d).toFormat('ccc, d LLL')} is marked as leave.\n${l.length ? `${l.length} booked patient${l.length > 1 ? 's were' : ' was'} asked to pick a new time.` : 'Nobody was booked that day.'}${sync}`);
+  }
+  else if (repCmd) {
+    const f = now.startOf('month').toFormat('yyyy-MM-dd');
+    payload = text(monthReport(f, today, now.toFormat('LLLL yyyy') + ' (so far)', langOf(me, '')).text);
   }
   else if (/^(TODAY|AAJ)/.test(cmd)) {
     const l = rows.filter(r => r.date === today && active(r)).sort((a, b) => a.time.localeCompare(b.time));
@@ -1947,7 +1997,7 @@ else if (id === 'FLOW' && !holding) {
     const rowNo = rows.reduce((m0, r0) => Math.max(m0, Number(r0.row_number) || 0), 1) + 1; const bk = { ...rec, row_number: rowNo };
     const pi = v8pinfo(patKey(me, '')); if (pd.self || !pi.name) { if (pd.age) pi.age = pd.age; if (pd.sex) pi.sex = pd.sex; if (pd.area) pi.area = pd.area; pi.name = pi.name || pd.name; }
     if (!mem.bkd) mem.bkd = {}; mem.bkd[rowNo] = { ...pd, at: now.toISO() };
-    payload = confirmMsg({ ...bk, name: pd.name + (pd.age || pd.sex ? ` (${[pd.age ? pd.age + (en ? ' yrs' : ' saal') : '', pd.sex].filter(Boolean).join(', ')})` : '') }); const rd = receiptDoc(bk, pd); if (rd) more.push(rd); pin(); bump('booked');
+    payload = confirmMsg({ ...bk, name: pd.name + (pd.age || pd.sex ? ` (${[pd.age ? pd.age + (en ? ' yrs' : ' saal') : '', pd.sex].filter(Boolean).join(', ')})` : '') }); const rd = receiptDoc(bk, pd); if (rd) more.push(rd); pin(); bump('booked'); bookedExtra(me);
     ev(me, 'booked', 'Booked ' + at(d, tm).toFormat('ccc d LLL, h:mm a') + ' · ' + pd.name + (pd.age ? ', ' + pd.age : '') + (pd.sex ? ', ' + pd.sex : ''));
   }
 }
@@ -1970,7 +2020,7 @@ else if (holding && (['SELF', 'OTHER', 'FLOW'].includes(id) || id.startsWith('SE
     const pi = v8pinfo(patKey(me, '')); if (pd.self || !pi.name) { if (pd.age) pi.age = pd.age; if (pd.sex) pi.sex = pd.sex; if (pd.area) pi.area = pd.area; pi.name = pi.name || pd.name; }
     if (!mem.bkd) mem.bkd = {}; mem.bkd[holding.row_number] = { name: pd.name, age: pd.age || 0, sex: pd.sex || '', area: pd.area || '', ph2: pd.ph2 || '', prob: pd.prob || '', self: !!pd.self, at: now.toISO() };
     delete mem.pend[me];
-    payload = confirmMsg({ ...bk, name: pd.name + (pd.age || pd.sex ? ` (${[pd.age ? pd.age + (en ? ' yrs' : ' saal') : '', pd.sex].filter(Boolean).join(', ')})` : '') }); const rd = receiptDoc(bk, pd); if (rd) more.push(rd); pin(); bump('booked');
+    payload = confirmMsg({ ...bk, name: pd.name + (pd.age || pd.sex ? ` (${[pd.age ? pd.age + (en ? ' yrs' : ' saal') : '', pd.sex].filter(Boolean).join(', ')})` : '') }); const rd = receiptDoc(bk, pd); if (rd) more.push(rd); pin(); bump('booked'); bookedExtra(me);
     ev(me, 'booked', 'Booked ' + at(holding.date, holding.time).toFormat('ccc d LLL, h:mm a') + ' · ' + pd.name + (pd.age ? ', ' + pd.age : '') + (pd.sex ? ', ' + pd.sex : ''));
   }
 }
@@ -2002,7 +2052,7 @@ else if (id.startsWith('M|')) { const [, d, after] = id.split('|'); payload = ti
 else if (id.startsWith('D|')) { const d0 = id.split('|')[1]; payload = S.bookFlowId && canBookMore ? dayFlow(d0) : timeList(d0); }
 else if (id.startsWith('RC|')) {
   const r = byRow(id.split('|')[1]);
-  if (r && active(r)) { setStatus(r, 'Confirmed'); payload = text(L.thanksConfirm(W(r))); pin(); } else payload = text(L.gone);
+  if (r && active(r)) { setStatus(r, 'Confirmed'); payload = text(L.thanksConfirm(W(r))); pin(); bump('confirmed'); } else payload = text(L.gone);
 }
 else if (id.startsWith('UK|')) { payload = text(L.kept); }
 else if (id.startsWith('RR|')) {
