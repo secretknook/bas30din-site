@@ -494,6 +494,12 @@ function inWords(n) { n = Math.round(n); if (!n) return 'Zero'; const a = ['', '
 const seenBefore = ph => !!ph && Object.keys(mem.vis || {}).some(d => d < todayStr && (mem.vis[d] || []).some(v => v.ph === ph));
 const SRC = { google: 'Google / Instagram', friend: 'Someone told them', board: 'Clinic board / poster', doctor: 'Another doctor', other: 'Other' };
 function stSum(from, to) { const o = {}; for (const d of Object.keys(mem.st || {})) if (d >= from && d <= to) for (const k of Object.keys(mem.st[d])) o[k] = (o[k] || 0) + mem.st[d][k]; return o; }
+// ---------- treatment quotes: patient was told the cost (implant, hair package, physio sessions) but did not start ----------
+function quoteAdd(ph, name, what, amt, by) {
+  if (!mem.quotes) mem.quotes = []; const q = { id: rid(6), ph, name: String(name || '').slice(0, 40), what: String(what || 'treatment').slice(0, 60), amt: Math.max(0, Math.round(Number(amt) || 0)), at: now.toISO(), day: todayStr, by: by || '', n: 0 };
+  mem.quotes = mem.quotes.filter(x => !(x.ph === ph && !x.done)).concat([q]).slice(-400); bump('quotes'); ev(ph, 'quote', 'Quote given: ' + q.what + (q.amt ? ' · ' + rupees(q.amt) : '')); return q;
+}
+const quotesOpen = () => (mem.quotes || []).filter(q => !q.done);
 // ---------- monthly results report for the owner: what the system brought in ----------
 function monthReport(from, to, label, lg) {
   const R = regSum(from, to); const T = stSum(from, to); const en = lg !== 'hl';
@@ -501,7 +507,7 @@ function monthReport(from, to, label, lg) {
   const avg = paid.length ? Math.round(paid.reduce((a, v) => a + v.fee, 0) / paid.length) : Number(S.fee || 0);
   const mc = T.mcalls || 0, mcB = T.mcBooked || 0, night = T.bookedNight || 0, wa = T.booked || 0;
   const back = T.recallBack || 0, backMoney = T.recallMoney || 0;
-  const extra = (mcB + night) * avg + backMoney;
+  const extra = (mcB + night) * avg + backMoney + (T.quoteMoney || 0);
   const rv = (T.rvGood || 0) + (T.rvMid || 0) + (T.rvLow || 0);
   const calls = wa + (T.reminders || 0) + (T.recalls || 0);
   const L = en ? [
@@ -513,6 +519,7 @@ function monthReport(from, to, label, lg) {
     `📅 Appointments booked on WhatsApp: *${wa}*`,
     `⏰ Reminders sent: *${T.reminders || 0}*${T.confirmed ? ` · ${T.confirmed} confirmed` : ''}`,
     `🔁 Follow-up reminders: *${T.recalls || 0}* · ${back} came back${backMoney ? ` (${rupees(backMoney)})` : ''}`,
+    `🦷 Treatment quotes followed up: *${T.quoteRem || 0}* · ${T.quoteWon || 0} came back${T.quoteMoney ? ` (quotes worth ${rupees(T.quoteMoney)})` : ''}`,
     `🌟 Feedback: *${rv}* · ${T.rvGood || 0} happy, ${(T.rvMid || 0) + (T.rvLow || 0)} not happy${T.rvGood && ((mem.cfg || {}).googleReview || S.googleReview) ? ' (happy ones were sent your Google review link)' : ''}`, '',
     `🏥 Clinic this month: ${R.seen} patients · ${rupees(R.money)} collected`,
     `🙋 Calls and messages your staff did not have to handle: about *${calls}*`]
@@ -525,6 +532,7 @@ function monthReport(from, to, label, lg) {
     `📅 WhatsApp se appointment: *${wa}*`,
     `⏰ Reminder bheje: *${T.reminders || 0}*${T.confirmed ? ` · ${T.confirmed} ne confirm kiya` : ''}`,
     `🔁 Follow-up reminder: *${T.recalls || 0}* · ${back} wapas aaye${backMoney ? ` (${rupees(backMoney)})` : ''}`,
+    `🦷 Treatment quote follow-up: *${T.quoteRem || 0}* · ${T.quoteWon || 0} wapas aaye${T.quoteMoney ? ` (${rupees(T.quoteMoney)} ke quote)` : ''}`,
     `🌟 Feedback: *${rv}* · ${T.rvGood || 0} khush, ${(T.rvMid || 0) + (T.rvLow || 0)} naakhush`, '',
     `🏥 Is mahine clinic: ${R.seen} patients · ${rupees(R.money)} collection`,
     `🙋 Staff ko jo calls/messages nahi karne pade: lagbhag *${calls}*`];
@@ -1249,6 +1257,9 @@ if (mode === 'desk') {
     }
     else if (b.action === 'note' && isDoc) { const pk = String(b.pk || ''); if (!mem.notes) mem.notes = {}; mem.notes[pk] = { t: String(b.text || '').slice(0, 600), at: now.toISO(), by: sess.name }; }
     else if (b.action === 'mc_done') { mem.mcalls = (mem.mcalls || []).filter(x => x.ph !== digits(b.phone)); }
+    else if (b.action === 'quote_add') { const ph = digits(b.phone || ''); if (ph.length >= 12) { const q = quoteAdd(ph, b.name, b.what, b.amt, sess.name); res.quote = { id: q.id }; } else res.error = 'Mobile number needed'; }
+    else if (b.action === 'quote_list') { res.quotes = quotesOpen().map(q => ({ id: q.id, name: q.name, phone: '+' + q.ph, what: q.what, amt: q.amt, at: q.at, n: q.n })); }
+    else if (b.action === 'quote_close') { const q = (mem.quotes || []).find(x => x.id === b.id); if (q) { q.done = b.won ? 'won' : 'closed'; q.doneAt = now.toISO(); } }
     else if (b.action === 'wl_done') { for (const d of Object.keys(mem.wait || {})) mem.wait[d] = (mem.wait[d] || []).filter(w => w.phone !== digits(b.phone)); }
     else if (b.action === 'close_day') { if (!mem.close) mem.close = {}; mem.close[todayStr] = { cash: Math.max(0, Math.round(Number(b.cash) || 0)), upi: Math.max(0, Math.round(Number(b.upi) || 0)), by: sess.name, at: now.toISO() }; res.closed = true; }
     else if (b.action === 'set_bill' && isDoc) { const L = (Array.isArray(b.bill) ? b.bill : []).map(x => ({ n: String(x.n || '').trim().slice(0, 40), p: Math.max(0, Math.min(500000, Math.round(Number(x.p) || 0))), g: [0, 5, 12, 18].includes(Number(x.g)) ? Number(x.g) : 0 })).filter(x => x.n).slice(0, 20); if (!mem.cfg) mem.cfg = {}; mem.cfg.bill = L; }
@@ -1553,6 +1564,21 @@ if (mode === 'summary' && now.hour >= 16) {
     if (inWindow(f.ph)) { more.push(buttonsTo(f.ph, msgTxt, [['NEW', lg === 'en' ? 'Book a time' : 'Time book karein']])); f.sent = true; bump('reminders'); }
     else if (S.templates && S.templates.followup) { more.push(templateTo(f.ph, S.templates.followup, [f.name, D, whenTxt], ['NEW'])); f.sent = true; }
   }
+  for (const q of quotesOpen()) {
+    const later = Object.keys(mem.vis || {}).some(d => d > q.day && (mem.vis[d] || []).some(v => v.ph === q.ph)) || rows.some(r => r.phone === q.ph && active(r) && r.date > q.day);
+    if (later) { q.done = 'won'; q.doneAt = now.toISO(); if (q.n > 0) { bump('quoteWon'); bump('quoteMoney', q.amt || 0); ev(q.ph, 'quote', 'Came back after the treatment reminder'); } continue; }
+    const age = Math.floor(now.startOf('day').diff(DateTime.fromISO(q.day, { zone: TZ }), 'days').days);
+    const st = age >= 30 ? 3 : age >= 7 ? 2 : age >= 2 ? 1 : 0; if (st <= q.n) { if (age > 45) { q.done = 'expired'; } continue; }
+    if ((mem.optout || {})[q.ph]) { q.done = 'stop'; continue; }
+    const lg = langOf(q.ph, ''); const en = lg === 'en'; const nm = String(q.name || '').split(' ')[0];
+    const body = en ? [`🩺 *About your ${q.what}*\n\n${nm ? 'Hi ' + nm + ', ' : ''}${D} had suggested ${q.what} at your last visit. If you have any questions about the treatment, the cost or the time it takes, we are happy to help.\n\nTap below to book a visit, or ask us anything.`, `🗓️ *Still thinking about your ${q.what}?*\n\n${nm ? nm + ', ' : ''}starting on time usually gives the best result. ${D} can see you this week.\n\nTap below to pick a time, or ask a question first.`, `🙂 *Just checking in*\n\n${nm ? nm + ', ' : ''}it has been a month since ${D} suggested ${q.what}. If you would still like to go ahead, we can find a time that suits you.`][st - 1]
+      : [`🩺 *Aapke ${q.what} ke baare mein*\n\n${nm ? nm + ' ji, ' : ''}${D} ne pichhle visit mein ${q.what} ki salah di thi. Treatment, kharche ya time ke baare mein koi sawaal ho to hum madad karenge.\n\nNeeche dabakar visit book kijiye, ya kuchh bhi poochhiye.`, `🗓️ *${q.what} ke baare mein soch rahe hain?*\n\n${nm ? nm + ' ji, ' : ''}samay par shuru karne se aksar sabse achha result milta hai. ${D} is hafte aapko dekh sakte hain.\n\nNeeche dabakar time chuniye, ya pehle sawaal poochhiye.`, `🙂 *Bas haal poochhna tha*\n\n${nm ? nm + ' ji, ' : ''}${D} ko ${q.what} ki salah diye ek mahina ho gaya. Agar aap aage badhna chahein, hum aapke hisaab se time nikaal denge.`][st - 1];
+    const btns = [[`QB|${q.id}`, en ? 'Book a visit' : 'Visit book karein'], [`QQ|${q.id}`, en ? 'Ask a question' : 'Sawaal poochhein'], [`QN|${q.id}`, en ? 'Not now' : 'Abhi nahi']];
+    if (inWindow(q.ph)) more.push(buttonsTo(q.ph, body, btns));
+    else if (S.templates && S.templates.quote) more.push(templateTo(q.ph, S.templates.quote, [nm || 'there', q.what, D], btns.map(b => b[0])));
+    else continue;
+    q.n = st; q.last = now.toISO(); bump('quoteRem'); ev(q.ph, 'quote', 'Reminded about ' + q.what + ' (' + ['2 days', '1 week', '1 month'][st - 1] + ')');
+  }
   for (const x of recallsDue()) { const lg = langOf(x.ph, '');
     const t = lg === 'en' ? [`🗓️ *Your follow-up is due*\n\nDear ${x.name},\n${D} had advised a follow-up visit, and it is now due. Completing your follow-up helps your treatment work the way it was planned. 👩‍⚕️\n\nTap below to book a time that suits you.`, `🗓️ *We missed you at your follow-up*\n\nDear ${x.name},\nit has been a week since your follow-up date with ${D}. Stopping treatment midway can sometimes bring the problem back, so a quick check-up is worth it. 💙\n\nTap below to book a time that suits you.`, `💙 *Checking in on you*\n\nDear ${x.name},\nit has been a month since your follow-up was due, and we wanted to know how you are doing. If the problem is still there, ${D} can see you this week.\n\nTap below to book a time that suits you.`][x.st - 1]
       : [`🗓️ *Aapka follow-up due hai*\n\n${x.name} ji,\n${D} ne aapko follow-up ke liye bulaya tha, aur ab uska samay ho gaya hai. Follow-up poora karne se aapka treatment waise hi kaam karta hai jaise plan kiya gaya tha. 👩‍⚕️\n\nNeeche dabakar apna time book kijiye.`, `🗓️ *Aap follow-up par nahi aa paaye*\n\n${x.name} ji,\n${D} ke saath follow-up ki date ko ek hafta ho gaya hai. Treatment beech mein chhodne se kabhi kabhi problem wapas aa jaati hai, isliye ek chhota check-up zaroori hai. 💙\n\nNeeche dabakar apna time book kijiye.`, `💙 *Aapka haal jaanna chahte the*\n\n${x.name} ji,\nfollow-up ki date ko ek mahina ho gaya hai, aur hum jaanna chahte the ki aap kaise hain. Agar problem abhi bhi hai, toh ${D} aapko is hafte dekh sakte hain.\n\nNeeche dabakar apna time book kijiye.`][x.st - 1];
@@ -1591,6 +1617,11 @@ for (const k of Object.keys(mem.wait)) if (k < now.toFormat('yyyy-MM-dd')) delet
 if (!mem.seen[me] || DateTime.fromISO(mem.seen[me]) < now.minus({ hours: 24 })) { { if (!staffOf2(me)) bump('chats'); if (msg.type === 'text' && msg.text) ev(me, 'msg', 'Messaged: "' + String(msg.text).slice(0, 90) + '"'); else if (msg.type !== 'interactive' && msg.type !== 'button') ev(me, 'msg', 'Started a WhatsApp chat'); } }
 if (!mem.seen[me] || DateTime.fromISO(mem.seen[me]) < now.minus({ minutes: 20 })) mem.seen[me] = now.toISO();
 let id = String(msg.replyId || '').trim();
+if (/^Q[BQN]\|/.test(id)) { const q0 = (mem.quotes || []).find(x => x.id === id.slice(3));
+  if (q0 && id[1] === 'N') { q0.done = 'no'; q0.doneAt = new Date().toISOString(); }
+  if (q0 && id[1] === 'B') q0.tapped = true;
+  if (q0 && id[1] === 'Q') q0.asked = true;
+  id = id[1] === 'B' ? 'NEW' : id[1] === 'Q' ? 'MC_CALL' : 'QUOTE_NO'; }
 const raw = String(msg.text || '').trim();
 const t = raw.toLowerCase();
 const has = words => words.some(w => new RegExp(`(^|\\W)${w}(\\W|$)`, 'i').test(t));
@@ -1804,7 +1835,8 @@ else if (isDocPh && !id && raw && raw.trim().split(/\s+/).length <= 6) {
 const repCmd = isDocPh && !id && /^(REPORT|RIPORT|HISAAB|HISAB)$/.test(cmd);
 const greetCmd = isDocPh && ((!id && /^(GREET|GREETING|WISH)\b/.test(cmd)) || String(id || '').startsWith('GR|'));
 const advCmd = isDocPh && !id && /^ADVANCE\b/.test(cmd);
-const adminCmd = (isAdmin && !id && /^(TODAY|AAJ|HELP|ADMIN)/.test(cmd)) || repCmd || greetCmd || advCmd || !!docIntent;
+const quoteCmd = (isDocPh || !!staffRec(me)) && !id && /^QUOTES?\b/.test(cmd);
+const adminCmd = (isAdmin && !id && /^(TODAY|AAJ|HELP|ADMIN)/.test(cmd)) || repCmd || greetCmd || advCmd || quoteCmd || !!docIntent;
 function parseLeaveDate(s) {
   const x = s.replace(/^LEAVE\s*/, '').trim();
   if (!x || x === 'TODAY' || x === 'AAJ') return now.toFormat('yyyy-MM-dd');
@@ -1859,6 +1891,21 @@ if (adminCmd) {
     if (!holidays.includes(d)) holiday = [[d, 'Doctor on leave (set by WhatsApp)']];
     if (d === today) { delete mem.docPend; setDoc('leave', 0, more); }
     payload = text(`Done ✓ ${DateTime.fromISO(d).toFormat('ccc, d LLL')} is marked as leave.\n${l.length ? `${l.length} booked patient${l.length > 1 ? 's were' : ' was'} asked to pick a new time.` : 'Nobody was booked that day.'}${sync}`);
+  }
+  else if (quoteCmd) {
+    const rest = raw.replace(/^\s*quotes?\s*/i, '').trim(); const ph0 = (rest.match(/(?:\+?91[\s-]*)?(\d[\d\s-]{8,13}\d)/) || [])[1];
+    const m10 = ph0 ? ph0.replace(/\D/g, '').slice(-10) : '';
+    if (!rest || !m10 || m10.length < 10) {
+      const L0 = quotesOpen().slice(-15).reverse();
+      payload = text((L0.length ? `*Open treatment quotes (${quotesOpen().length})*\n\n` + L0.map(q => `• ${q.name || '+' + q.ph} · ${q.what}${q.amt ? ' ' + rupees(q.amt) : ''} · ${DateTime.fromISO(q.at).toFormat('d LLL')}${q.n ? ' · reminded ' + q.n + 'x' : ''}`).join('\n') : 'No open treatment quotes.') +
+        '\n\nTo add one, send:\nQUOTE 9876543210 Implant 40000\n\nThe patient gets a gentle reminder after 2 days, 7 days and 30 days, unless they book or say not now.');
+    } else {
+      const to = '91' + m10; const words = rest.replace(ph0, ' ').trim(); const amt = Number(((words.match(/(\d[\d,]{2,})(?!.*\d)/) || [])[1] || '0').replace(/,/g, ''));
+      const what = words.replace(/(?:rs\.?|₹)?\s*\d[\d,]{2,}\s*(?:rs|rupees)?/i, ' ').replace(/\s+/g, ' ').trim() || 'treatment';
+      let nm = ''; for (const d of Object.keys(mem.vis || {}).sort()) for (const v of mem.vis[d]) if (v.ph === to && v.name) nm = v.name; if (!nm) { const r0 = rows.filter(r => r.phone === to && r.name).pop(); if (r0) nm = r0.name; }
+      const q = quoteAdd(to, nm, what, amt, me);
+      payload = text(`Done ✓ Quote saved: ${nm || '+' + to} · ${q.what}${q.amt ? ' · ' + rupees(q.amt) : ''}.\nIf they do not book, they will get a gentle WhatsApp reminder after 2, 7 and 30 days. It stops as soon as they book or say not now.`);
+    }
   }
   else if (advCmd) {
     const m0 = cmd.match(/\d+/); if (!mem.cfg) mem.cfg = {};
@@ -2110,6 +2157,7 @@ else if (id.startsWith('S|')) {
 }
 else if (id.startsWith('M|')) { const [, d, after] = id.split('|'); payload = timeList(d, after); }
 else if (id.startsWith('D|')) { const d0 = id.split('|')[1]; payload = S.bookFlowId && canBookMore ? dayFlow(d0) : timeList(d0); }
+else if (id === 'QUOTE_NO') { payload = text(lang === 'en' ? '👍 No problem. We will not remind you again. Whenever you are ready, just message us here.' : '👍 Koi baat nahi. Hum dobara yaad nahi dilayenge. Jab bhi aap taiyaar hon, yahin message kar dijiye.'); }
 else if (id.startsWith('PAID|')) {
   const rn = id.split('|')[1]; const r = byRow(rn); if (!mem.adv) mem.adv = {};
   if (r && !mem.adv[rn]) { mem.adv[rn] = { ph: me, amt: advAmt(), at: now.toISO(), st: 'claimed' }; bump('advClaimed'); ev(me, 'pay', 'Says advance ₹' + advAmt() + ' paid · check UPI');
