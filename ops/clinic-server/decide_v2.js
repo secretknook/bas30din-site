@@ -1623,6 +1623,31 @@ const L = T[lang];
 const W = r => whenText(r.date, r.time, lang);
 const text = body => textTo(msg.from, body);
 const buttons = (body, btns, header, footer) => buttonsTo(msg.from, body, btns, header, footer);
+// ---------- advance payment by UPI: QR made from the clinic's own UPI ID, money goes straight to the clinic ----------
+const advAmt = () => Number(((mem.cfg || {}).advance != null ? mem.cfg.advance : S.advance) || 0);
+const upiOf = () => String((mem.cfg || {}).upiId || S.upiId || '').trim();
+function payAsk(bk) {
+  const amt = advAmt(), upi = upiOf(); if (!amt || !upi || !bk) return null; const en = lang === 'en';
+  const note = 'Advance ' + bookingId(bk);
+  const qr = 'https://quickchart.io/qr?size=600&margin=2&text=' + encodeURIComponent(`upi://pay?pa=${upi}&pn=${C}&am=${amt}&cu=INR&tn=${note}`);
+  const body = en ? `💳 *Pay ₹${amt} advance to hold your time*\n\nScan this QR with any UPI app (GPay, PhonePe, Paytm), or pay to *${upi}*.\nThe ₹${amt} is adjusted in your bill at the clinic.\n\nAfter paying, tap the button below.`
+    : `💳 *₹${amt} advance dekar apna time pakka kijiye*\n\nKisi bhi UPI app (GPay, PhonePe, Paytm) se yeh QR scan kijiye, ya *${upi}* pe pay kijiye.\nYeh ₹${amt} clinic ke bill mein kam ho jayega.\n\nPay karne ke baad neeche button dabaiye.`;
+  return buttonsTo(msg.from, body, [[`PAID|${bk.row_number}`, en ? 'I have paid' : 'Maine pay kiya']], { type: 'image', image: { link: qr } });
+}
+// ---------- festival greetings to all patients (owner/doctor only, max 2 a month) ----------
+const GREET = {
+  DIWALI: { en: n => `🪔 *Happy Diwali${n ? ', ' + n : ''}!*\n\nWishing you and your family good health, light and happiness this Diwali.\n\nWarm wishes,\n${D}\n${C}`, hl: n => `🪔 *Shubh Deepawali${n ? ', ' + n + ' ji' : ''}!*\n\nAapko aur aapke parivaar ko achhi sehat, roshni aur khushiyon bhari Diwali ki shubhkamnayein.\n\n${D}\n${C}` },
+  HOLI: { en: n => `🎨 *Happy Holi${n ? ', ' + n : ''}!*\n\nPlay safe with colours and keep your skin and eyes protected. Wishing you a joyful Holi.\n\n${D}\n${C}`, hl: n => `🎨 *Holi ki shubhkamnayein${n ? ', ' + n + ' ji' : ''}!*\n\nRangon se surakshit kheliye, skin aur aankhon ka dhyan rakhiye. Khushiyon bhari Holi!\n\n${D}\n${C}` },
+  NEWYEAR: { en: n => `🎉 *Happy New Year${n ? ', ' + n : ''}!*\n\nThank you for trusting us with your care. Wishing you a healthy year ahead.\n\n${D}\n${C}`, hl: n => `🎉 *Naya saal mubarak${n ? ', ' + n + ' ji' : ''}!*\n\nHum par bharosa karne ke liye dhanyavaad. Aane wala saal sehat se bhara ho.\n\n${D}\n${C}` }
+};
+function greetList() {
+  const staff = new Set((S.staff || []).map(x => digits(x.phone)).concat((S.doctorNumbers || []).map(digits)));
+  const P = {}; for (const d of Object.keys(mem.vis || {})) for (const v of mem.vis[d]) if (v.ph) P[v.ph] = v.name || P[v.ph] || '';
+  for (const r of rows) if (r.phone) P[r.phone] = P[r.phone] || r.name || '';
+  return Object.keys(P).filter(ph => ph.length >= 11 && !staff.has(ph) && !(mem.optout || {})[ph]).map(ph => ({ ph, name: String(P[ph] || '').split(' ')[0] }));
+}
+const greetCount = () => (mem.bcLog || []).filter(x => x.at > now.minus({ days: 30 }).toISO()).length;
+
 const list = (body, button, title, rowsOut) => listTo(msg.from, body, button, title, rowsOut, lang);
 
 const canBookMore = upcoming.length < S.maxBookingsPerPhone;
@@ -1758,7 +1783,9 @@ else if (isDocPh && !id && raw && raw.trim().split(/\s+/).length <= 6) {
   else if (/^(in|back|aa gaya|aa gayi|aagaya|aagayi|pahunch gaya|pahunch gayi|reached|in clinic|i am in|i'm in|im in|start|started|wapas|wapas aa gaya|wapas aa gayi)\b/.test(low)) docIntent = { k: 'in' };
 }
 const repCmd = isDocPh && !id && /^(REPORT|RIPORT|HISAAB|HISAB)$/.test(cmd);
-const adminCmd = (isAdmin && !id && /^(TODAY|AAJ|HELP|ADMIN)/.test(cmd)) || repCmd || !!docIntent;
+const greetCmd = isDocPh && ((!id && /^(GREET|GREETING|WISH)\b/.test(cmd)) || String(id || '').startsWith('GR|'));
+const advCmd = isDocPh && !id && /^ADVANCE\b/.test(cmd);
+const adminCmd = (isAdmin && !id && /^(TODAY|AAJ|HELP|ADMIN)/.test(cmd)) || repCmd || greetCmd || advCmd || !!docIntent;
 function parseLeaveDate(s) {
   const x = s.replace(/^LEAVE\s*/, '').trim();
   if (!x || x === 'TODAY' || x === 'AAJ') return now.toFormat('yyyy-MM-dd');
@@ -1813,6 +1840,20 @@ if (adminCmd) {
     if (!holidays.includes(d)) holiday = [[d, 'Doctor on leave (set by WhatsApp)']];
     if (d === today) { delete mem.docPend; setDoc('leave', 0, more); }
     payload = text(`Done ✓ ${DateTime.fromISO(d).toFormat('ccc, d LLL')} is marked as leave.\n${l.length ? `${l.length} booked patient${l.length > 1 ? 's were' : ' was'} asked to pick a new time.` : 'Nobody was booked that day.'}${sync}`);
+  }
+  else if (advCmd) {
+    const m0 = cmd.match(/\d+/); if (!mem.cfg) mem.cfg = {};
+    if (/OFF|BAND|0\b/.test(cmd) && !(m0 && Number(m0[0]) > 0)) { mem.cfg.advance = 0; payload = text('Done ✓ Advance payment is off. Patients will book without paying.'); }
+    else if (m0) { const a0 = Math.min(5000, Number(m0[0])); if (!upiOf()) payload = text('First add your clinic UPI ID in the Clinic Desk settings, then send ADVANCE ' + a0 + ' again.'); else { mem.cfg.advance = a0; payload = text(`Done ✓ After booking, patients will now get a UPI QR to pay ₹${a0} advance to ${upiOf()}.\nReception gets a message when someone says they paid.\nTo stop: ADVANCE OFF`); } }
+    else payload = text(`Advance now: ${advAmt() ? '₹' + advAmt() : 'off'}.\nSend ADVANCE 100 to ask ₹100 after booking, or ADVANCE OFF.`);
+  }
+  else if (greetCmd) {
+    const gr = String(id || '').startsWith('GR|'); const k = gr ? (GREET[id.slice(3)] ? id.slice(3) : null) : ['DIWALI', 'HOLI', 'NEWYEAR'].find(x => cmd.replace(/\s|-/g, '').includes(x)); const custom = gr ? '' : raw.replace(/^\s*(greet(ing)?|wish)\s*/i, '').trim();
+    const n0 = greetList().length;
+    if (!k && custom.length < 15) payload = buttons(`Which greeting should go to your ${n0} patients?\n\nOr write your own: GREET <your message>`, [['GR|DIWALI', 'Diwali'], ['GR|HOLI', 'Holi'], ['GR|NEWYEAR', 'New Year']]);
+    else { if (!mem.bcPend) mem.bcPend = {}; mem.bcPend[me] = { k: k || '', text: k ? '' : custom + `\n\n${D}\n${C}`, at: now.toISO() };
+      const prev = k ? GREET[k].en('Riya') : custom;
+      payload = buttons(`*Preview*\n\n${prev}\n\nThis goes to *${Math.min(n0, 300)}* patients (each in their own language). Send now?`, [['BC|yes', 'Send'], ['BC|no', 'Cancel']]); }
   }
   else if (repCmd) {
     const f = now.startOf('month').toFormat('yyyy-MM-dd');
@@ -1997,7 +2038,7 @@ else if (id === 'FLOW' && !holding) {
     const rowNo = rows.reduce((m0, r0) => Math.max(m0, Number(r0.row_number) || 0), 1) + 1; const bk = { ...rec, row_number: rowNo };
     const pi = v8pinfo(patKey(me, '')); if (pd.self || !pi.name) { if (pd.age) pi.age = pd.age; if (pd.sex) pi.sex = pd.sex; if (pd.area) pi.area = pd.area; pi.name = pi.name || pd.name; }
     if (!mem.bkd) mem.bkd = {}; mem.bkd[rowNo] = { ...pd, at: now.toISO() };
-    payload = confirmMsg({ ...bk, name: pd.name + (pd.age || pd.sex ? ` (${[pd.age ? pd.age + (en ? ' yrs' : ' saal') : '', pd.sex].filter(Boolean).join(', ')})` : '') }); const rd = receiptDoc(bk, pd); if (rd) more.push(rd); pin(); bump('booked'); bookedExtra(me);
+    payload = confirmMsg({ ...bk, name: pd.name + (pd.age || pd.sex ? ` (${[pd.age ? pd.age + (en ? ' yrs' : ' saal') : '', pd.sex].filter(Boolean).join(', ')})` : '') }); const rd = receiptDoc(bk, pd); if (rd) more.push(rd); { const pa = payAsk(bk); if (pa) more.push(pa); } pin(); bump('booked'); bookedExtra(me);
     ev(me, 'booked', 'Booked ' + at(d, tm).toFormat('ccc d LLL, h:mm a') + ' · ' + pd.name + (pd.age ? ', ' + pd.age : '') + (pd.sex ? ', ' + pd.sex : ''));
   }
 }
@@ -2020,7 +2061,7 @@ else if (holding && (['SELF', 'OTHER', 'FLOW'].includes(id) || id.startsWith('SE
     const pi = v8pinfo(patKey(me, '')); if (pd.self || !pi.name) { if (pd.age) pi.age = pd.age; if (pd.sex) pi.sex = pd.sex; if (pd.area) pi.area = pd.area; pi.name = pi.name || pd.name; }
     if (!mem.bkd) mem.bkd = {}; mem.bkd[holding.row_number] = { name: pd.name, age: pd.age || 0, sex: pd.sex || '', area: pd.area || '', ph2: pd.ph2 || '', prob: pd.prob || '', self: !!pd.self, at: now.toISO() };
     delete mem.pend[me];
-    payload = confirmMsg({ ...bk, name: pd.name + (pd.age || pd.sex ? ` (${[pd.age ? pd.age + (en ? ' yrs' : ' saal') : '', pd.sex].filter(Boolean).join(', ')})` : '') }); const rd = receiptDoc(bk, pd); if (rd) more.push(rd); pin(); bump('booked'); bookedExtra(me);
+    payload = confirmMsg({ ...bk, name: pd.name + (pd.age || pd.sex ? ` (${[pd.age ? pd.age + (en ? ' yrs' : ' saal') : '', pd.sex].filter(Boolean).join(', ')})` : '') }); const rd = receiptDoc(bk, pd); if (rd) more.push(rd); { const pa = payAsk(bk); if (pa) more.push(pa); } pin(); bump('booked'); bookedExtra(me);
     ev(me, 'booked', 'Booked ' + at(holding.date, holding.time).toFormat('ccc d LLL, h:mm a') + ' · ' + pd.name + (pd.age ? ', ' + pd.age : '') + (pd.sex ? ', ' + pd.sex : ''));
   }
 }
@@ -2050,6 +2091,22 @@ else if (id.startsWith('S|')) {
 }
 else if (id.startsWith('M|')) { const [, d, after] = id.split('|'); payload = timeList(d, after); }
 else if (id.startsWith('D|')) { const d0 = id.split('|')[1]; payload = S.bookFlowId && canBookMore ? dayFlow(d0) : timeList(d0); }
+else if (id.startsWith('PAID|')) {
+  const rn = id.split('|')[1]; const r = byRow(rn); if (!mem.adv) mem.adv = {};
+  if (r && !mem.adv[rn]) { mem.adv[rn] = { ph: me, amt: advAmt(), at: now.toISO(), st: 'claimed' }; bump('advClaimed'); ev(me, 'pay', 'Says advance ₹' + advAmt() + ' paid · check UPI');
+    for (const st of (S.staff || []).filter(x => x.role === 'reception' || x.role === 'owner')) if (inWindow(digits(st.phone))) more.push(textTo(digits(st.phone), `💳 ${r.name || 'A patient'} says ₹${advAmt()} advance is paid (${bookingId(r)}, ${W(r)}). Please check your UPI app.`)); }
+  payload = text(lang === 'en' ? '🙏 Thank you! The clinic will check the payment, and ₹' + advAmt() + ' will be adjusted in your bill.' : '🙏 Dhanyavaad! Clinic payment check kar lega, aur ₹' + advAmt() + ' aapke bill mein kam ho jayega.');
+}
+else if (id.startsWith('BC|')) {
+  const p0 = (mem.bcPend || {})[me]; if (mem.bcPend) delete mem.bcPend[me];
+  if (id !== 'BC|yes' || !p0 || p0.at < now.minus({ minutes: 30 }).toISO()) payload = text('Okay, nothing was sent.');
+  else if (greetCount() >= 2) payload = text('Two greetings have already gone out in the last 30 days. To protect your WhatsApp number, the next one can go later.');
+  else { const L0 = greetList().slice(0, 300); let n = 0, skip = 0;
+    for (const p of L0) { const lg = langOf(p.ph, ''); const body = (GREET[p0.k] ? GREET[p0.k][lg === 'en' ? 'en' : 'hl'](p.name) : p0.text) + (lg === 'en' ? '\n\n_Reply STOP to stop messages._' : '\n\n_Messages band karne ke liye STOP likhiye._');
+      if (inWindow(p.ph)) { more.push(textTo(p.ph, body)); n++; } else if (S.templates && S.templates.greeting) { more.push(templateTo(p.ph, S.templates.greeting, [p.name || 'there', C], [])); n++; } else skip++; }
+    if (!mem.bcLog) mem.bcLog = []; mem.bcLog = mem.bcLog.concat([{ at: now.toISO(), k: p0.k, n, by: me }]).slice(-24); bump('greetSent', n);
+    payload = text(`Done ✓ Greeting sent to ${n} patient${n === 1 ? '' : 's'}.` + (skip ? `\n${skip} could not get it yet: they have not messaged in 24 hours and the greeting template is not approved yet.` : '')); }
+}
 else if (id.startsWith('RC|')) {
   const r = byRow(id.split('|')[1]);
   if (r && active(r)) { setStatus(r, 'Confirmed'); payload = text(L.thanksConfirm(W(r))); pin(); bump('confirmed'); } else payload = text(L.gone);
