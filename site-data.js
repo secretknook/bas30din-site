@@ -63,7 +63,7 @@ window.SITE = {
       cover: "coral", photo: true,
       totalDays: 30,
       started: "2026-11-11",   // Day 1 (Day 0 was 10 Nov). The live day moves on by itself every day from this date; past days unlock by themselves.
-      skipped: ["2026-11-19"], // Dates with no video. They don't count as a day and are never shown on the site.
+      skipped: ["2026-11-19", "2026-11-21", "2026-11-22", "2026-11-23"], // Dates with no video. They don't count as a day and are never shown on the site.
       // The claim being tested: shown as "claim VS me" on the home page and every day page.
       // img = a REAL post (no faces). url = where it came from (kept for our records; the picture is not a link).
       claim: { img: "assets/claim-1lakh.jpg", url: "https://www.youtube.com/watch?v=RVaEJQaBNq4", by: "Vedantu Upskill Academy on YouTube", says: "Earn ₹1 lakh / monthly" },
@@ -84,7 +84,9 @@ window.SITE = {
         { day: 5, date: "2026-11-15", title: "54 business emails, ₹0 so far", video: "vWrSxOe8J70", short: true, length: "1 min", thumb: "vWrSxOe8J70.jpg", notes: "", files: [], pictures: [], published: false },
         { day: 6, date: "2026-11-16", title: "PC off, bot still replies, ₹0 so far", video: "D8s94KfRwY4", short: true, length: "1 min", thumb: "D8s94KfRwY4.jpg", notes: "", files: [], pictures: [], published: false },
         { day: 7, date: "2026-11-17", title: "Week 1 plan fail, ₹0 so far", video: "OGHysbdPh0Q", short: true, length: "1 min", thumb: "OGHysbdPh0Q.jpg", notes: "", files: [], pictures: [], published: false },
-        { day: 8, date: "2026-11-18", title: "I built a clinic WhatsApp bot and tested it", video: "EvnvoCkwI_k", short: true, length: "2 min", thumb: "EvnvoCkwI_k.jpg", notes: "", files: [], pictures: [], published: false }
+        { day: 8, date: "2026-11-18", title: "I built a clinic WhatsApp bot and tested it", video: "EvnvoCkwI_k", short: true, length: "2 min", thumb: "EvnvoCkwI_k.jpg", notes: "", files: [], pictures: [], published: false },
+        { day: 9, date: "2026-11-20", title: "Meta launched a WhatsApp AI agent. Is my bot finished?", video: "6cjXxT_bi0w", short: true, length: "1 min", thumb: "6cjXxT_bi0w.jpg", notes: "", files: [], pictures: [], published: false },
+        { day: 10, date: "2026-11-24", title: "Doctors were ready. My software wasn't", video: "m0lsxLOrTlU", short: true, length: "2 min", thumb: "m0lsxLOrTlU.jpg", notes: "", files: [], pictures: [], published: false }
       ]
     },
     {
