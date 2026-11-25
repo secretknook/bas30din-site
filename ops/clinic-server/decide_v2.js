@@ -1595,6 +1595,25 @@ const raw = String(msg.text || '').trim();
 const t = raw.toLowerCase();
 const has = words => words.some(w => new RegExp(`(^|\\W)${w}(\\W|$)`, 'i').test(t));
 const isAdmin = (S.adminNumbers || []).some(a => same(a, me));
+// ---------- lab report / document from clinic staff: forward it to the patient on WhatsApp ----------
+// Staff send the PDF or photo to the clinic's bot number with the patient's mobile number in the caption.
+if (msg.media && msg.media.id && (staffRec(me) || isAdmin)) {
+  const num = raw.replace(/\D/g, ''); const m10 = num.length >= 10 ? num.slice(-10) : '';
+  const out0 = t0 => [{ json: { action: 'reply', payload: textTo(me, t0), more: [], holiday: null, values: null, range: null, sheetId: S.sheetId, phoneNumberId: S.phoneNumberId, notify: false } }];
+  if (!m10) return out0('To send this report to a patient, forward it again with the patient\'s 10-digit mobile number in the caption.\nExample caption: 9876543210');
+  const to = '91' + m10; let nm = '';
+  for (const d of Object.keys(mem.vis || {}).sort()) for (const v of mem.vis[d]) if (v.ph === to && v.name) nm = v.name;
+  if (!nm) { const r0 = rows.filter(r => r.phone === to && r.name).pop(); if (r0) nm = r0.name; }
+  const first = String(nm || '').split(' ')[0]; const lg = langOf(to, ''); const en = lg === 'en';
+  const inW = inWindow(to); const tpl = S.templates && S.templates.report;
+  if ((mem.optout || {})[to]) return out0(`+${to} has asked not to get messages, so the report was not sent. Please hand it over at the clinic.`);
+  if (!inW && !tpl) return out0(`Could not send yet: +${to} has not messaged the clinic in the last 24 hours, and the "report ready" template is not approved yet.\nAsk the patient to send "Hi" to this number, then forward the report again.`);
+  const caption = en ? `🧾 *Your report is ready${first ? ', ' + first : ''}*\n\nHere is your report from ${C}. ${D} will go through it at your next visit.\nTo book a visit, just reply here.`
+    : `🧾 *Aapki report aa gayi hai${first ? ', ' + first + ' ji' : ''}*\n\n${C} se aapki report yeh rahi. ${D} agle visit mein ise dekhenge.\nVisit book karne ke liye yahin reply kijiye.`;
+  if (!mem.labs) mem.labs = []; mem.labs = mem.labs.concat([{ to, by: me, at: now.toISO(), name: nm || '' }]).slice(-300); bump('labSent'); ev(to, 'report', 'Report sent on WhatsApp');
+  const labfwd = { media: msg.media.id, mime: msg.media.mime || 'application/pdf', filename: msg.media.filename || (msg.media.kind === 'image' ? 'report.jpg' : 'report.pdf'), kind: msg.media.kind || 'document', to, caption, name: first || 'there', clinic: C, template: inW ? null : tpl, tplLang: S.templateLang || 'en' };
+  return [{ json: { action: 'reply', payload: textTo(me, `✅ Sending the report to ${nm || 'the patient'} (+${to})${inW ? '' : ' using the report template'}.`), more: [], labfwd, holiday: null, values: null, range: null, sheetId: S.sheetId, phoneNumberId: S.phoneNumberId, notify: false } }];
+}
 const mine = rows.filter(r => same(r.phone, me));
 const upcoming = mine.filter(r => active(r) && at(r.date, r.time) >= now).sort((a, b) => at(a.date, a.time) - at(b.date, b.time));
 const holding = mine.filter(r => r.status === 'holding' && holdFresh(r)).sort((a, b) => b.row_number - a.row_number)[0];
