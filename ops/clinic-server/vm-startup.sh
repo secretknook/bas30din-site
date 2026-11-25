@@ -9,11 +9,25 @@ fi
 swapon /swapfile 2>/dev/null || true
 if ! command -v docker >/dev/null; then curl -fsSL https://get.docker.com | sh; fi
 mkdir -p /opt/n8n && cd /opt/n8n
+# Email for n8n (forgot password, invites). The login and app password are NOT in this file:
+# they are read from the VM's own metadata keys smtp-user / smtp-pass (set in the Google Cloud console).
+MD=http://metadata.google.internal/computeMetadata/v1/instance/attributes
+SMTP_USER=$(curl -sf -H 'Metadata-Flavor: Google' $MD/smtp-user || true)
+SMTP_PASS=$(curl -sf -H 'Metadata-Flavor: Google' $MD/smtp-pass || true)
+umask 077
+if [ -n "$SMTP_USER" ] && [ -n "$SMTP_PASS" ]; then
+  printf 'N8N_EMAIL_MODE=smtp\nN8N_SMTP_HOST=smtp.zoho.in\nN8N_SMTP_PORT=465\nN8N_SMTP_SSL=true\nN8N_SMTP_USER=%s\nN8N_SMTP_PASS=%s\nN8N_SMTP_SENDER=OkayBridge <%s>\n' "$SMTP_USER" "$SMTP_PASS" "$SMTP_USER" > .env.mail
+else
+  : > .env.mail
+fi
+umask 022
 cat > docker-compose.yml <<'YML'
 services:
   n8n:
     image: docker.n8n.io/n8nio/n8n:latest
     restart: always
+    env_file:
+      - .env.mail
     environment:
       - N8N_HOST=admin.okaybridge.com
       - N8N_PROTOCOL=https
