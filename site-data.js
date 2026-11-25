@@ -71,7 +71,7 @@ window.SITE = {
       trailer: { video: "8c9g6EDp3z8", short: true, thumb: "8c9g6EDp3z8.jpg", length: "47 sec" },
       // The receipt: REAL numbers only. null = not started yet (shows "—").
       // Update these as the challenge runs, e.g. hours: 12, spent: 499, earned: 0
-      ledger: { hours: null, spent: null, earned: 0 },
+      ledger: { hours: null, spent: 3640, earned: 0 },   // spent: domain 1300 + website 1300 + Google Cloud server 1000 + WhatsApp (Meta) testing 40
       about: "", learn: ["What the 'lakhs' claim really promises", "What it takes to get a first paying client", "What real earners do differently"], tools: [],
       // A day with video: "" shows "goes up today" until the link is added. published: false keeps it out of the email feed.
       // pictures (optional) = "Today in 3 pictures": [{ img: "assets/days/d1-1.jpg", text: "What I tried" }, ...]
