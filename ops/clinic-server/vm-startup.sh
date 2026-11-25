@@ -15,10 +15,10 @@ services:
     image: docker.n8n.io/n8nio/n8n:latest
     restart: always
     environment:
-      - N8N_HOST=bot.bas30din.com
+      - N8N_HOST=admin.okaybridge.com
       - N8N_PROTOCOL=https
-      - WEBHOOK_URL=https://bot.bas30din.com/
-      - N8N_EDITOR_BASE_URL=https://bot.bas30din.com/
+      - WEBHOOK_URL=https://api.okaybridge.com/
+      - N8N_EDITOR_BASE_URL=https://admin.okaybridge.com/
       - N8N_PROXY_HOPS=1
       - GENERIC_TIMEZONE=Asia/Kolkata
       - TZ=Asia/Kolkata
@@ -44,9 +44,25 @@ volumes:
   caddy_data:
 YML
 cat > Caddyfile <<'CADDY'
-# Old and new addresses both point to the same n8n while clinics move over.
+# Public addresses: only webhooks (WhatsApp, missed calls, receipts) and the health check.
+# The n8n login page is NOT served here.
 bot.bas30din.com, api.okaybridge.com {
   encode gzip
+  @public path /webhook/* /webhook-test/* /healthz
+  handle @public {
+    reverse_proxy n8n:5678
+  }
+  handle {
+    respond "Not found" 404
+  }
+}
+# n8n editor: only reachable through Cloudflare (Cloudflare Access email login in front).
+# Direct visits to the server IP are refused.
+admin.okaybridge.com {
+  tls internal
+  encode gzip
+  @notcf not remote_ip 173.245.48.0/20 103.21.244.0/22 103.22.200.0/22 103.31.4.0/22 141.101.64.0/18 108.162.192.0/18 190.93.240.0/20 188.114.96.0/20 197.234.240.0/22 198.41.128.0/17 162.158.0.0/15 104.16.0.0/13 104.24.0.0/14 172.64.0.0/13 131.0.72.0/22 2400:cb00::/32 2606:4700::/32 2803:f800::/32 2405:b500::/32 2405:8100::/32 2a06:98c0::/29 2c0f:f248::/32
+  respond @notcf "Forbidden" 403
   reverse_proxy n8n:5678
 }
 desk.bas30din.com, clinic.okaybridge.com {
